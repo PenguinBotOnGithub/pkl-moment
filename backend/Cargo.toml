@@ -1,12 +1,22 @@
+[workspace]
+members = [".", "entity", "migration"]
+
 [package]
 name = "warp-pkl-moment"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+entity = { path = "entity" }
+migration = { path = "migration" }
 argon2 = "0.5.3"
-sea-orm = { version = "0.12.15", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+sea-orm = { version = "0.12.15", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+] }
 shuttle-runtime = "0.44.0"
+shuttle-shared-db = { version = "0.44.0", features = ["postgres"] }
 shuttle-warp = "0.44.0"
 tokio = "1.26.0"
 tracing = "0.1.40"
