@@ -1,3 +1,4 @@
+workspace = { members = ["models"] }
 [package]
 name = "warp-pkl-moment"
 version = "0.1.0"
@@ -5,8 +6,14 @@ edition = "2021"
 
 [dependencies]
 argon2 = "0.5.3"
-sea-orm = { version = "0.12.15", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+diesel = "2.1.6"
+diesel-async = { version = "0.4.1", features = ["postgres"] }
+diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 shuttle-runtime = "0.44.0"
+shuttle-shared-db = { version = "0.44.0", features = [
+    "postgres",
+    "diesel-async",
+] }
 shuttle-warp = "0.44.0"
 tokio = "1.26.0"
 tracing = "0.1.40"
