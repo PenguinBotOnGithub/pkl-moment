@@ -15,6 +15,6 @@ async fn warp(
         .await
         .map_err(|e| shuttle_runtime::Error::Database(format!("Error running migrations: {e}")))?;
 
-    let route = warp::any().map(|| "Hello, World!");
+    let route = warp::get().then(|| async { "Hello, World!" });
     Ok(route.boxed().into())
 }
