@@ -9,6 +9,7 @@ argon2 = "0.5.3"
 diesel = "2.1.6"
 diesel-async = { version = "0.4.1", features = ["postgres"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
+diesel_async_migrations = { version = "0.12.0" }
 shuttle-runtime = "0.44.0"
 shuttle-shared-db = { version = "0.44.0", features = [
     "postgres",
