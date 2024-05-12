@@ -7,17 +7,15 @@ function Navbar({ title = "Title" }) {
         <a className="btn btn-ghost text-2xl">{title}</a>
       </div>
       <div className="flex-none">
-        <div className="btn btn-square btn-ghost">
-          <label className="swap swap-rotate">
-            <input type="checkbox" class="theme-controller" value="airlight" />
-            <span className="swap-off fill-current material-symbols-rounded">
-              dark_mode
-            </span>
-            <span className="swap-on fill-current material-symbols-rounded">
-              light_mode
-            </span>
-          </label>
-        </div>
+        <label className="btn btn-square btn-ghost swap swap-rotate">
+          <input type="checkbox" className="theme-controller" value="airlight" />
+          <span className="swap-off fill-current material-symbols-rounded">
+            dark_mode
+          </span>
+          <span className="swap-on fill-current material-symbols-rounded">
+            light_mode
+          </span>
+        </label>
       </div>
     </div>
   );
