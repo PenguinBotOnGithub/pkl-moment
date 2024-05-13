@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "Reef";
+  src: local("Reed"), url("./assets/fonts/Reef.otf") format("truetype");
+  font-weight: bold;
+}
+
+* {
+  font-family: "Reef";
+}
+
+#root {
+  height: 100vh;
+}

@@ -1,0 +1,20 @@
+{
+  "en": {
+    "translation": {
+      "Dashboard": "Dashboard",
+      "Login": "Login",
+      "Entry and Document": "Entry and Document",
+      "All Users": "All Users",
+      "Settings": "Settings"
+    }
+  },
+  "id": {
+    "translation": {
+      "Dashboard": "Dasbor",
+      "Login": "Masuk",
+      "Entry and Document": "Entri dan Dokumen",
+      "All Users": "Semua Pengguna",
+      "Settings": "Setelan"
+    }
+  }
+}
