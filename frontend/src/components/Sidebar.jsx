@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-function Sidebar({ index = 0 }) {
+function Sidebar({ index = -1 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { t } = useTranslation();
 
@@ -22,7 +22,7 @@ function Sidebar({ index = 0 }) {
           menu
         </span>
       </label>
-      <ul className={`menu ${isExpanded && `w-56`} px-0 pt-2`}>
+      <ul className={`menu ${isExpanded && `w-56`} px-0 pt-4`}>
         <li>
           <a className={`p-3 ${index == 0 && "active"}`}>
             <span className="material-symbols-rounded">dashboard</span>
