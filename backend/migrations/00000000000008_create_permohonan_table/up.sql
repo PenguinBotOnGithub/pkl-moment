@@ -9,9 +9,12 @@ CREATE TABLE
         verified BOOLEAN NOT NULL DEFAULT FALSE,
         verified_date DATE,
         wave_id INT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_user FOREIGN KEY ("user_id") REFERENCES "user" ("id"),
         CONSTRAINT fk_company FOREIGN KEY ("company_id") REFERENCES "company" ("id"),
         CONSTRAINT fk_wave FOREIGN KEY ("wave_id") REFERENCES "wave" ("id")
     );
+
+CREATE TRIGGER updated_at_trigger BEFORE
+UPDATE ON "permohonan" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();
