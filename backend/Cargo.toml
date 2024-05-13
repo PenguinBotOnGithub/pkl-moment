@@ -1,10 +1,11 @@
-workspace = { members = ["models"] }
+workspace = { members = ["api", "models"] }
 [package]
 name = "warp-pkl-moment"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+api = { path = "api" }
 argon2 = "0.5.3"
 diesel = "2.1.6"
 diesel-async = { version = "0.4.1", features = ["postgres"] }
