@@ -15,7 +15,6 @@ pub struct Signature {
     pub id: i32,
     pub name: String,
     pub title: String,
-    pub image: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -24,7 +23,6 @@ pub struct CreateSignature {
     pub id: i32,
     pub name: String,
     pub title: String,
-    pub image: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -32,7 +30,6 @@ pub struct CreateSignature {
 pub struct UpdateSignature {
     pub name: Option<String>,
     pub title: Option<String>,
-    pub image: Option<String>,
 }
 
 
