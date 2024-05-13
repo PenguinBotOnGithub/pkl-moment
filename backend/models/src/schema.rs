@@ -83,11 +83,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    session (id) {
+        id -> Uuid,
+        user_id -> Int4,
+        invalidated -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        expires_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     signature (id) {
         id -> Int4,
         name -> Text,
         title -> Text,
-        image -> Text,
     }
 }
 
@@ -137,6 +147,7 @@ diesel::joinable!(permohonan -> user (user_id));
 diesel::joinable!(permohonan -> wave (wave_id));
 diesel::joinable!(permohonan_student -> permohonan (permohonan_id));
 diesel::joinable!(permohonan_student -> student (student_id));
+diesel::joinable!(session -> user (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     company,
@@ -146,6 +157,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     pengantaran_student,
     permohonan,
     permohonan_student,
+    session,
     signature,
     student,
     user,

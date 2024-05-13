@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE
-    "permohonan" (
+    "pengantaran" (
         id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         user_id INT NOT NULL,
         company_id INT NOT NULL,
@@ -15,3 +15,6 @@ CREATE TABLE
         CONSTRAINT fk_company FOREIGN KEY ("company_id") REFERENCES "company" ("id"),
         CONSTRAINT fk_wave FOREIGN KEY ("wave_id") REFERENCES "wave" ("id")
     );
+
+CREATE TRIGGER updated_at_trigger BEFORE
+UPDATE ON "pengantaran" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();

@@ -1,10 +1,9 @@
 -- Your SQL goes here
 CREATE TABLE
-    "pengantaran" (
+    "penarikan" (
         id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         user_id INT NOT NULL,
         company_id INT NOT NULL,
-        start_date DATE NOT NULL,
         end_date DATE NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT FALSE,
         verified_date DATE,
@@ -15,3 +14,6 @@ CREATE TABLE
         CONSTRAINT fk_company FOREIGN KEY ("company_id") REFERENCES "company" ("id"),
         CONSTRAINT fk_wave FOREIGN KEY ("wave_id") REFERENCES "wave" ("id")
     );
+
+CREATE TRIGGER updated_at_trigger BEFORE
+UPDATE ON "penarikan" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();
