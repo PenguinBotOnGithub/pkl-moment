@@ -7,7 +7,13 @@ edition = "2021"
 argon2 = "0.5.3"
 diesel = "2.1.6"
 diesel-async = { version = "0.4.1", features = ["postgres"] }
+serde = { version = "1.0.201", features = ["derive"] }
 tokio = "1.26.0"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 warp = "0.3.7"
+models = { path = "../models" }
+jsonwebtoken = "9.3.0"
+parking_lot = { version = "0.12.2", features = ["send_guard"] }
+thiserror = "1.0.60"
+chrono = "0.4.38"
