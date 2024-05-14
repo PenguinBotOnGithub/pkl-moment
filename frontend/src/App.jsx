@@ -1,11 +1,30 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import UsageExample from "./components/UsageExample";
+// src/App.js
+import React from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import UsageExample from './components/UsageExample';
 import './i18n';
+import EntryDocument from './routes/EntryDocument';
+import AllUsers from './routes/AllUsers';
+import Settings from './routes/Settings';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <UsageExample />,
+  },
+  {
+    path: '/document',
+    element: <EntryDocument />,
+  },
+
+  {
+    path: '/users',
+    element: <AllUsers />,
+  },
+
+  {
+    path: '/settings',
+    element: <Settings />,
   },
 ]);
 
