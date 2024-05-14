@@ -57,6 +57,14 @@ impl User {
         user.filter(id.eq(param_id)).first::<Self>(db).await
     }
 
+    pub async fn find_by_username(db: &mut Connection, param_username: &str) -> QueryResult<Self> {
+        use crate::schema::user::dsl::*;
+
+        user.filter(username.eq(param_username))
+            .first::<Self>(db)
+            .await
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
