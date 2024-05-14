@@ -29,11 +29,12 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    pub fn error(m: String, e: T) -> Self {
+    pub fn error(m: String) -> ApiResponse<u8> {
         ApiResponse {
             status: "error",
             message: m,
-            data: None,
+            // todo: fix u8 workaround !!!
+            data: None::<u8>,
         }
     }
 }

@@ -90,7 +90,7 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
     };
 
     Ok(warp::reply::with_status(
-        warp::reply::json(&ApiResponse::error(message, None::<u8>)),
+        warp::reply::json(&ApiResponse::<Infallible>::error(message)),
         code,
     ))
 }

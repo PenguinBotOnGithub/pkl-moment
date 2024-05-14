@@ -7,7 +7,7 @@ use jsonwebtoken::{EncodingKey, Header};
 use models::user::User;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error};
+use tracing::debug;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
