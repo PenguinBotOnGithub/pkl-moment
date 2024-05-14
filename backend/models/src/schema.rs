@@ -15,6 +15,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    invalidated_jwt (id) {
+        id -> Int4,
+        jwt -> Text,
+        invalidated_timestamp -> Timestamptz,
+        expires_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     penarikan (id) {
         id -> Int4,
         user_id -> Int4,
@@ -83,17 +92,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    session (id) {
-        id -> Uuid,
-        user_id -> Int4,
-        invalidated -> Bool,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-        expires_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
     signature (id) {
         id -> Int4,
         name -> Text,
@@ -147,17 +145,16 @@ diesel::joinable!(permohonan -> user (user_id));
 diesel::joinable!(permohonan -> wave (wave_id));
 diesel::joinable!(permohonan_student -> permohonan (permohonan_id));
 diesel::joinable!(permohonan_student -> student (student_id));
-diesel::joinable!(session -> user (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     company,
+    invalidated_jwt,
     penarikan,
     penarikan_student,
     pengantaran,
     pengantaran_student,
     permohonan,
     permohonan_student,
-    session,
     signature,
     student,
     user,
