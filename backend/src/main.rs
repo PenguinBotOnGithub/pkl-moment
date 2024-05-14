@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use api::error::handle_rejection;
 use diesel_async::AsyncPgConnection;
 use diesel_async_migrations::{embed_migrations, EmbeddedMigrations};
 use parking_lot::Mutex;
@@ -31,6 +32,7 @@ async fn warp(
     let route = warp::any()
         .and(warp::path::end())
         .then(|| async { "Hello, World!" })
-        .or(api::routes::routes(with_db, with_jwt_key));
+        .or(api::routes::routes(with_db, with_jwt_key))
+        .recover(handle_rejection);
     Ok(route.boxed().into())
 }

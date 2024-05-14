@@ -7,7 +7,7 @@ use jsonwebtoken::{EncodingKey, Header};
 use models::user::User;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, error};
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -45,11 +45,15 @@ pub async fn login_handler(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if user.is_none() {
-        reject::custom(ClientError::NotFound("user not found".to_owned()));
+        return Err(reject::custom(ClientError::NotFound(
+            "user not found".to_owned(),
+        )));
     }
 
     if user.as_ref().unwrap().username != payload.username {
-        reject::custom(ClientError::NotFound("user not found".to_owned()));
+        return Err(reject::custom(ClientError::NotFound(
+            "user not found".to_owned(),
+        )));
     }
 
     let jwt = match Argon2::default().verify_password(
