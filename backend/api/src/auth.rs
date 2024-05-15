@@ -3,14 +3,16 @@ use std::sync::Arc;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::{Duration, Utc};
 use diesel_async::AsyncPgConnection;
-use jsonwebtoken::{EncodingKey, Header};
-use models::user::User;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use models::{invalidated_jwt::InvalidatedJwt, user::User};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use warp::{
+    filters::BoxedFilter,
     reject::{self, Rejection},
     reply::{self, Reply},
+    Filter,
 };
 
 use crate::{
@@ -21,10 +23,11 @@ use crate::{
 const BEARER: &'static str = "Bearer ";
 
 #[derive(Debug, Serialize, Deserialize)]
-struct JwtClaims {
-    sub: String,
-    role: String,
-    exp: i64,
+pub struct JwtClaims {
+    pub id: i32,
+    pub name: String,
+    pub role: String,
+    pub exp: i64,
 }
 
 #[derive(Deserialize)]
@@ -70,7 +73,8 @@ pub async fn login_handler(
                 .timestamp();
 
             let claims = JwtClaims {
-                sub: user.as_ref().unwrap().username.clone(),
+                id: user.as_ref().unwrap().id,
+                name: user.as_ref().unwrap().username.clone(),
                 role: match &user.as_ref().unwrap().role {
                     models::types::UserRole::Admin => "admin".to_owned(),
                     models::types::UserRole::Advisor => "advisor".to_owned(),
@@ -89,9 +93,7 @@ pub async fn login_handler(
         Err(e) => match e {
             argon2::password_hash::Error::Password => {
                 debug!("argon2: {:?}", e);
-                return Err(reject::custom(ClientError::AuthenticationFailed(
-                    e.to_string(),
-                )));
+                return Err(reject::custom(ClientError::Authentication(e.to_string())));
             }
             _ => return Err(reject::custom(InternalError::ArgonError(e.to_string()))),
         },
@@ -104,12 +106,59 @@ pub async fn register_handler() -> Result<impl Reply, Rejection> {
     Ok(reply::json(&ApiResponse::ok("registered".to_owned(), "f")))
 }
 
-/* pub async fn with_auth() -> impl Filter<Extract = (User,), Error = Rejection> + Clone {
+pub async fn with_auth(
+    require_admin: bool,
+    with_jwt_key: impl FnOnce() -> BoxedFilter<(String,)>,
+    with_db: impl FnOnce() -> BoxedFilter<(Arc<Mutex<AsyncPgConnection>>,)>,
+) -> impl Filter<Extract = (JwtClaims,), Error = Rejection> + Clone {
     warp::header::<String>("Authorization")
-        .and_then(|s: String| async {
-            if &s[0..6] == "Bearer " {
+        .and(warp::any().map(move || require_admin).boxed())
+        .and(with_jwt_key())
+        .and(with_db())
+        .and_then(
+            |token: String,
+             require_admin: bool,
+             secret: String,
+             db: Arc<Mutex<AsyncPgConnection>>| async move {
+                let token = if token.trim().starts_with(BEARER) {
+                    &token[7..]
+                } else {
+                    &token
+                };
 
-            }
+                let decoded = jsonwebtoken::decode::<JwtClaims>(
+                    &token,
+                    &DecodingKey::from_secret(secret.as_bytes()),
+                    &Validation::new(jsonwebtoken::Algorithm::HS512),
+                )
+                .map_err(|_| {
+                    reject::custom(ClientError::Authentication(
+                        "jwt signature invalid or validation failed".to_owned(),
+                    ))
+                })?;
 
-        })
-} */
+                let mut db = db.lock();
+                let blacklist = InvalidatedJwt::find_by_token(&mut db, &token)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                if blacklist.is_some() {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "token is blacklisted".to_owned(),
+                    )));
+                }
+
+                if require_admin {
+                    if decoded.claims.name == "admin" {
+                        Ok::<JwtClaims, Rejection>(decoded.claims)
+                    } else {
+                        Err(reject::custom(ClientError::Authorization(
+                            "insufficient permission".to_owned(),
+                        )))
+                    }
+                } else {
+                    Ok::<JwtClaims, Rejection>(decoded.claims)
+                }
+            },
+        )
+}

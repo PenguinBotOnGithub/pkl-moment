@@ -27,12 +27,12 @@ impl Reject for InternalError {}
 pub enum ClientError {
     #[error("internal data conflict")]
     Conflict(String),
-    #[error("unauthorized access")]
-    Unauthorized(String),
+    #[error("authorization related error")]
+    Authorization(String),
     #[error("resource not found")]
     NotFound(String),
-    #[error("authentication failed")]
-    AuthenticationFailed(String),
+    #[error("authentication related error")]
+    Authentication(String),
 }
 
 impl Reject for ClientError {}
@@ -43,9 +43,9 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
     } else if let Some(e) = err.find::<ClientError>() {
         match e {
             ClientError::Conflict(e) => (StatusCode::CONFLICT, e.to_owned()),
-            ClientError::Unauthorized(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
+            ClientError::Authorization(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
             ClientError::NotFound(e) => (StatusCode::NOT_FOUND, e.to_owned()),
-            ClientError::AuthenticationFailed(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
+            ClientError::Authentication(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
         }
     } else if let Some(e) = err.find::<InternalError>() {
         match e {
