@@ -1,19 +1,22 @@
 import React, { useState } from "react";
+
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 function Sidebar({ index = -1 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { t } = useTranslation();
 
+  const handleExpandToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className="flex-none p-2">
       <label className="btn btn-square btn-ghost swap swap-rotate">
         <input
           type="checkbox"
-          onClick={() => {
-            setIsExpanded(!isExpanded);
-            console.log(isExpanded);
-          }}
+          onClick={handleExpandToggle}
         />
         <span className="swap-off fill-current material-symbols-rounded">
           arrow_back
@@ -22,30 +25,30 @@ function Sidebar({ index = -1 }) {
           menu
         </span>
       </label>
-      <ul className={`menu ${isExpanded && `w-56`} px-0 pt-4`}>
+      <ul className={`menu ${isExpanded ? 'w-56' : ''} px-0 pt-4`}>
         <li>
-          <a className={`p-3 ${index == 0 && "active"}`}>
+          <Link to="/dashboard" className={`p-3 ${index === 0 && "active"}`}>
             <span className="material-symbols-rounded">dashboard</span>
-            {isExpanded && <span>{t("Dashboard")}</span>}
-          </a>
+            <span>{isExpanded && t("Dashboard")}</span>
+          </Link>
         </li>
         <li>
-          <a className={`p-3 ${index == 1 && "active"}`}>
+          <Link to="/entries" className={`p-3 ${index === 1 && "active"}`}>
             <span className="material-symbols-rounded">description</span>
-            {isExpanded && t("Entry and Document")}
-          </a>
+            <span>{isExpanded && t("Entries & Document")}</span>
+          </Link>
         </li>
         <li>
-          <a className={`p-3 ${index == 2 && "active"}`}>
+          <Link to="/users" className={`p-3 ${index === 2 && "active"}`}>
             <span className="material-symbols-rounded">manage_accounts</span>
-            {isExpanded && t("All Users")}
-          </a>
+            <span>{isExpanded && t("All Users")}</span>
+          </Link>
         </li>
         <li>
-          <a className={`p-3 ${index == 3 && "active"}`}>
+          <Link to="/settings" className={`p-3 ${index === 3 && "active"}`}>
             <span className="material-symbols-rounded">settings</span>
-            {isExpanded && t("Settings")}
-          </a>
+            <span>{isExpanded && t("Settings")}</span>
+          </Link>
         </li>
       </ul>
     </div>

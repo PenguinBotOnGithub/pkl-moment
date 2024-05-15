@@ -15,3 +15,10 @@
 #root {
   height: 100vh;
 }
+.sidebar-text.hidden {
+  display: none;
+}
+
+.sidebar-text.visible {
+  display: inline; /* Atau block, tergantung kebutuhan */
+}

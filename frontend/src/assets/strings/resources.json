@@ -3,7 +3,7 @@
     "translation": {
       "Dashboard": "Dashboard",
       "Login": "Login",
-      "Entry and Document": "Entry and Document",
+      "Entries & Documents": "Entries & Documents",
       "All Users": "All Users",
       "Settings": "Settings"
     }
@@ -12,7 +12,7 @@
     "translation": {
       "Dashboard": "Dasbor",
       "Login": "Masuk",
-      "Entry and Document": "Entri dan Dokumen",
+      "Entries & Documents": "Entri dan Dokumen",
       "All Users": "Semua Pengguna",
       "Settings": "Setelan"
     }
