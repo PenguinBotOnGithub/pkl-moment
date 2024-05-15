@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import { useTranslation } from 'react-i18next';
 import Search from '../components/Search';
 
-function Settings() {
+function EntriesAndDocuments() {
   const { t } = useTranslation();
 
   return (
@@ -15,4 +15,4 @@ function Settings() {
   );
 }
 
-export default Settings;
+export default EntriesAndDocuments;

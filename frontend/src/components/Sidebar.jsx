@@ -27,15 +27,15 @@ function Sidebar({ index = -1 }) {
       </label>
       <ul className={`menu ${isExpanded ? 'w-56' : ''} px-0 pt-4`}>
         <li>
-          <Link to="/" className={`p-3 ${index === 0 && "active"}`}>
+          <Link to="/dashboard" className={`p-3 ${index === 0 && "active"}`}>
             <span className="material-symbols-rounded">dashboard</span>
             <span>{isExpanded && t("Dashboard")}</span>
           </Link>
         </li>
         <li>
-          <Link to="/document" className={`p-3 ${index === 1 && "active"}`}>
+          <Link to="/entries" className={`p-3 ${index === 1 && "active"}`}>
             <span className="material-symbols-rounded">description</span>
-            <span>{isExpanded && t("Entry and Document")}</span>
+            <span>{isExpanded && t("Entries & Document")}</span>
           </Link>
         </li>
         <li>
