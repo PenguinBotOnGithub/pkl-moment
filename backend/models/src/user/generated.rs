@@ -20,7 +20,6 @@ pub struct User {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=user)]
 pub struct CreateUser {
-    pub id: i32,
     pub username: String,
     pub password: String,
     pub role: crate::types::UserRole,
