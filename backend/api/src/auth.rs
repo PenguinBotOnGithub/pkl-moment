@@ -263,3 +263,50 @@ pub fn with_auth(
             },
         )
 }
+
+pub async fn refresh_token_handler(
+    claims: JwtClaims,
+    jwt_key: String,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let user = User::read(&mut db, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if user.is_none() {
+        return Err(reject::custom(ClientError::NotFound(
+            "user not found in database".to_owned(),
+        )));
+    }
+
+    let exp = Utc::now()
+        .checked_add_signed(Duration::hours(3))
+        .ok_or(reject::custom(InternalError::ChronoError(
+            "invalid timestamp".to_owned(),
+        )))?
+        .timestamp();
+
+    let claims = JwtClaims {
+        id: claims.id,
+        name: user.as_ref().unwrap().username.clone(),
+        role: match user.unwrap().role {
+            models::types::UserRole::Admin => "admin".to_owned(),
+            models::types::UserRole::Advisor => "advisor".to_owned(),
+        },
+        exp: exp,
+    };
+
+    let header = Header::new(jsonwebtoken::Algorithm::HS512);
+    let jwt = jsonwebtoken::encode(
+        &header,
+        &claims,
+        &EncodingKey::from_secret(jwt_key.as_bytes()),
+    )
+    .map_err(|e| reject::custom(InternalError::JwtError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "refreshed token".to_owned(),
+        jwt,
+    )))
+}
