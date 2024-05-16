@@ -1,15 +1,20 @@
 use std::sync::Arc;
 
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use argon2::{
+    password_hash::{rand_core::OsRng, SaltString},
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+};
 use chrono::{Duration, Utc};
 use diesel_async::AsyncPgConnection;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
-use models::{invalidated_jwt::InvalidatedJwt, user::User};
+use models::{
+    invalidated_jwt::InvalidatedJwt,
+    user::{CreateUser, User},
+};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, error};
 use warp::{
-    filters::BoxedFilter,
     reject::{self, Rejection},
     reply::{self, Reply},
     Filter,
@@ -17,7 +22,7 @@ use warp::{
 
 use crate::{
     error::{ClientError, InternalError},
-    ApiResponse,
+    with_db, with_jwt_key, ApiResponse,
 };
 
 const BEARER: &'static str = "Bearer ";
@@ -34,6 +39,13 @@ pub struct JwtClaims {
 pub struct LoginRequest {
     username: String,
     password: String,
+}
+
+#[derive(Deserialize)]
+pub struct RegisterRequest {
+    username: String,
+    password: String,
+    role: String,
 }
 
 pub async fn login_handler(
@@ -66,7 +78,7 @@ pub async fn login_handler(
     ) {
         Ok(_) => {
             let exp = Utc::now()
-                .checked_sub_signed(Duration::hours(3))
+                .checked_add_signed(Duration::hours(3))
                 .ok_or(reject::custom(InternalError::ChronoError(
                     "invalid timestamp".to_owned(),
                 )))?
@@ -102,19 +114,51 @@ pub async fn login_handler(
     Ok(reply::json(&ApiResponse::ok("logged in".to_owned(), jwt)))
 }
 
-pub async fn register_handler() -> Result<impl Reply, Rejection> {
-    Ok(reply::json(&ApiResponse::ok("registered".to_owned(), "f")))
+pub async fn register_handler(
+    payload: RegisterRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon = Argon2::default();
+    let hash = argon
+        .hash_password(payload.password.trim().as_bytes(), &salt)
+        .map_err(|e| reject::custom(InternalError::ArgonError(e.to_string())))?
+        .to_string();
+
+    let user = CreateUser {
+        username: payload.username.trim().to_owned(),
+        password: hash,
+        role: match &payload.role[..] {
+            "admin" => models::types::UserRole::Admin,
+            "advisor" => models::types::UserRole::Advisor,
+            _ => {
+                return Err(reject::custom(ClientError::InvalidInput(
+                    "field 'role' must be either 'admin' or 'advisor'".to_owned(),
+                )))
+            }
+        },
+    };
+
+    let mut db = db.lock();
+    let result = User::create(&mut db, &user)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "registered".to_owned(),
+        result,
+    )))
 }
 
-pub async fn with_auth(
+pub fn with_auth_with_claims(
     require_admin: bool,
-    with_jwt_key: impl FnOnce() -> BoxedFilter<(String,)>,
-    with_db: impl FnOnce() -> BoxedFilter<(Arc<Mutex<AsyncPgConnection>>,)>,
+    jwt_key: String,
+    db: Arc<Mutex<AsyncPgConnection>>,
 ) -> impl Filter<Extract = (JwtClaims,), Error = Rejection> + Clone {
     warp::header::<String>("Authorization")
-        .and(warp::any().map(move || require_admin).boxed())
-        .and(with_jwt_key())
-        .and(with_db())
+        .and(warp::any().map(move || require_admin))
+        .and(with_jwt_key(jwt_key))
+        .and(with_db(db))
         .and_then(
             |token: String,
              require_admin: bool,
@@ -158,6 +202,66 @@ pub async fn with_auth(
                     }
                 } else {
                     Ok::<JwtClaims, Rejection>(decoded.claims)
+                }
+            },
+        )
+}
+
+pub fn with_auth(
+    require_admin: bool,
+    jwt_key: String,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> impl Filter<Extract = ((),), Error = Rejection> + Clone {
+    warp::header::<String>("Authorization")
+        .and(warp::any().map(move || require_admin))
+        .and(with_jwt_key(jwt_key))
+        .and(with_db(db))
+        .and_then(
+            |token: String,
+             require_admin: bool,
+             secret: String,
+             db: Arc<Mutex<AsyncPgConnection>>| async move {
+                error!("{token}");
+                let token = if token.trim().starts_with(BEARER) {
+                    error!("aa");
+                    &token[7..]
+                } else {
+                    error!("aaa");
+                    &token
+                };
+
+                let decoded = jsonwebtoken::decode::<JwtClaims>(
+                    &token,
+                    &DecodingKey::from_secret(secret.as_bytes()),
+                    &Validation::new(jsonwebtoken::Algorithm::HS512),
+                )
+                .map_err(|e| {
+                    reject::custom(ClientError::Authentication(format!(
+                        "jwt signature invalid or validation failed: {e}"
+                    )))
+                })?;
+
+                let mut db = db.lock();
+                let blacklist = InvalidatedJwt::find_by_token(&mut db, &token)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                if blacklist.is_some() {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "token is blacklisted".to_owned(),
+                    )));
+                }
+
+                if require_admin {
+                    if decoded.claims.name == "admin" {
+                        Ok(())
+                    } else {
+                        Err(reject::custom(ClientError::Authorization(
+                            "insufficient permission".to_owned(),
+                        )))
+                    }
+                } else {
+                    Ok(())
                 }
             },
         )
