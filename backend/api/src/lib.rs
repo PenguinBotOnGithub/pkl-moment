@@ -1,3 +1,7 @@
+use std::{convert::Infallible, sync::Arc};
+
+use diesel_async::AsyncPgConnection;
+use parking_lot::Mutex;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use warp::{reject::Rejection, Filter};
 
@@ -11,6 +15,18 @@ where
     J: Send + Sync,
 {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+pub fn with_db(
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> impl Filter<Extract = (Arc<Mutex<AsyncPgConnection>>,), Error = Infallible> + Clone {
+    warp::any().map(move || Arc::clone(&db))
+}
+
+pub fn with_jwt_key(
+    jwt_key: String,
+) -> impl Filter<Extract = (String,), Error = Infallible> + Clone {
+    warp::any().map(move || jwt_key.clone())
 }
 
 #[derive(Debug, Serialize, Deserialize)]

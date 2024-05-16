@@ -19,7 +19,6 @@ async fn warp(
     let jwt_key = secrets
         .get("JWT_SECRET")
         .expect("Failed to get jet key from secrets");
-    let with_jwt_key = || warp::any().map(move || jwt_key.clone()).boxed();
 
     MIGRATIONS
         .run_pending_migrations(&mut db_connection)
@@ -27,12 +26,11 @@ async fn warp(
         .map_err(|e| shuttle_runtime::Error::Database(format!("Error running migrations: {e}")))?;
 
     let arc_db = Arc::new(Mutex::new(db_connection));
-    let with_db = || warp::any().map(move || Arc::clone(&arc_db)).boxed();
 
     let route = warp::any()
         .and(warp::path::end())
         .then(|| async { "Hello, World!" })
-        .or(api::routes::routes(with_db, with_jwt_key))
+        .or(api::routes::routes(arc_db, jwt_key))
         .recover(handle_rejection);
     Ok(route.boxed().into())
 }
