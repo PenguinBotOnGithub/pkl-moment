@@ -9,28 +9,29 @@ use serde::{Deserialize, Serialize};
 type Connection = diesel_async::AsyncPgConnection;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset, Selectable)]
-#[diesel(table_name=user, primary_key(id))]
-pub struct User {
+#[diesel(table_name=invalidated_jwt, primary_key(id))]
+pub struct InvalidatedJwt {
     pub id: i32,
-    pub username: String,
-    pub password: String,
-    pub role: crate::types::UserRole,
+    pub jwt: String,
+    pub invalidated_timestamp: chrono::DateTime<chrono::Utc>,
+    pub expires_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name=user)]
-pub struct CreateUser {
-    pub username: String,
-    pub password: String,
-    pub role: crate::types::UserRole,
+#[diesel(table_name=invalidated_jwt)]
+pub struct CreateInvalidatedJwt {
+    pub id: i32,
+    pub jwt: String,
+    pub invalidated_timestamp: chrono::DateTime<chrono::Utc>,
+    pub expires_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name=user)]
-pub struct UpdateUser {
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub role: Option<crate::types::UserRole>,
+#[diesel(table_name=invalidated_jwt)]
+pub struct UpdateInvalidatedJwt {
+    pub jwt: Option<String>,
+    pub invalidated_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -43,29 +44,33 @@ pub struct PaginationResult<T> {
     pub num_pages: i64,
 }
 
-impl User {
-    pub async fn create(db: &mut Connection, item: &CreateUser) -> QueryResult<Self> {
-        use crate::schema::user::dsl::*;
+impl InvalidatedJwt {
+    pub async fn create(db: &mut Connection, item: &CreateInvalidatedJwt) -> QueryResult<Self> {
+        use crate::schema::invalidated_jwt::dsl::*;
 
-        insert_into(user).values(item).get_result::<Self>(db).await
+        insert_into(invalidated_jwt)
+            .values(item)
+            .get_result::<Self>(db)
+            .await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
-        use crate::schema::user::dsl::*;
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
+        use crate::schema::invalidated_jwt::dsl::*;
 
-        user.filter(id.eq(param_id))
+        invalidated_jwt
+            .filter(id.eq(param_id))
             .first::<Self>(db)
             .await
-            .optional()
     }
 
-    pub async fn find_by_username(
+    pub async fn find_by_token(
         db: &mut Connection,
-        param_username: &str,
+        param_token: &str,
     ) -> QueryResult<Option<Self>> {
-        use crate::schema::user::dsl::*;
+        use crate::schema::invalidated_jwt::dsl::*;
 
-        user.filter(username.eq(param_username))
+        invalidated_jwt
+            .filter(jwt.eq(param_token))
             .first::<Self>(db)
             .await
             .optional()
@@ -77,11 +82,11 @@ impl User {
         page: i64,
         page_size: i64,
     ) -> QueryResult<PaginationResult<Self>> {
-        use crate::schema::user::dsl::*;
+        use crate::schema::invalidated_jwt::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = user.count().get_result(db).await?;
-        let items = user
+        let total_items = invalidated_jwt.count().get_result(db).await?;
+        let items = invalidated_jwt
             .limit(page_size)
             .offset(page * page_size)
             .load::<Self>(db)
@@ -100,20 +105,20 @@ impl User {
     pub async fn update(
         db: &mut Connection,
         param_id: i32,
-        item: &UpdateUser,
+        item: &UpdateInvalidatedJwt,
     ) -> QueryResult<Self> {
-        use crate::schema::user::dsl::*;
+        use crate::schema::invalidated_jwt::dsl::*;
 
-        diesel::update(user.filter(id.eq(param_id)))
+        diesel::update(invalidated_jwt.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
-        use crate::schema::user::dsl::*;
+        use crate::schema::invalidated_jwt::dsl::*;
 
-        diesel::delete(user.filter(id.eq(param_id)))
+        diesel::delete(invalidated_jwt.filter(id.eq(param_id)))
             .execute(db)
             .await
     }
