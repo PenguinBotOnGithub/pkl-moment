@@ -13,7 +13,7 @@ use models::{
 };
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error};
+use tracing::debug;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -221,12 +221,9 @@ pub fn with_auth(
              require_admin: bool,
              secret: String,
              db: Arc<Mutex<AsyncPgConnection>>| async move {
-                error!("{token}");
                 let token = if token.trim().starts_with(BEARER) {
-                    error!("aa");
                     &token[7..]
                 } else {
-                    error!("aaa");
                     &token
                 };
 
