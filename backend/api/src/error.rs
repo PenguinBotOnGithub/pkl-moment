@@ -2,7 +2,7 @@ use std::convert::Infallible;
 
 use thiserror::Error;
 use tracing::error;
-use warp::reject::{Reject, Rejection};
+use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection};
 use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 
 use crate::ApiResponse;
@@ -33,6 +33,8 @@ pub enum ClientError {
     NotFound(String),
     #[error("authentication related error")]
     Authentication(String),
+    #[error("invalid user input")]
+    InvalidInput(String),
 }
 
 impl Reject for ClientError {}
@@ -40,12 +42,19 @@ impl Reject for ClientError {}
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (code, message) = if err.is_not_found() {
         (StatusCode::NOT_FOUND, "not found".to_owned())
+    } else if let Some(e) = err.find::<MissingHeader>() {
+        let e = e.to_string();
+        (StatusCode::BAD_REQUEST, format!("missing header: {e}"))
+    } else if let Some(e) = err.find::<InvalidHeader>() {
+        let e = e.to_string();
+        (StatusCode::BAD_REQUEST, format!("invalid header: {e}"))
     } else if let Some(e) = err.find::<ClientError>() {
         match e {
             ClientError::Conflict(e) => (StatusCode::CONFLICT, e.to_owned()),
             ClientError::Authorization(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
             ClientError::NotFound(e) => (StatusCode::NOT_FOUND, e.to_owned()),
             ClientError::Authentication(e) => (StatusCode::UNAUTHORIZED, e.to_owned()),
+            ClientError::InvalidInput(e) => (StatusCode::BAD_REQUEST, e.to_owned()),
         }
     } else if let Some(e) = err.find::<InternalError>() {
         match e {
