@@ -9,6 +9,7 @@ pub mod auth;
 pub mod company;
 pub mod error;
 pub mod routes;
+pub mod signature;
 pub mod student;
 pub mod wave;
 
