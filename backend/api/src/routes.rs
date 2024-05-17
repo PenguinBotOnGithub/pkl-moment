@@ -46,10 +46,10 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(refresh_token_handler);
 
-    let iwak = api
+    let root = api
         .and(warp::path::end())
         .and(warp::any())
         .then(|| async { "Iwak 🐟🐟🐟☭☭☭" });
 
-    iwak.or(login_route).or(register_route).or(refresh_route)
+    root.or(login_route).or(register_route).or(refresh_route)
 }
