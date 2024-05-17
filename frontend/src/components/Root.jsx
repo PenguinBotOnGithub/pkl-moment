@@ -10,7 +10,7 @@ function Root() {
 
   return (
     <div className="flex h-full">
-      <Sidebar index={0} />
+      <Sidebar />
       <div className="flex-1 flex flex-col">
         <Navbar title={t("Dashboard")} sidebar={true} />
         <div className="flex-1 flex flex-col flex-nowrap bg-base-200 rounded-tl-xl p-2 gap-2">

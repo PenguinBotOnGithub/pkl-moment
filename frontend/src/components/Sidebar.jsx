@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 function Sidebar({ index = -1 }) {
@@ -14,10 +14,7 @@ function Sidebar({ index = -1 }) {
   return (
     <div className="flex-none p-2">
       <label className="btn btn-square btn-ghost swap swap-rotate">
-        <input
-          type="checkbox"
-          onClick={handleExpandToggle}
-        />
+        <input type="checkbox" onClick={handleExpandToggle} />
         <span className="swap-off fill-current material-symbols-rounded">
           arrow_back
         </span>
@@ -25,30 +22,42 @@ function Sidebar({ index = -1 }) {
           menu
         </span>
       </label>
-      <ul className={`menu ${isExpanded ? 'w-56' : ''} px-0 pt-4`}>
+      <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4`}>
         <li>
-          <Link to="/dashboard" className={`p-3 ${index === 0 && "active"}`}>
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
             <span className="material-symbols-rounded">dashboard</span>
-            <span>{isExpanded && t("Dashboard")}</span>
-          </Link>
+            {isExpanded && t("Dashboard")}
+          </NavLink>
         </li>
         <li>
-          <Link to="/entries" className={`p-3 ${index === 1 && "active"}`}>
+          <NavLink
+            to="/entries"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
             <span className="material-symbols-rounded">description</span>
-            <span>{isExpanded && t("Entries & Document")}</span>
-          </Link>
+            {isExpanded && t("Entries & Document")}
+          </NavLink>
         </li>
         <li>
-          <Link to="/users" className={`p-3 ${index === 2 && "active"}`}>
+          <NavLink
+            to="/users"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
             <span className="material-symbols-rounded">manage_accounts</span>
-            <span>{isExpanded && t("All Users")}</span>
-          </Link>
+            {isExpanded && t("All Users")}
+          </NavLink>
         </li>
         <li>
-          <Link to="/settings" className={`p-3 ${index === 3 && "active"}`}>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
             <span className="material-symbols-rounded">settings</span>
-            <span>{isExpanded && t("Settings")}</span>
-          </Link>
+            {isExpanded && t("Settings")}
+          </NavLink>
         </li>
       </ul>
     </div>

@@ -19,12 +19,12 @@ function Search() {
       </div>
       <div className="grow-[3] flex flex-row-reverse gap-2">
         <button className="flex-none btn bg-base-100">
-          <span className="material-symbols-rounded icon-size-20">refresh</span>
-          Refresh
-        </button>
-        <button className="flex-none btn bg-base-100">
           <span className="material-symbols-rounded icon-size-20">edit</span>
           Edit
+        </button>
+        <button className="flex-none btn bg-base-100">
+          <span className="material-symbols-rounded icon-size-20">refresh</span>
+          Refresh
         </button>
       </div>
     </div>
