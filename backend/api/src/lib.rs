@@ -6,6 +6,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use warp::{reject::Rejection, Filter};
 
 pub mod auth;
+pub mod company;
 pub mod error;
 pub mod routes;
 
