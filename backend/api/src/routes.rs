@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use parking_lot::Mutex;
@@ -8,6 +8,7 @@ use crate::{
     auth::{
         login_handler, refresh_token_handler, register_handler, with_auth, with_auth_with_claims,
     },
+    wave::get_waves,
     with_db, with_json, with_jwt_key,
 };
 
@@ -17,6 +18,9 @@ pub fn routes(
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let api = warp::path("api");
     let auth = api.and(warp::path("auth"));
+    let wave = api.and(warp::path("wave"));
+
+    // Auth
 
     let login_route = auth
         .and(warp::path("login"))
@@ -46,10 +50,25 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(refresh_token_handler);
 
+    let auth_routes = login_route.or(register_route).or(refresh_route);
+
+    // Wave
+
+    let get_waves = wave
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(warp::query::<HashMap<String, String>>())
+        .and(with_db(db.clone()))
+        .and_then(get_waves);
+
+    let waves_route = get_waves;
+
     let root = api
         .and(warp::path::end())
         .and(warp::any())
         .then(|| async { "Iwak 🐟🐟🐟☭☭☭" });
 
-    root.or(login_route).or(register_route).or(refresh_route)
+    root.or(auth_routes).or(waves_route)
 }
