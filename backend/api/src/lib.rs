@@ -9,6 +9,7 @@ pub mod auth;
 pub mod company;
 pub mod error;
 pub mod routes;
+pub mod wave;
 
 pub fn with_json<J>() -> impl Filter<Extract = (J,), Error = Rejection> + Clone
 where
