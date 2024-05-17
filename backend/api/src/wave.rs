@@ -5,7 +5,7 @@ use warp::{
 
 use crate::error::InternalError;
 
-pub async fn get_wave() -> Result<impl Reply, Rejection> {
+pub async fn get_waves() -> Result<impl Reply, Rejection> {
     Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
         "this feature has not been implemented yet; please contact the administrator or developer"
             .to_owned(),
