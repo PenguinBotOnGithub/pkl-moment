@@ -1,17 +1,28 @@
 /* This file is generated and managed by dsync */
 
-use crate::diesel::*;
+use crate::company::Company;
 use crate::schema::*;
+use crate::user::User;
+use crate::wave::Wave;
 use diesel::QueryResult;
-use serde::{Deserialize, Serialize};
+use diesel::*;
 use diesel_async::RunQueryDsl;
-use crate::models::company::Company;
-use crate::models::user::User;
-use crate::models::wave::Wave;
+use serde::{Deserialize, Serialize};
 
 type Connection = diesel_async::AsyncPgConnection;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset, Identifiable, Associations, Selectable)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Identifiable,
+    Associations,
+    Selectable,
+)]
 #[diesel(table_name=penarikan, primary_key(id), belongs_to(Company, foreign_key=company_id) , belongs_to(User, foreign_key=user_id) , belongs_to(Wave, foreign_key=wave_id))]
 pub struct Penarikan {
     pub id: i32,
@@ -52,7 +63,6 @@ pub struct UpdatePenarikan {
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct PaginationResult<T> {
     pub items: Vec<T>,
@@ -64,11 +74,13 @@ pub struct PaginationResult<T> {
 }
 
 impl Penarikan {
-
     pub async fn create(db: &mut Connection, item: &CreatePenarikan) -> QueryResult<Self> {
         use crate::schema::penarikan::dsl::*;
 
-        insert_into(penarikan).values(item).get_result::<Self>(db).await
+        insert_into(penarikan)
+            .values(item)
+            .get_result::<Self>(db)
+            .await
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
@@ -78,12 +90,20 @@ impl Penarikan {
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
-    pub async fn paginate(db: &mut Connection, page: i64, page_size: i64) -> QueryResult<PaginationResult<Self>> {
+    pub async fn paginate(
+        db: &mut Connection,
+        page: i64,
+        page_size: i64,
+    ) -> QueryResult<PaginationResult<Self>> {
         use crate::schema::penarikan::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = penarikan.count().get_result(db).await?;
-        let items = penarikan.limit(page_size).offset(page * page_size).load::<Self>(db).await?;
+        let items = penarikan
+            .limit(page_size)
+            .offset(page * page_size)
+            .load::<Self>(db)
+            .await?;
 
         Ok(PaginationResult {
             items,
@@ -91,20 +111,28 @@ impl Penarikan {
             page,
             page_size,
             /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0)
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
         })
     }
 
-    pub async fn update(db: &mut Connection, param_id: i32, item: &UpdatePenarikan) -> QueryResult<Self> {
+    pub async fn update(
+        db: &mut Connection,
+        param_id: i32,
+        item: &UpdatePenarikan,
+    ) -> QueryResult<Self> {
         use crate::schema::penarikan::dsl::*;
 
-        diesel::update(penarikan.filter(id.eq(param_id))).set(item).get_result(db).await
+        diesel::update(penarikan.filter(id.eq(param_id)))
+            .set(item)
+            .get_result(db)
+            .await
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
         use crate::schema::penarikan::dsl::*;
 
-        diesel::delete(penarikan.filter(id.eq(param_id))).execute(db).await
+        diesel::delete(penarikan.filter(id.eq(param_id)))
+            .execute(db)
+            .await
     }
-
 }

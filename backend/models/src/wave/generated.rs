@@ -1,11 +1,10 @@
 /* This file is generated and managed by dsync */
 
-use crate::diesel::*;
 use crate::schema::*;
 use diesel::QueryResult;
-use serde::{Deserialize, Serialize};
+use diesel::*;
 use diesel_async::RunQueryDsl;
-
+use serde::{Deserialize, Serialize};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -32,7 +31,6 @@ pub struct UpdateWave {
     pub end_date: Option<Option<chrono::NaiveDate>>,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct PaginationResult<T> {
     pub items: Vec<T>,
@@ -44,7 +42,6 @@ pub struct PaginationResult<T> {
 }
 
 impl Wave {
-
     pub async fn create(db: &mut Connection, item: &CreateWave) -> QueryResult<Self> {
         use crate::schema::wave::dsl::*;
 
@@ -58,12 +55,20 @@ impl Wave {
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
-    pub async fn paginate(db: &mut Connection, page: i64, page_size: i64) -> QueryResult<PaginationResult<Self>> {
+    pub async fn paginate(
+        db: &mut Connection,
+        page: i64,
+        page_size: i64,
+    ) -> QueryResult<PaginationResult<Self>> {
         use crate::schema::wave::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = wave.count().get_result(db).await?;
-        let items = wave.limit(page_size).offset(page * page_size).load::<Self>(db).await?;
+        let items = wave
+            .limit(page_size)
+            .offset(page * page_size)
+            .load::<Self>(db)
+            .await?;
 
         Ok(PaginationResult {
             items,
@@ -71,20 +76,28 @@ impl Wave {
             page,
             page_size,
             /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0)
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
         })
     }
 
-    pub async fn update(db: &mut Connection, param_id: i32, item: &UpdateWave) -> QueryResult<Self> {
+    pub async fn update(
+        db: &mut Connection,
+        param_id: i32,
+        item: &UpdateWave,
+    ) -> QueryResult<Self> {
         use crate::schema::wave::dsl::*;
 
-        diesel::update(wave.filter(id.eq(param_id))).set(item).get_result(db).await
+        diesel::update(wave.filter(id.eq(param_id)))
+            .set(item)
+            .get_result(db)
+            .await
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
         use crate::schema::wave::dsl::*;
 
-        diesel::delete(wave.filter(id.eq(param_id))).execute(db).await
+        diesel::delete(wave.filter(id.eq(param_id)))
+            .execute(db)
+            .await
     }
-
 }
