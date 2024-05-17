@@ -10,6 +10,8 @@ pub mod company;
 pub mod error;
 pub mod penarikan;
 pub mod penarikan_student;
+pub mod pengantaran;
+pub mod pengantaran_student;
 pub mod routes;
 pub mod signature;
 pub mod student;
