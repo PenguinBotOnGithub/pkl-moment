@@ -1,21 +1,27 @@
 // src/App.js
 import React from "react";
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-} from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/AllUsers";
 import Settings from "./routes/Settings";
 import Dashboard from "./routes/Dashboard";
 import EntriesAndDocuments from "./routes/EntriesAndDocuments";
 import Root from "./components/Root";
+import { LoginPage } from "./routes/Login";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
-const router = createBrowserRouter([
+const routes = Routes([
+  {
+    path: "login",
+    element: <LoginPage />
+  },
   {
     path: "/",
-    element: <Root />,
+    element: (
+      <ProtectedRoute>
+        <Root />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "dashboard",
@@ -31,14 +37,14 @@ const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: <Settings />
-      }
+        element: <Settings />,
+      },
     ],
   },
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return <RouterProvider routes={routes} />;
 }
 
-export default App;
+export default App

@@ -20,5 +20,5 @@
 }
 
 .sidebar-text.visible {
-  display: inline; /* Atau block, tergantung kebutuhan */
+  display: inline; 
 }
