@@ -13,22 +13,21 @@ type Connection = diesel_async::AsyncPgConnection;
 pub struct Wave {
     pub id: i32,
     pub start_date: chrono::NaiveDate,
-    pub end_date: Option<chrono::NaiveDate>,
+    pub end_date: chrono::NaiveDate,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=wave)]
 pub struct CreateWave {
-    pub id: i32,
     pub start_date: chrono::NaiveDate,
-    pub end_date: Option<chrono::NaiveDate>,
+    pub end_date: chrono::NaiveDate,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=wave)]
 pub struct UpdateWave {
     pub start_date: Option<chrono::NaiveDate>,
-    pub end_date: Option<Option<chrono::NaiveDate>>,
+    pub end_date: Option<chrono::NaiveDate>,
 }
 
 #[derive(Debug, Serialize)]

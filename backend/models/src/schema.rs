@@ -126,7 +126,7 @@ diesel::table! {
     wave (id) {
         id -> Int4,
         start_date -> Date,
-        end_date -> Nullable<Date>,
+        end_date -> Date,
     }
 }
 
