@@ -54,7 +54,7 @@ pub fn routes(
 
     // Wave
 
-    let get_waves = wave
+    let get_waves_route = wave
         .and(warp::path::end())
         .and(warp::get())
         .and(with_auth(false, jwt_key.clone(), db.clone()))
@@ -63,7 +63,7 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(get_waves);
 
-    let waves_route = get_waves;
+    let waves_route = get_waves_route;
 
     let root = api
         .and(warp::path::end())
