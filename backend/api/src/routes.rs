@@ -100,7 +100,7 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(delete_wave);
 
-    let waves_route = get_waves_route
+    let waves_routes = get_waves_route
         .or(create_wave_route)
         .or(read_wave_route)
         .or(update_wave_route)
@@ -111,5 +111,5 @@ pub fn routes(
         .and(warp::any())
         .then(|| async { "Iwak 🐟🐟🐟☭☭☭" });
 
-    root.or(auth_routes).or(waves_route)
+    root.or(auth_routes).or(waves_routes)
 }
