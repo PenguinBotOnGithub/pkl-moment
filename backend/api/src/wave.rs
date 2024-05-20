@@ -85,11 +85,23 @@ pub async fn create_wave(
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
-pub async fn read_wave() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "this feature has not been implemented yet; please contact the administrator or developer"
-            .to_owned(),
-    )))
+
+pub async fn read_wave(
+    id: i32,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let wave = Wave::read(&mut db, id)
+        .await
+        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+
+    if let Some(v) = wave {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "wave not found".to_owned(),
+        )))
+    }
 }
 pub async fn update_wave() -> Result<impl Reply, Rejection> {
     Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
