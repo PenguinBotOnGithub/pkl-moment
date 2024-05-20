@@ -121,8 +121,21 @@ pub async fn update_wave(
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
-pub async fn delete_wave() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "companies deletion hasn't been implemented".to_owned(),
-    )))
+
+pub async fn delete_wave(
+    id: i32,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Wave::delete(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if result > 0 {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "wave not found".to_owned(),
+        )))
+    }
 }

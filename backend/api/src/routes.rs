@@ -8,7 +8,7 @@ use crate::{
     auth::{
         login_handler, refresh_token_handler, register_handler, with_auth, with_auth_with_claims,
     },
-    wave::{create_wave, get_waves, read_wave, update_wave},
+    wave::{create_wave, delete_wave, get_waves, read_wave, update_wave},
     with_db, with_json, with_jwt_key,
 };
 
@@ -91,10 +91,20 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(update_wave);
 
+    let delete_wave_route = wave
+        .and(warp::path::param::<i32>())
+        .and(warp::path("delete"))
+        .and(warp::path::end())
+        .and(warp::delete())
+        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_db(db.clone()))
+        .and_then(delete_wave);
+
     let waves_route = get_waves_route
         .or(create_wave_route)
         .or(read_wave_route)
-        .or(update_wave_route);
+        .or(update_wave_route)
+        .or(delete_wave_route);
 
     let root = api
         .and(warp::path::end())
