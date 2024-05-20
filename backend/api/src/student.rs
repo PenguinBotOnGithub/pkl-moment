@@ -100,8 +100,21 @@ pub async fn update_student(
         )))
     }
 }
-pub async fn delete_student() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "companies deletion hasn't been implemented".to_owned(),
-    )))
+
+pub async fn delete_student(
+    id: i32,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Student::delete(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if result > 0 {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "student not found".to_owned(),
+        )))
+    }
 }
