@@ -1,7 +1,7 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
-use models::student::Student;
+use models::student::{CreateStudent, Student};
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -51,11 +51,17 @@ pub async fn get_students(
         students,
     )))
 }
-pub async fn create_student() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "this feature has not been implemented yet; please contact the administrator or developer"
-            .to_owned(),
-    )))
+
+pub async fn create_student(
+    payload: CreateStudent,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Student::create(&mut db, &payload)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 pub async fn read_student() -> Result<impl Reply, Rejection> {
     Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
