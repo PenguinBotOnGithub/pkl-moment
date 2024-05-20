@@ -1,7 +1,7 @@
-use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use std::{collections::HashMap, mem, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
-use models::wave::{CreateWave, Wave};
+use models::wave::{CreateWave, UpdateWave, Wave};
 use parking_lot::Mutex;
 use serde::Deserialize;
 use warp::{
@@ -103,11 +103,23 @@ pub async fn read_wave(
         )))
     }
 }
-pub async fn update_wave() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "this feature has not been implemented yet; please contact the administrator or developer"
-            .to_owned(),
-    )))
+
+pub async fn update_wave(
+    id: i32,
+    mut payload: WaveRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let new_wave = UpdateWave {
+        start_date: mem::take(&mut payload.start_date),
+        end_date: mem::take(&mut payload.end_date),
+    };
+
+    let mut db = db.lock();
+    let result = Wave::update(&mut db, id, &new_wave)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 pub async fn delete_wave() -> Result<impl Reply, Rejection> {
     Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
