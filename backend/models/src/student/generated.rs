@@ -53,10 +53,14 @@ impl Student {
             .await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
         use crate::schema::student::dsl::*;
 
-        student.filter(id.eq(param_id)).first::<Self>(db).await
+        student
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
