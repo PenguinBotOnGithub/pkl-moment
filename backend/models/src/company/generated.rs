@@ -19,7 +19,6 @@ pub struct Company {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=company)]
 pub struct CreateCompany {
-    pub id: i32,
     pub name: String,
     pub address: String,
 }
