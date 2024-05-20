@@ -93,13 +93,14 @@ impl Student {
         db: &mut Connection,
         param_id: i32,
         item: &UpdateStudent,
-    ) -> QueryResult<Self> {
+    ) -> QueryResult<Option<Self>> {
         use crate::schema::student::dsl::*;
 
         diesel::update(student.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
+            .optional()
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
