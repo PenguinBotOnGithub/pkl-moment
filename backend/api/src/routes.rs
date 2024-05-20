@@ -8,7 +8,7 @@ use crate::{
     auth::{
         login_handler, refresh_token_handler, register_handler, with_auth, with_auth_with_claims,
     },
-    company::get_companies,
+    company::{create_company, get_companies},
     student::{create_student, delete_student, get_students, read_student, update_student},
     wave::{create_wave, delete_wave, get_waves, read_wave, update_wave},
     with_db, with_json, with_jwt_key,
@@ -175,7 +175,17 @@ pub fn routes(
         .and(with_db(db.clone()))
         .and_then(get_companies);
 
-    let companies_route = get_companies_route;
+    let create_company_route = company
+        .and(warp::path("create"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth(true, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(create_company);
+
+    let companies_route = get_companies_route.or(create_company_route);
 
     let root = api
         .and(warp::path::end())
