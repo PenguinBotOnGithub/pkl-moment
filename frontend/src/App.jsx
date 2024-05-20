@@ -11,10 +11,19 @@ import Settings from "./routes/Settings";
 import Dashboard from "./routes/Dashboard";
 import EntriesAndDocuments from "./routes/EntriesAndDocuments";
 import Root from "./components/Root";
+import NotFound from "./routes/NotFound";
+import Login from "./routes/Login";
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: "*",
+    element: <NotFound />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
     element: <Root />,
     children: [
       {
@@ -31,8 +40,8 @@ const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: <Settings />
-      }
+        element: <Settings />,
+      },
     ],
   },
 ]);
