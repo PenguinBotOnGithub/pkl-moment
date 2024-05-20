@@ -20,7 +20,6 @@ pub struct Student {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=student)]
 pub struct CreateStudent {
-    pub id: i32,
     pub name: String,
     pub class: String,
     pub nis: String,
