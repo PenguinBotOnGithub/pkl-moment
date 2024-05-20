@@ -16,8 +16,8 @@ use crate::{
 
 #[derive(Debug, Deserialize)]
 pub struct WaveRequest {
-    start_date: Option<chrono::DateTime<chrono::Utc>>,
-    end_date: Option<chrono::DateTime<chrono::Utc>>,
+    start_date: Option<chrono::NaiveDate>,
+    end_date: Option<chrono::NaiveDate>,
 }
 
 pub async fn get_waves(
@@ -74,8 +74,8 @@ pub async fn create_wave(
     }
 
     let new_wave = CreateWave {
-        start_date: payload.start_date.unwrap().date_naive(),
-        end_date: payload.end_date.unwrap().date_naive(),
+        start_date: payload.start_date.unwrap(),
+        end_date: payload.end_date.unwrap(),
     };
 
     let mut db = db.lock();
