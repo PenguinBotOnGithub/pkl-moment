@@ -8,6 +8,7 @@ use crate::{
     auth::{
         login_handler, refresh_token_handler, register_handler, with_auth, with_auth_with_claims,
     },
+    student::get_students,
     wave::{create_wave, delete_wave, get_waves, read_wave, update_wave},
     with_db, with_json, with_jwt_key,
 };
@@ -19,6 +20,7 @@ pub fn routes(
     let api = warp::path("api");
     let auth = api.and(warp::path("auth"));
     let wave = api.and(warp::path("wave"));
+    let student = api.and(warp::path("student"));
 
     // Auth
 
@@ -106,10 +108,23 @@ pub fn routes(
         .or(update_wave_route)
         .or(delete_wave_route);
 
+    // Student
+
+    let get_students_route = student
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(warp::query::query::<HashMap<String, String>>())
+        .and(with_db(db.clone()))
+        .and_then(get_students);
+
+    let students_route = get_students_route;
+
     let root = api
         .and(warp::path::end())
         .and(warp::any())
         .then(|| async { "Iwak 🐟🐟🐟☭☭☭" });
 
-    root.or(auth_routes).or(waves_routes)
+    root.or(auth_routes).or(waves_routes).or(students_route)
 }
