@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use thiserror::Error;
 use tracing::error;
 use warp::filters::body::BodyDeserializeError;
-use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection};
+use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection, UnsupportedMediaType};
 use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 
 use crate::ApiResponse;
@@ -92,6 +92,8 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             "method not allowed".to_owned(),
         )
     } else if let Some(e) = err.find::<BodyDeserializeError>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
+    } else if let Some(e) = err.find::<UnsupportedMediaType>() {
         (StatusCode::BAD_REQUEST, e.to_string())
     } else {
         error!("unhandled rejection {:?}", err);
