@@ -64,6 +64,7 @@ pub fn routes(
         .and_then(get_waves);
 
     let create_wave_route = wave
+        .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
         .and(with_auth(true, jwt_key.clone(), db.clone()))
