@@ -2,6 +2,7 @@ use std::convert::Infallible;
 
 use thiserror::Error;
 use tracing::error;
+use warp::filters::body::BodyDeserializeError;
 use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection};
 use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 
@@ -90,6 +91,8 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             StatusCode::METHOD_NOT_ALLOWED,
             "method not allowed".to_owned(),
         )
+    } else if let Some(e) = err.find::<BodyDeserializeError>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
     } else {
         error!("unhandled rejection {:?}", err);
         (
