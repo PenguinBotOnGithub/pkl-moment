@@ -85,6 +85,7 @@ pub fn routes(
         .and(warp::path::param::<i32>())
         .and(warp::path("update"))
         .and(warp::path::end())
+        .and(warp::patch())
         .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
         .and(with_json())
         .and(with_db(db.clone()))
