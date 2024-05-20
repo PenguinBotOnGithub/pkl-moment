@@ -90,7 +90,13 @@ pub async fn update_wave(
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    if let Some(v) = result {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "student not found".to_owned(),
+        )))
+    }
 }
 
 pub async fn delete_wave(
