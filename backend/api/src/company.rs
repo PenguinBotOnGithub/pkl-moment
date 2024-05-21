@@ -1,7 +1,7 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
-use models::company::{Company, CreateCompany};
+use models::company::{Company, CreateCompany, UpdateCompany};
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -77,11 +77,22 @@ pub async fn read_company(
         ))),
     }
 }
-pub async fn update_company() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "this feature has not been implemented yet; please contact the administrator or developer"
-            .to_owned(),
-    )))
+pub async fn update_company(
+    id: i32,
+    payload: UpdateCompany,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Company::update(&mut db, id, &payload)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    match result {
+        Some(v) => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+        None => Err(reject::custom(ClientError::NotFound(
+            "company not found".to_owned(),
+        ))),
+    }
 }
 pub async fn delete_company() -> Result<impl Reply, Rejection> {
     Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
