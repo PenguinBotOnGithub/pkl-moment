@@ -221,7 +221,7 @@ pub fn routes(
     let root = api
         .and(warp::path::end())
         .and(warp::any())
-        .then(|| async { "Iwak 🐟🐟🐟☭☭☭" });
+        .then(|| async { "Hello, World!" });
 
     root.or(auth_routes)
         .or(waves_routes)
