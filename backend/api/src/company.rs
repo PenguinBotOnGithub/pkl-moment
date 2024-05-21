@@ -77,6 +77,7 @@ pub async fn read_company(
         ))),
     }
 }
+
 pub async fn update_company(
     id: i32,
     payload: UpdateCompany,
@@ -94,8 +95,21 @@ pub async fn update_company(
         ))),
     }
 }
-pub async fn delete_company() -> Result<impl Reply, Rejection> {
-    Err::<String, Rejection>(reject::custom(InternalError::NotImplemented(
-        "companies deletion hasn't been implemented".to_owned(),
-    )))
+
+pub async fn delete_company(
+    id: i32,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Company::delete(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if result > 0 {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "company not found".to_owned(),
+        )))
+    }
 }
