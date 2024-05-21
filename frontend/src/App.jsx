@@ -1,6 +1,10 @@
 // src/App.js
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/AllUsers";
 import Settings from "./routes/Settings";
@@ -10,11 +14,7 @@ import Root from "./components/Root";
 import NotFound from "./routes/NotFound";
 import Login from "./routes/Login";
 
-const routes = Routes([
-  {
-    path: "login",
-    element: <LoginPage />
-  },
+const router = createBrowserRouter([
   {
     path: "*",
     element: <NotFound />,
@@ -47,7 +47,7 @@ const routes = Routes([
 ]);
 
 function App() {
-  return <RouterProvider routes={routes} />;
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;
