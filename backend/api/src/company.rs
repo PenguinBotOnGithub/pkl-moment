@@ -6,14 +6,75 @@ use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
+    Filter,
 };
 
 use crate::{
+    auth::with_auth,
     error::{ClientError, InternalError},
-    ApiResponse,
+    with_db, with_json, ApiResponse,
 };
 
-pub async fn get_companies(
+pub fn companies_routes(
+    jwt_key: String,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    let company = warp::any().and(warp::path("company"));
+
+    let get_companies_route = company
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(warp::query::query::<HashMap<String, String>>())
+        .and(with_db(db.clone()))
+        .and_then(get_companies);
+
+    let create_company_route = company
+        .and(warp::path("create"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth(true, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(create_company);
+
+    let read_company_route = company
+        .and(warp::path::param::<i32>())
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_db(db.clone()))
+        .and_then(read_company);
+
+    let update_company_route = company
+        .and(warp::path::param::<i32>())
+        .and(warp::path("update"))
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(update_company);
+
+    let delete_company_route = company
+        .and(warp::path::param::<i32>())
+        .and(warp::path("delete"))
+        .and(warp::path::end())
+        .and(warp::delete())
+        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_db(db.clone()))
+        .and_then(delete_company);
+
+    get_companies_route
+        .or(create_company_route)
+        .or(read_company_route)
+        .or(update_company_route)
+        .or(delete_company_route)
+}
+
+async fn get_companies(
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -49,7 +110,7 @@ pub async fn get_companies(
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 
-pub async fn create_company(
+async fn create_company(
     payload: CreateCompany,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -61,10 +122,7 @@ pub async fn create_company(
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 
-pub async fn read_company(
-    id: i32,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
+async fn read_company(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
     let result = Company::read(&mut db, id)
         .await
@@ -78,7 +136,7 @@ pub async fn read_company(
     }
 }
 
-pub async fn update_company(
+async fn update_company(
     id: i32,
     payload: UpdateCompany,
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -96,7 +154,7 @@ pub async fn update_company(
     }
 }
 
-pub async fn delete_company(
+async fn delete_company(
     id: i32,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
