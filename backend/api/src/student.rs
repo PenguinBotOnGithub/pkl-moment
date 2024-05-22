@@ -74,7 +74,7 @@ pub fn students_routes(
         .or(delete_student_route)
 }
 
-pub async fn get_students(
+async fn get_students(
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -113,7 +113,7 @@ pub async fn get_students(
     )))
 }
 
-pub async fn create_student(
+async fn create_student(
     payload: CreateStudent,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -125,10 +125,7 @@ pub async fn create_student(
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 
-pub async fn read_student(
-    id: i32,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
+async fn read_student(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
     let student = Student::read(&mut db, id)
         .await
@@ -143,7 +140,7 @@ pub async fn read_student(
     }
 }
 
-pub async fn update_student(
+async fn update_student(
     id: i32,
     payload: UpdateStudent,
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -162,7 +159,7 @@ pub async fn update_student(
     }
 }
 
-pub async fn delete_student(
+async fn delete_student(
     id: i32,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
