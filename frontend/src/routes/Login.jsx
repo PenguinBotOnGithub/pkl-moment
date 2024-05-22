@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
 import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+import getCurrentDate from "../assets/strings/getCurrentDate";
 
-function Login() {
+function Login({ cookies }) {
   const navigate = useNavigate();
+  // const cookies = new Cookies(null, { path: '/' });
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
 
   const handleInputChange = (e) => {
@@ -22,9 +25,11 @@ function Login() {
     e.preventDefault();
 
     // Add your login logic here, such as sending a request to your server
-    navigate("/dashboard");
+    cookies.set("access-token", getCurrentDate());
+    console.log(cookies.get("access-token"));
+    window.location.reload();
 
-    console.log('Form data submitted:', formData);
+    console.log("Form data submitted:", formData);
     // You can use Axios or the Fetch API to send the data to your server for authentication
   };
   return (
@@ -39,7 +44,9 @@ function Login() {
         {/* The form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <label htmlFor="username" className="w-40">Username</label>
+            <label htmlFor="username" className="w-40">
+              Username
+            </label>
             <input
               type="text"
               name="username"
@@ -65,7 +72,9 @@ function Login() {
           <div className="flex justify-end">
             <a href="">Forgot your password?</a>
           </div>
-          <button type="submit" className="btn btn-secondary text-base">Login</button>
+          <button type="submit" className="btn btn-secondary text-base">
+            Login
+          </button>
         </form>
       </div>
     </div>
