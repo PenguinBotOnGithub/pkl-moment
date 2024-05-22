@@ -7,7 +7,7 @@ use warp::{reject::Rejection, Filter, Reply};
 use crate::{
     auth::{auth_routes, with_auth},
     company::{create_company, delete_company, get_companies, read_company, update_company},
-    student::{create_student, delete_student, get_students, read_student, update_student},
+    student::students_routes,
     wave::waves_routes,
     with_db, with_json,
 };
@@ -17,62 +17,7 @@ pub fn routes(
     jwt_key: String,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let api = warp::path("api");
-    let student = api.and(warp::path("student"));
     let company = api.and(warp::path("company"));
-
-    // Student
-
-    let get_students_route = student
-        .and(warp::path::end())
-        .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
-        .and(warp::query::query::<HashMap<String, String>>())
-        .and(with_db(db.clone()))
-        .and_then(get_students);
-
-    let create_student_route = student
-        .and(warp::path("create"))
-        .and(warp::path::end())
-        .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
-        .and(with_json())
-        .and(with_db(db.clone()))
-        .and_then(create_student);
-
-    let read_student_route = student
-        .and(warp::path::param::<i32>())
-        .and(warp::path::end())
-        .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
-        .and(with_db(db.clone()))
-        .and_then(read_student);
-
-    let update_student_route = student
-        .and(warp::path::param::<i32>())
-        .and(warp::path("update"))
-        .and(warp::path::end())
-        .and(warp::patch())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
-        .and(with_json())
-        .and(with_db(db.clone()))
-        .and_then(update_student);
-
-    let delete_student_route = student
-        .and(warp::path::param::<i32>())
-        .and(warp::path("delete"))
-        .and(warp::path::end())
-        .and(warp::delete())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
-        .and(with_db(db.clone()))
-        .and_then(delete_student);
-
-    let students_route = get_students_route
-        .or(create_student_route)
-        .or(read_student_route)
-        .or(update_student_route)
-        .or(delete_student_route);
 
     // Company
 
@@ -135,6 +80,6 @@ pub fn routes(
 
     root.or(api.and(auth_routes(jwt_key.clone(), db.clone())))
         .or(api.and(waves_routes(jwt_key.clone(), db.clone())))
-        .or(students_route)
+        .or(api.and(students_routes(jwt_key.clone(), db.clone())))
         .or(companies_route)
 }
