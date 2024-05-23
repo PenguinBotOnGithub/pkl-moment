@@ -1,11 +1,10 @@
-
-import React from 'react';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import { useTranslation } from 'react-i18next';
-import Search from '../components/Search';
-import Statistic from '../components/Statistic';
-import Endoc from '../components/Endoc';
+import React from "react";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
+import { useTranslation } from "react-i18next";
+import Search from "../components/Search";
+import Statistic from "../components/Statistic";
+import Endoc from "../components/Tables/EntriesTable";
 
 function EntriesAndDocuments() {
   const { t } = useTranslation();
@@ -13,8 +12,8 @@ function EntriesAndDocuments() {
   return (
     <>
       <Search />
-      <Statistic/>
-      <Endoc/>
+      <Statistic />
+      <Endoc />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Setelan() {
+function Settings() {
   return (
     <div className="flex flex-col items-center min-h-screen py-2 mb-2">
       
@@ -78,4 +78,4 @@ function Setelan() {
   );
 }
 
-export default Setelan;
+export default Settings;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Users() {
+function UsersTable() {
   const [selectedRows, setSelectedRows] = useState([]);
 
   const handleSelectRow = (rowIndex) => {
@@ -11,7 +11,7 @@ function Users() {
     }
   };
 
-  const allRows = [
+  const data = [
     { id: 1, pembimbing: 'Cy Ganderton', jenisEntri: 'Quality Control Specialist', tanggalPermintaan: 'Blue', verifikasi: 'tidak ada entri' },
     { id: 2, pembimbing: 'Cy Ganderton', jenisEntri: 'Quality Control Specialist', tanggalPermintaan: 'Blue', verifikasi: 'tidak ada entri' },
     { id: 3, pembimbing: 'Cy Ganderton', jenisEntri: 'Quality Control Specialist', tanggalPermintaan: 'Blue', verifikasi: 'tidak ada entri' }
@@ -30,21 +30,29 @@ function Users() {
           </button>
         </div>
       </div>
-      <table className="table bg-base-100 overflow-hidden rounded-xl">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
         <thead className="bg-neutral">
           <tr>
-            <th>
-              <input
-                type="checkbox" className="checkbox"
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedRows(allRows.map((_, index) => index));
-                  } else {
-                    setSelectedRows([]);
-                  }
-                }}
-                checked={selectedRows.length === allRows.length}
-              />
+            <th className='pl-3 pb-2'>
+            <label className="swap">
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedRows(data.map((_, index) => index));
+                    } else {
+                      setSelectedRows([]);
+                    }
+                  }}
+                  checked={selectedRows.length === data.length}
+                />
+                <span className="swap-off material-symbols-rounded">
+                  check_box_outline_blank
+                </span>
+                <span className="swap-on material-symbols-rounded">
+                  check_box
+                </span>
+              </label>
             </th>
             <th>No</th>
             <th>Pembimbing</th>
@@ -55,14 +63,22 @@ function Users() {
           </tr>
         </thead>
         <tbody>
-          {allRows.map((row, index) => (
+          {data.map((row, index) => (
             <tr key={row.id} className='border-t-2 border-neutral'>
-              <td>
-                <input
-                  type="checkbox" className="checkbox"
-                  onChange={() => handleSelectRow(index)}
-                  checked={selectedRows.includes(index)}
-                />
+              <td className='pl-3 pb-2'>
+              <label className="swap opacity-60">
+                  <input
+                    type="checkbox"
+                    onChange={() => handleSelectRow(index)}
+                    checked={selectedRows.includes(index)}
+                  />
+                  <span className="swap-off material-symbols-rounded">
+                    check_box_outline_blank
+                  </span>
+                  <span className="swap-on material-symbols-rounded">
+                    check_box
+                  </span>
+                </label>
               </td>
               <th>{row.id}</th>
               <td>{row.pembimbing}</td>
@@ -97,4 +113,4 @@ function Users() {
   );
 }
 
-export default Users;
+export default UsersTable;
