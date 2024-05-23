@@ -1,2 +1,2 @@
 -- This file should undo anything in `up.sql`
-DROP TABLE IF EXISTS "session";
+DROP TABLE IF EXISTS "invalidated_jwt";
