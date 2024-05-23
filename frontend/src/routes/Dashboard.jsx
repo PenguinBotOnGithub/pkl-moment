@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import { useTranslation } from "react-i18next";
 import Search from "../components/Search";
+import Statistic from "../components/Statistic";
+import Data from "../components/Data";
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -10,6 +12,8 @@ function Dashboard() {
   return (
     <>
       <Search />
+      <Statistic />
+      <Data />
     </>
   );
 }
