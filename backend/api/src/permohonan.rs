@@ -58,7 +58,7 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(update_permohonan);
 
-    let delete_student_route = permohonan
+    let delete_permohonan_route = permohonan
         .and(warp::path::param::<i32>())
         .and(warp::path("delete"))
         .and(warp::path::end())
@@ -71,7 +71,7 @@ pub fn permohonans_routes(
         .or(create_permohonan_route)
         .or(read_permohonan_route)
         .or(update_permohonan_route)
-        .or(delete_student_route)
+        .or(delete_permohonan_route)
 }
 
 async fn get_permohonans(
