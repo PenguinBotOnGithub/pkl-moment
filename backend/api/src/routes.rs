@@ -8,6 +8,7 @@ use crate::{
     auth::auth_routes, company::companies_routes, permohonan::permohonans_routes,
     permohonan_student::permohonan_students_routes, student::students_routes, wave::waves_routes,
 };
+use crate::pengantaran::pengantarans_routes;
 
 pub fn routes(
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -26,4 +27,5 @@ pub fn routes(
         .or(api.and(companies_routes(jwt_key.clone(), db.clone())))
         .or(api.and(permohonans_routes(jwt_key.clone(), db.clone())))
         .or(api.and(permohonan_students_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(pengantarans_routes(jwt_key.clone(), db.clone())))
 }
