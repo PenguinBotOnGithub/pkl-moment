@@ -9,6 +9,7 @@ use crate::{
     permohonan_student::permohonan_students_routes, student::students_routes, wave::waves_routes,
 };
 use crate::penarikan::penarikans_routes;
+use crate::penarikan_student::penarikan_students_routes;
 use crate::pengantaran::pengantarans_routes;
 use crate::pengantaran_student::pengantaran_students_routes;
 
@@ -32,4 +33,5 @@ pub fn routes(
         .or(api.and(pengantarans_routes(jwt_key.clone(), db.clone())))
         .or(api.and(pengantaran_students_routes(jwt_key.clone(), db.clone())))
         .or(api.and(penarikans_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(penarikan_students_routes(jwt_key.clone(), db.clone())))
 }
