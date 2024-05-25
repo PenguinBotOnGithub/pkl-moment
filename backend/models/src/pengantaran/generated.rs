@@ -86,10 +86,14 @@ impl Pengantaran {
             .await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
         use crate::schema::pengantaran::dsl::*;
 
-        pengantaran.filter(id.eq(param_id)).first::<Self>(db).await
+        pengantaran
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -122,13 +126,14 @@ impl Pengantaran {
         db: &mut Connection,
         param_id: i32,
         item: &UpdatePengantaran,
-    ) -> QueryResult<Self> {
+    ) -> QueryResult<Option<Self>> {
         use crate::schema::pengantaran::dsl::*;
 
         diesel::update(pengantaran.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
+            .optional()
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
