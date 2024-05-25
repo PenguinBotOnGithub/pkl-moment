@@ -6,7 +6,7 @@ use warp::{reject::Rejection, Filter, Reply};
 
 use crate::{
     auth::auth_routes, company::companies_routes, permohonan::permohonans_routes,
-    student::students_routes, wave::waves_routes,
+    permohonan_student::permohonan_students_routes, student::students_routes, wave::waves_routes,
 };
 
 pub fn routes(
@@ -25,4 +25,5 @@ pub fn routes(
         .or(api.and(students_routes(jwt_key.clone(), db.clone())))
         .or(api.and(companies_routes(jwt_key.clone(), db.clone())))
         .or(api.and(permohonans_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(permohonan_students_routes(jwt_key.clone(), db.clone())))
 }
