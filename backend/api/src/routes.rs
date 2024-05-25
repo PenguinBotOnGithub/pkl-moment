@@ -5,7 +5,8 @@ use parking_lot::Mutex;
 use warp::{reject::Rejection, Filter, Reply};
 
 use crate::{
-    auth::auth_routes, company::companies_routes, student::students_routes, wave::waves_routes,
+    auth::auth_routes, company::companies_routes, permohonan::permohonans_routes,
+    student::students_routes, wave::waves_routes,
 };
 
 pub fn routes(
@@ -23,4 +24,5 @@ pub fn routes(
         .or(api.and(waves_routes(jwt_key.clone(), db.clone())))
         .or(api.and(students_routes(jwt_key.clone(), db.clone())))
         .or(api.and(companies_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(permohonans_routes(jwt_key.clone(), db.clone())))
 }
