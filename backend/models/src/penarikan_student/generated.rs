@@ -1,12 +1,13 @@
 /* This file is generated and managed by dsync */
 
+use diesel::*;
+use diesel::QueryResult;
+use diesel_async::RunQueryDsl;
+use serde::{Deserialize, Serialize};
+
 use crate::penarikan::Penarikan;
 use crate::schema::*;
 use crate::student::Student;
-use diesel::QueryResult;
-use diesel::*;
-use diesel_async::RunQueryDsl;
-use serde::{Deserialize, Serialize};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -64,13 +65,14 @@ impl PenarikanStudent {
             .await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
         use crate::schema::penarikan_student::dsl::*;
 
         penarikan_student
             .filter(id.eq(param_id))
             .first::<Self>(db)
             .await
+            .optional()
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -103,13 +105,14 @@ impl PenarikanStudent {
         db: &mut Connection,
         param_id: i32,
         item: &UpdatePenarikanStudent,
-    ) -> QueryResult<Self> {
+    ) -> QueryResult<Option<Self>> {
         use crate::schema::penarikan_student::dsl::*;
 
         diesel::update(penarikan_student.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
+            .optional()
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
