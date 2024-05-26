@@ -1,13 +1,9 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
-import { useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
 import getCurrentDate from "../assets/strings/getCurrentDate";
 
 function Login({ cookies }) {
-  const navigate = useNavigate();
-  // const cookies = new Cookies(null, { path: '/' });
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -26,7 +22,6 @@ function Login({ cookies }) {
 
     // Add your login logic here, such as sending a request to your server
     cookies.set("access-token", getCurrentDate());
-    console.log(cookies.get("access-token"));
     window.location.reload();
 
     console.log("Form data submitted:", formData);
