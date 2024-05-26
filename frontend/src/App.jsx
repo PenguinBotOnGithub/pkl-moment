@@ -13,7 +13,6 @@ import EntriesAndDocuments from "./routes/EntriesAndDocuments";
 import Root from "./components/Root";
 import NotFound from "./routes/NotFound";
 import Login from "./routes/Login";
-import { useCookies } from "react-cookie";
 import Cookies from "universal-cookie";
 
 function App() {
@@ -41,7 +40,7 @@ function App() {
         { path: "dashboard", element: <Dashboard /> },
         { path: "entries", element: <EntriesAndDocuments /> },
         { path: "users", element: <AllUsers /> },
-        { path: "settings", element: <Settings /> },
+        { path: "settings", element: <Settings cookies={cookies} /> },
       ],
     },
   ]);
