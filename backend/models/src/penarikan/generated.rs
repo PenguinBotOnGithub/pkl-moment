@@ -1,13 +1,14 @@
 /* This file is generated and managed by dsync */
 
+use diesel::*;
+use diesel::QueryResult;
+use diesel_async::RunQueryDsl;
+use serde::{Deserialize, Serialize};
+
 use crate::company::Company;
 use crate::schema::*;
 use crate::user::User;
 use crate::wave::Wave;
-use diesel::QueryResult;
-use diesel::*;
-use diesel_async::RunQueryDsl;
-use serde::{Deserialize, Serialize};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -39,15 +40,12 @@ pub struct Penarikan {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=penarikan)]
 pub struct CreatePenarikan {
-    pub id: i32,
     pub user_id: i32,
     pub company_id: i32,
     pub end_date: chrono::NaiveDate,
     pub verified: bool,
     pub verified_date: Option<chrono::NaiveDate>,
     pub wave_id: i32,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -59,8 +57,6 @@ pub struct UpdatePenarikan {
     pub verified: Option<bool>,
     pub verified_date: Option<Option<chrono::NaiveDate>>,
     pub wave_id: Option<i32>,
-    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Serialize)]

@@ -1,12 +1,13 @@
 /* This file is generated and managed by dsync */
 
+use diesel::*;
+use diesel::QueryResult;
+use diesel_async::RunQueryDsl;
+use serde::{Deserialize, Serialize};
+
 use crate::pengantaran::Pengantaran;
 use crate::schema::*;
 use crate::student::Student;
-use diesel::QueryResult;
-use diesel::*;
-use diesel_async::RunQueryDsl;
-use serde::{Deserialize, Serialize};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -32,7 +33,6 @@ pub struct PengantaranStudent {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=pengantaran_student)]
 pub struct CreatePengantaranStudent {
-    pub id: i32,
     pub pengantaran_id: i32,
     pub student_id: i32,
 }

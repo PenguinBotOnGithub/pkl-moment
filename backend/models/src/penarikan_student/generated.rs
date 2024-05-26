@@ -33,7 +33,6 @@ pub struct PenarikanStudent {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=penarikan_student)]
 pub struct CreatePenarikanStudent {
-    pub id: i32,
     pub penarikan_id: i32,
     pub student_id: i32,
 }
