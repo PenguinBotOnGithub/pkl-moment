@@ -1,10 +1,11 @@
 /* This file is generated and managed by dsync */
 
-use crate::schema::*;
-use diesel::QueryResult;
 use diesel::*;
+use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+
+use crate::schema::*;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -19,7 +20,6 @@ pub struct Signature {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=signature)]
 pub struct CreateSignature {
-    pub id: i32,
     pub name: String,
     pub title: String,
 }
@@ -51,10 +51,14 @@ impl Signature {
             .await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Self> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
         use crate::schema::signature::dsl::*;
 
-        signature.filter(id.eq(param_id)).first::<Self>(db).await
+        signature
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -87,13 +91,14 @@ impl Signature {
         db: &mut Connection,
         param_id: i32,
         item: &UpdateSignature,
-    ) -> QueryResult<Self> {
+    ) -> QueryResult<Option<Self>> {
         use crate::schema::signature::dsl::*;
 
         diesel::update(signature.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
+            .optional()
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
