@@ -7,6 +7,7 @@ use parking_lot::Mutex;
 use shuttle_runtime::SecretStore;
 use warp::Filter;
 use warp::Reply;
+use warp_pkl_moment::assets_route;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -27,9 +28,7 @@ async fn warp(
 
     let arc_db = Arc::new(Mutex::new(db_connection));
 
-    let route = warp::any()
-        .and(warp::path::end())
-        .then(|| async { "Hello, World!" })
+    let route = assets_route()
         .or(api::routes::routes(arc_db, jwt_key))
         .recover(handle_rejection);
     Ok(route.boxed().into())
