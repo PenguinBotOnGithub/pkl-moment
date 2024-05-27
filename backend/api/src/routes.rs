@@ -2,16 +2,16 @@ use std::sync::Arc;
 
 use diesel_async::AsyncPgConnection;
 use parking_lot::Mutex;
-use warp::{Filter, reject::Rejection, Reply};
+use tracing::log::debug;
+use warp::{reject::Rejection, Filter, Reply};
 
 use crate::{
-    auth::auth_routes, company::companies_routes, permohonan::permohonans_routes,
-    permohonan_student::permohonan_students_routes, student::students_routes, wave::waves_routes,
+    auth::auth_routes, company::companies_routes, penarikan::penarikans_routes,
+    penarikan_student::penarikan_students_routes, pengantaran::pengantarans_routes,
+    pengantaran_student::pengantaran_students_routes, permohonan::permohonans_routes,
+    permohonan_student::permohonan_students_routes, signature::signatures_routes,
+    student::students_routes, wave::waves_routes,
 };
-use crate::penarikan::penarikans_routes;
-use crate::penarikan_student::penarikan_students_routes;
-use crate::pengantaran::pengantarans_routes;
-use crate::pengantaran_student::pengantaran_students_routes;
 
 pub fn routes(
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -19,10 +19,10 @@ pub fn routes(
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let api = warp::path("api");
 
-    let root = api
-        .and(warp::path::end())
-        .and(warp::any())
-        .then(|| async { "Hello, World!" });
+    let root = api.and(warp::path::end()).and(warp::any()).then(|| async {
+        debug!("Hello, World!");
+        "Hello, World!"
+    });
 
     root.or(api.and(auth_routes(jwt_key.clone(), db.clone())))
         .or(api.and(waves_routes(jwt_key.clone(), db.clone())))
@@ -34,4 +34,5 @@ pub fn routes(
         .or(api.and(pengantaran_students_routes(jwt_key.clone(), db.clone())))
         .or(api.and(penarikans_routes(jwt_key.clone(), db.clone())))
         .or(api.and(penarikan_students_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(signatures_routes(jwt_key.clone(), db.clone())))
 }
