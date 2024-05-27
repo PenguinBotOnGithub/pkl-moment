@@ -3,7 +3,9 @@ use std::{convert::Infallible, sync::Arc};
 use diesel_async::AsyncPgConnection;
 use parking_lot::Mutex;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use warp::{reject::Rejection, Filter};
+use warp::{reject, reject::Rejection, Buf, Filter};
+
+use crate::error::ClientError;
 
 pub mod auth;
 pub mod company;
@@ -37,6 +39,22 @@ pub fn with_jwt_key(
     jwt_key: String,
 ) -> impl Filter<Extract = (String,), Error = Infallible> + Clone {
     warp::any().map(move || jwt_key.clone())
+}
+
+pub fn with_image_upload() -> impl Filter<Extract = (impl Buf,), Error = Rejection> + Clone {
+    warp::header::header::<String>("Content-Type")
+        .and_then(|v: String| async move {
+            if v.starts_with("image") {
+                Ok(())
+            } else {
+                Err(reject::custom(ClientError::InvalidInput(
+                    "unsupported media type".to_owned(),
+                )))
+            }
+        })
+        .untuple_one()
+        .and(warp::body::content_length_limit(1024 * 5000))
+        .and(warp::body::aggregate())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
