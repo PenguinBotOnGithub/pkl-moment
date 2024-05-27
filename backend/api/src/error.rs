@@ -2,9 +2,9 @@ use std::convert::Infallible;
 
 use thiserror::Error;
 use tracing::error;
+use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 use warp::filters::body::BodyDeserializeError;
 use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection, UnsupportedMediaType};
-use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 
 use crate::ApiResponse;
 
@@ -20,6 +20,8 @@ pub enum InternalError {
     NotImplemented(String),
     #[error("chrono time error")]
     ChronoError(String),
+    #[error("filesystem error")]
+    FilesystemError(String),
 }
 
 impl Reject for InternalError {}
@@ -83,6 +85,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             }
             InternalError::ChronoError(e) => {
                 error!("chrono time error: {}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
+            }
+            InternalError::FilesystemError(e) => {
+                error!("filesystem error: {}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
             }
         }
