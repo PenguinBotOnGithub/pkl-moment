@@ -1,7 +1,9 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
-use models::pengantaran_student::{CreatePengantaranStudent, PengantaranStudent, UpdatePengantaranStudent};
+use models::pengantaran_student::{
+    CreatePengantaranStudent, PengantaranStudent, UpdatePengantaranStudent,
+};
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -9,6 +11,7 @@ use warp::{
     Filter,
 };
 
+use crate::error::handle_vulnerable_to_fk_violation;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -120,7 +123,7 @@ async fn create_pengantaran_student(
     let mut db = db.lock();
     let result = PengantaranStudent::create(&mut db, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
@@ -151,7 +154,7 @@ async fn update_pengantaran_student(
     let mut db = db.lock();
     let result = PengantaranStudent::update(&mut db, id, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     if let Some(v) = result {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))

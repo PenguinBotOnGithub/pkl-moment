@@ -9,6 +9,7 @@ use warp::{
     Filter,
 };
 
+use crate::error::handle_vulnerable_to_fk_violation;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -120,7 +121,7 @@ async fn create_permohonan(
     let mut db = db.lock();
     let result = Permohonan::create(&mut db, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
@@ -151,7 +152,7 @@ async fn update_permohonan(
     let mut db = db.lock();
     let result = Permohonan::update(&mut db, id, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     if let Some(v) = result {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))

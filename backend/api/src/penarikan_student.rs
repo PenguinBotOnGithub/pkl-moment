@@ -3,17 +3,18 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 use diesel_async::AsyncPgConnection;
 use parking_lot::Mutex;
 use warp::{
-    Filter,
     reject::{self, Rejection},
     reply::{self, Reply},
+    Filter,
 };
 
 use models::penarikan_student::{CreatePenarikanStudent, PenarikanStudent, UpdatePenarikanStudent};
 
+use crate::error::handle_vulnerable_to_fk_violation;
 use crate::{
-    ApiResponse,
     auth::with_auth,
-    error::{ClientError, InternalError}, with_db, with_json,
+    error::{ClientError, InternalError},
+    with_db, with_json, ApiResponse,
 };
 
 pub fn penarikan_students_routes(
@@ -121,7 +122,7 @@ async fn create_penarikan_student(
     let mut db = db.lock();
     let result = PenarikanStudent::create(&mut db, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
@@ -152,7 +153,7 @@ async fn update_penarikan_student(
     let mut db = db.lock();
     let result = PenarikanStudent::update(&mut db, id, &payload)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_vulnerable_to_fk_violation)?;
 
     if let Some(v) = result {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
