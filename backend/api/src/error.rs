@@ -2,9 +2,9 @@ use std::convert::Infallible;
 
 use thiserror::Error;
 use tracing::error;
-use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
 use warp::filters::body::BodyDeserializeError;
 use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection, UnsupportedMediaType};
+use warp::{http::StatusCode, reject, reject::MethodNotAllowed, reply::Reply};
 
 use crate::ApiResponse;
 
@@ -41,6 +41,19 @@ pub enum ClientError {
 }
 
 impl Reject for ClientError {}
+
+pub fn handle_vulnerable_to_fk_violation(e: diesel::result::Error) -> Rejection {
+    if let diesel::result::Error::DatabaseError(v1, v2) = &e {
+        if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
+            return reject::custom(ClientError::NotFound(format!(
+                "foreign key doesn't exists: {:?}",
+                v2.constraint_name()
+                    .unwrap_or("none; please contact administrator or developer for further info")
+            )));
+        }
+    }
+    reject::custom(InternalError::DatabaseError(e.to_string()))
+}
 
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (code, message) = if err.is_not_found() {
