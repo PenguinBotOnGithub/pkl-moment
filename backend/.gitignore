@@ -2,3 +2,7 @@
 .shuttle-storage
 Secrets*.toml
 migrations-old/
+assets/signatures/*
+!assets/signatures/0.jpg
+.idea
+.idea/*
