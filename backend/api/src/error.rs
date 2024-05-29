@@ -56,6 +56,22 @@ pub fn handle_fk_data_not_exists(e: diesel::result::Error) -> Rejection {
     reject::custom(InternalError::DatabaseError(e.to_string()))
 }
 
+pub fn handle_fk_depended_data_delete(e: diesel::result::Error) -> Rejection {
+    if let diesel::result::Error::DatabaseError(v1, v2) = &e {
+        if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
+            return reject::custom(ClientError::Conflict(
+                format!("there are data that depends on the data you are trying to delete; fk: {:?}; table: {:?}", 
+                        v2.constraint_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info"), 
+                        v2.table_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info")
+                ))
+            );
+        }
+    }
+    reject::custom(InternalError::DatabaseError(e.to_string()))
+}
+
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (code, message) = if err.is_not_found() {
         (StatusCode::NOT_FOUND, "not found".to_owned())
