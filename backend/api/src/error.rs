@@ -42,14 +42,31 @@ pub enum ClientError {
 
 impl Reject for ClientError {}
 
-pub fn handle_vulnerable_to_fk_violation(e: diesel::result::Error) -> Rejection {
+pub fn handle_fk_data_not_exists(e: diesel::result::Error) -> Rejection {
     if let diesel::result::Error::DatabaseError(v1, v2) = &e {
         if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
             return reject::custom(ClientError::NotFound(format!(
-                "foreign key doesn't exists: {:?}",
-                v2.constraint_name()
-                    .unwrap_or("none; please contact administrator or developer for further info")
+                "the row the foreign key points to doesn't exists; constraint: {:?}",
+                v2.constraint_name().unwrap_or(
+                    "none found; please contact administrator or developer for further info"
+                )
             )));
+        }
+    }
+    reject::custom(InternalError::DatabaseError(e.to_string()))
+}
+
+pub fn handle_fk_depended_data_delete(e: diesel::result::Error) -> Rejection {
+    if let diesel::result::Error::DatabaseError(v1, v2) = &e {
+        if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
+            return reject::custom(ClientError::Conflict(
+                format!("there are data that depends on the data you are trying to delete; fk: {:?}; table: {:?}", 
+                        v2.constraint_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info"), 
+                        v2.table_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info")
+                ))
+            );
         }
     }
     reject::custom(InternalError::DatabaseError(e.to_string()))

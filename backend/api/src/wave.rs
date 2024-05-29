@@ -9,6 +9,7 @@ use warp::{
     Filter,
 };
 
+use crate::error::handle_fk_depended_data_delete;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -161,7 +162,7 @@ async fn delete_wave(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl 
     let mut db = db.lock();
     let result = Wave::delete(&mut db, id)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_fk_depended_data_delete)?;
 
     if result > 0 {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
