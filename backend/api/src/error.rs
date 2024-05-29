@@ -42,11 +42,11 @@ pub enum ClientError {
 
 impl Reject for ClientError {}
 
-pub fn handle_vulnerable_to_fk_violation(e: diesel::result::Error) -> Rejection {
+pub fn handle_fk_data_not_exists(e: diesel::result::Error) -> Rejection {
     if let diesel::result::Error::DatabaseError(v1, v2) = &e {
         if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
             return reject::custom(ClientError::NotFound(format!(
-                "foreign key doesn't exists: {:?}",
+                "the row the foreign key points to doesn't exists: {:?}",
                 v2.constraint_name()
                     .unwrap_or("none; please contact administrator or developer for further info")
             )));
