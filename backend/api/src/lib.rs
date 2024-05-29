@@ -19,6 +19,7 @@ pub mod permohonan_student;
 pub mod routes;
 pub mod signature;
 pub mod student;
+pub mod user;
 pub mod wave;
 
 pub fn with_json<J>() -> impl Filter<Extract = (J,), Error = Rejection> + Clone
