@@ -177,9 +177,15 @@ async fn register_handler(
     };
 
     let mut db = db.lock();
-    let result = User::create(&mut db, &user)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let result = User::create(&mut db, &user).await.map_err(|e| {
+        if let diesel::result::Error::DatabaseError(v1, _) = &e {
+            if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
+                return reject::custom(ClientError::Conflict("username already taken".to_owned()));
+            }
+        }
+
+        reject::custom(InternalError::DatabaseError(e.to_string()))
+    })?;
 
     Ok(reply::json(&ApiResponse::ok(
         "registered".to_owned(),

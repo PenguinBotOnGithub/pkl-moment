@@ -122,9 +122,15 @@ async fn update_user(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = User::update(&mut db, id, &payload)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let result = User::update(&mut db, id, &payload).await.map_err(|e| {
+        if let diesel::result::Error::DatabaseError(v1, _) = &e {
+            if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
+                return reject::custom(ClientError::Conflict("username already taken".to_owned()));
+            }
+        }
+
+        reject::custom(InternalError::DatabaseError(e.to_string()))
+    })?;
 
     if let Some(v) = result {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
