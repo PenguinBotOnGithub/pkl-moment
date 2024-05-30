@@ -12,27 +12,9 @@ function EntriesTable() {
   };
 
   const data = [
-    {
-      id: 1,
-      pembimbing: "Cy Ganderton",
-      jenisEntri: "Quality Control Specialist",
-      tanggalPermintaan: "Blue",
-      verifikasi: "Terverifikasi",
-    },
-    {
-      id: 2,
-      pembimbing: "Cy Ganderton",
-      jenisEntri: "Quality Control Specialist",
-      tanggalPermintaan: "Blue",
-      verifikasi: "Terverifikasi",
-    },
-    {
-      id: 3,
-      pembimbing: "Cy Ganderton",
-      jenisEntri: "Quality Control Specialist",
-      tanggalPermintaan: "Blue",
-      verifikasi: "Terverifikasi",
-    },
+    { id:1, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: true },
+    { id:2, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: false },
+    { id:3, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: true }
   ];
 
   return (
@@ -90,20 +72,18 @@ function EntriesTable() {
                 </span>
               </label>
             </th>
-            <th>No</th>
             <th>Pembimbing</th>
             <th>Jenis Entri</th>
             <th>Tanggal Permintaan</th>
             <th>Data Input</th>
             <th>Verifikasi</th>
-            <th>Aksi</th>
           </tr>
         </thead>
         <tbody className="box-content">
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
               <td className="p-3 pb-2">
-              <label className="swap opacity-60">
+                <label className="swap opacity-60">
                   <input
                     type="checkbox"
                     onChange={() => handleSelectRow(index)}
@@ -117,7 +97,6 @@ function EntriesTable() {
                   </span>
                 </label>
               </td>
-              <th>{row.id}</th>
               <td>{row.pembimbing}</td>
               <td>{row.jenisEntri}</td>
               <td>{row.tanggalPermintaan}</td>
@@ -126,12 +105,7 @@ function EntriesTable() {
                   Detail
                 </button>
               </td>
-              <td className="">{row.verifikasi}</td>
-              <td>
-                <button className="btn btn-error btn-xs rounded-lg mr-2">
-                  Delete
-                </button>
-              </td>
+              <td>{row.verifikasi ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
             </tr>
           ))}
         </tbody>

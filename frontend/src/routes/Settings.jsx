@@ -75,14 +75,14 @@ function Settings({ cookies }) {
       <div className="flex justify-between gap-2 w-full max-w-xl">
         <button
           className="btn btn-lg bg-base-100 text-error p-4 rounded-lg flex flex-row items-center flex-1"
-          onClick={() => document.getElementById("my_modal_1").showModal()}
+          onClick={() => document.getElementById("logout_confirmation_modal").showModal()}
         >
           <span className="material-symbols-rounded icon-size-24 text-error">
             logout
           </span>
           <span className="text-lg font-bold text-error">Logout</span>
         </button>
-        <dialog id="my_modal_1" className="modal">
+        <dialog id="logout_confirmation_modal" className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg text-error">Warning!</h3>
             <p className="py-4">

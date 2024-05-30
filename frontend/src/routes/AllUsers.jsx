@@ -9,10 +9,13 @@ import StUser from "../components/StUser";
 
 function AllUsers() {
   const { t } = useTranslation();
+  function onAddHandle() {
+    console.log("add clicked");
+  };
 
   return (
     <>
-      <Search />
+      <Search addOnClick={onAddHandle} />
       <StUser />
       <Users />
     </>
