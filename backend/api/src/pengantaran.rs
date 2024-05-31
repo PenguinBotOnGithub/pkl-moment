@@ -26,8 +26,7 @@ pub fn pengantarans_routes(
     let get_pengantarans_route = pengantaran
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(warp::query::query::<HashMap<String, String>>())
         .and(with_db(db.clone()))
         .and_then(get_pengantarans);
@@ -76,6 +75,7 @@ pub fn pengantarans_routes(
 }
 
 async fn get_pengantarans(
+    claims: JwtClaims,
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -104,14 +104,53 @@ async fn get_pengantarans(
     };
 
     let mut db = db.lock();
-    let pengantarans = Pengantaran::paginate(&mut db, page, page_size)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    match &claims.role[..] {
+        "admin" => {
+            let by_user = queries.get("user");
+            match by_user {
+                None => {
+                    let pengantarans = Pengantaran::paginate(&mut db, page, page_size)
+                        .await
+                        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    Ok(reply::json(&ApiResponse::ok(
-        "success".to_owned(),
-        pengantarans,
-    )))
+                    Ok(reply::json(&ApiResponse::ok(
+                        "success".to_owned(),
+                        pengantarans,
+                    )))
+                }
+                Some(v) => {
+                    let by_user = v.parse::<i32>().map_err(|e| {
+                        reject::custom(ClientError::InvalidInput(format!(
+                            "invalid user id: {}",
+                            e.to_string()
+                        )))
+                    })?;
+
+                    let pengantarans =
+                        Pengantaran::paginate_by_user(&mut db, by_user, page, page_size)
+                            .await
+                            .map_err(|e| {
+                                reject::custom(InternalError::DatabaseError(e.to_string()))
+                            })?;
+
+                    Ok(reply::json(&ApiResponse::ok(
+                        "success".to_owned(),
+                        pengantarans,
+                    )))
+                }
+            }
+        }
+        _ => {
+            let pengantarans = Pengantaran::paginate_by_user(&mut db, claims.id, page, page_size)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+            Ok(reply::json(&ApiResponse::ok(
+                "success".to_owned(),
+                pengantarans,
+            )))
+        }
+    }
 }
 
 async fn create_pengantaran(
