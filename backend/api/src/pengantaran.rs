@@ -63,7 +63,7 @@ pub fn pengantarans_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_pengantaran);
 
@@ -262,9 +262,32 @@ async fn update_pengantaran(
 
 async fn delete_pengantaran(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let letter = Pengantaran::read(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = letter {
+        match &claims.role[..] {
+            "admin" => (),
+            _ => {
+                if v.user_id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to delete other users data".to_owned(),
+                    )));
+                }
+            }
+        }
+    } else {
+        return Err(reject::custom(ClientError::NotFound(
+            "pengantaran not found".to_owned(),
+        )));
+    }
+
     let result = Pengantaran::delete(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
