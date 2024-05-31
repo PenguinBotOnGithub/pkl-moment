@@ -12,7 +12,6 @@ use warp::{
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
-    auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
 };
@@ -63,7 +62,7 @@ pub fn pengantarans_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_pengantaran);
 
