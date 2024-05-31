@@ -44,7 +44,7 @@ pub fn pengantarans_routes(
         .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(read_pengantaran);
 
@@ -190,6 +190,7 @@ async fn create_pengantaran(
 
 async fn read_pengantaran(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
@@ -198,7 +199,18 @@ async fn read_pengantaran(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(v) = pengantaran {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+        match &claims.role[..] {
+            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+            _ => {
+                if v.user_id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to view other users data".to_owned(),
+                    )));
+                }
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+            }
+        }
     } else {
         Err(reject::custom(ClientError::NotFound(
             "pengantaran not found".to_owned(),
