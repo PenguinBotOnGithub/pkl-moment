@@ -1,7 +1,7 @@
 /* This file is generated and managed by dsync */
 
-use diesel::*;
 use diesel::QueryResult;
+use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -40,7 +40,7 @@ pub struct Penarikan {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=penarikan)]
 pub struct CreatePenarikan {
-    pub user_id: i32,
+    pub user_id: Option<i32>,
     pub company_id: i32,
     pub end_date: chrono::NaiveDate,
     pub verified: bool,
@@ -87,6 +87,33 @@ impl Penarikan {
             .first::<Self>(db)
             .await
             .optional()
+    }
+
+    pub async fn paginate_by_user(
+        db: &mut Connection,
+        param_id: i32,
+        page: i64,
+        page_size: i64,
+    ) -> QueryResult<PaginationResult<Self>> {
+        use crate::schema::penarikan::dsl::*;
+
+        let page_size = if page_size < 1 { 1 } else { page_size };
+        let total_items = penarikan.count().get_result(db).await?;
+        let items = penarikan
+            .filter(user_id.eq(param_id))
+            .limit(page_size)
+            .offset(page * page_size)
+            .load::<Self>(db)
+            .await?;
+
+        Ok(PaginationResult {
+            items,
+            total_items,
+            page,
+            page_size,
+            /* ceiling division of integers */
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
+        })
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
