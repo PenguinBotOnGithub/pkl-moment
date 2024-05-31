@@ -53,7 +53,7 @@ pub fn pengantarans_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_pengantaran);
@@ -220,10 +220,33 @@ async fn read_pengantaran(
 
 async fn update_pengantaran(
     id: i32,
+    claims: JwtClaims,
     payload: UpdatePengantaran,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let letter = Pengantaran::read(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = letter {
+        match &claims.role[..] {
+            "admin" => (),
+            _ => {
+                if v.user_id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to update other users data".to_owned(),
+                    )));
+                }
+            }
+        }
+    } else {
+        return Err(reject::custom(ClientError::NotFound(
+            "pengantaran not found".to_owned(),
+        )));
+    }
+
     let result = Pengantaran::update(&mut db, id, &payload)
         .await
         .map_err(handle_fk_data_not_exists)?;
