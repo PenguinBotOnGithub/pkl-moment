@@ -40,7 +40,7 @@ pub struct Permohonan {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=permohonan)]
 pub struct CreatePermohonan {
-    pub user_id: i32,
+    pub user_id: Option<i32>,
     pub company_id: i32,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
@@ -89,6 +89,33 @@ impl Permohonan {
             .first::<Self>(db)
             .await
             .optional()
+    }
+
+    pub async fn paginate_by_user(
+        db: &mut Connection,
+        param_id: i32,
+        page: i64,
+        page_size: i64,
+    ) -> QueryResult<PaginationResult<Self>> {
+        use crate::schema::permohonan::dsl::*;
+
+        let page_size = if page_size < 1 { 1 } else { page_size };
+        let total_items = permohonan.count().get_result(db).await?;
+        let items = permohonan
+            .filter(user_id.eq(param_id))
+            .limit(page_size)
+            .offset(page * page_size)
+            .load::<Self>(db)
+            .await?;
+
+        Ok(PaginationResult {
+            items,
+            total_items,
+            page,
+            page_size,
+            /* ceiling division of integers */
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
+        })
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
