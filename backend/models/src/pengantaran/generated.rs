@@ -1,7 +1,7 @@
 /* This file is generated and managed by dsync */
 
-use diesel::*;
 use diesel::QueryResult;
+use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -41,7 +41,7 @@ pub struct Pengantaran {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=pengantaran)]
 pub struct CreatePengantaran {
-    pub user_id: i32,
+    pub user_id: Option<i32>,
     pub company_id: i32,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,

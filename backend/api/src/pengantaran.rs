@@ -9,6 +9,7 @@ use warp::{
     Filter,
 };
 
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
     auth::with_auth,
@@ -35,8 +36,7 @@ pub fn pengantarans_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(create_pengantaran);
@@ -115,9 +115,32 @@ async fn get_pengantarans(
 }
 
 async fn create_pengantaran(
-    payload: CreatePengantaran,
+    claims: JwtClaims,
+    mut payload: CreatePengantaran,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    match &claims.role[..] {
+        "admin" => {
+            if let None = payload.user_id {
+                payload.user_id = Some(claims.id);
+            }
+
+            if payload.verified {
+                payload.verified_date = Some(chrono::Local::now().date_naive());
+            }
+        }
+        _ => {
+            if let Some(_) = payload.user_id {
+                payload.user_id = Some(claims.id);
+            }
+
+            if payload.verified {
+                payload.verified = false;
+                payload.verified_date = None;
+            }
+        }
+    }
+
     let mut db = db.lock();
     let result = Pengantaran::create(&mut db, &payload)
         .await
