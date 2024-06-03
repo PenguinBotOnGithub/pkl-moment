@@ -5,7 +5,7 @@ export default {
     themes: [
       {
         airdark: {
-          primary: "#EC2939",
+          primary: "#EC9E56",
           secondary: "#EC9E56",
           accent: "#EC9E56",
           neutral: "#292929",
@@ -16,7 +16,7 @@ export default {
           error: "#F84F31",
         },
         airlight: {
-          primary: "#f72c3c",
+          primary: "#f8ab64",
           secondary: "#f8ab64",
           accent: "#f8ab64",
           neutral: "#d2d2d2",

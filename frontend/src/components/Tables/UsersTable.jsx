@@ -37,8 +37,7 @@ function UsersTable() {
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-lg">Permintaan Verifikasi</span>
+      <div className="flex justify-end items-center mb-2">
         <div className="flex gap-2">
           <button
             className={`btn bg-green-500 btn-sm text-black ${

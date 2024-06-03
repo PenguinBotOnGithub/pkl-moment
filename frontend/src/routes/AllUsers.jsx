@@ -1,22 +1,19 @@
 import React from "react";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
 import { useTranslation } from "react-i18next";
 import Search from "../components/Search";
-import Statistic from "../components/Statistic";
-import Users from "../components/Tables/UsersTable";
-import StUser from "../components/StUser";
+import Users from "../components/tables/UsersTable";
+import StatisticUser from "../components/count/StatisticUser";
 
 function AllUsers() {
   const { t } = useTranslation();
   function onAddHandle() {
     console.log("add clicked");
-  };
+  }
 
   return (
     <>
       <Search addOnClick={onAddHandle} />
-      <StUser />
+      <StatisticUser />
       <Users />
     </>
   );

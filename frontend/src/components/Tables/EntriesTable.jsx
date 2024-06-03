@@ -12,15 +12,19 @@ function EntriesTable() {
   };
 
   const data = [
-    { id:1, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: true },
-    { id:2, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: false },
-    { id:3, pembimbing: 'Cy Ganderton', jenisEntri: 'Surat Pengantaran', tanggalPermintaan: '23/05/2024', verifikasi: true }
+    { id:1, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: true },
+    { id:2, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: false },
+    { id:3, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: true }
   ];
 
   return (
     <div className="overflow-x-auto">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-lg">Permintaan Verifikasi</span>
+        <div role="tablist" className= "tabs-boxed p-0 bg-base-100">
+          <a role="tab" className="tab">Permohonan</a>
+          <a role="tab" className="tab tab-active">Pengantaran</a>
+          <a role="tab" className="tab">Penjemputan</a>
+        </div>
         <div className="flex gap-2">
           <button
             className={`btn btn-success btn-sm text-black ${
@@ -73,7 +77,6 @@ function EntriesTable() {
               </label>
             </th>
             <th>Pembimbing</th>
-            <th>Jenis Entri</th>
             <th>Tanggal Permintaan</th>
             <th>Data Input</th>
             <th>Verifikasi</th>
@@ -98,7 +101,6 @@ function EntriesTable() {
                 </label>
               </td>
               <td>{row.pembimbing}</td>
-              <td>{row.jenisEntri}</td>
               <td>{row.tanggalPermintaan}</td>
               <td>
                 <button className="btn btn-info btn-xs rounded-lg mr-2">
