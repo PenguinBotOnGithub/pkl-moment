@@ -220,7 +220,7 @@ async fn read_permohonan(
 async fn update_permohonan(
     id: i32,
     claims: JwtClaims,
-    payload: UpdatePermohonan,
+    mut payload: UpdatePermohonan,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
@@ -231,11 +231,33 @@ async fn update_permohonan(
 
     if let Some(v) = letter {
         match &claims.role[..] {
-            "admin" => (),
+            "admin" => {
+                if let Some(b) = payload.verified {
+                    if b {
+                        if v.verified {
+                            ()
+                        } else {
+                            payload.verified_date = Some(chrono::Local::now().date_naive());
+                        }
+                    } else {
+                        if v.verified {
+                            payload.verified_date = None;
+                        } else {
+                            ()
+                        }
+                    }
+                }
+            }
             _ => {
                 if v.user_id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to update other users data".to_owned(),
+                    )));
+                }
+
+                if let Some(_) = payload.verified {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to verify data".to_owned(),
                     )));
                 }
             }
