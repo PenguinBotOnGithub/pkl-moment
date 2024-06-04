@@ -117,16 +117,19 @@ impl Permohonan {
         use crate::schema::user;
         use crate::schema::wave;
 
-        let (item, wave, user, company) = permohonan
+        let res = permohonan
             .filter(id.eq(param_id))
             .inner_join(wave::table)
             .inner_join(user::table)
             .inner_join(company::table)
             .first::<(Permohonan, Wave, User, crate::company::Company)>(db)
             .await
-            .optional()?
-            .map_or(Ok::<_, result::Error>(None), |v| Ok(Some(v)))?
-            .unwrap();
+            .optional()?;
+
+        let (item, wave, user, company) = match res {
+            Some(v) => v,
+            None => return Ok(None),
+        };
 
         let students = PermohonanStudent::belonging_to(&item)
             .inner_join(student::table)
