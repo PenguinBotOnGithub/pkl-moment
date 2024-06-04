@@ -2,7 +2,7 @@
 
 use crate::company::Company;
 use crate::schema::*;
-use crate::user::User;
+use crate::user::{User, UserPublic};
 use crate::wave::Wave;
 use diesel::QueryResult;
 use diesel::*;
@@ -40,7 +40,7 @@ pub struct Permohonan {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PermohonanJoined {
     pub id: i32,
-    pub user: User,
+    pub user: UserPublic,
     pub company: Company,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
@@ -126,7 +126,7 @@ impl Permohonan {
             .await
             .optional()?;
 
-        let (item, wave, user, company) = match res {
+        let (item, wave, mut user, company) = match res {
             Some(v) => v,
             None => return Ok(None),
         };
@@ -140,7 +140,7 @@ impl Permohonan {
 
         Ok(Some(PermohonanJoined {
             id: item.id,
-            user,
+            user: user.public(),
             company,
             start_date: item.start_date,
             end_date: item.end_date,
