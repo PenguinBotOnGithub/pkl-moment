@@ -1,4 +1,3 @@
-// src/App.js
 import React from "react";
 import {
   createBrowserRouter,
@@ -14,12 +13,17 @@ import Root from "./components/Root";
 import NotFound from "./routes/NotFound";
 import Login from "./routes/Login";
 import Cookies from "universal-cookie";
+import Company from "./routes/detail/Company";
+import Student from "./routes/detail/Student";
+import CompanyAdd from "./routes/detail/CompanyAdd";
+import StudentAdd from "./routes/detail/StudentAdd";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
   const isLoggedIn = cookies.get("access-token");
   const router = createBrowserRouter([
     { path: "*", element: <NotFound /> },
+    
     {
       path: "login",
       element: !isLoggedIn ? (
@@ -28,7 +32,9 @@ function App() {
         <Navigate to="../admin" />
       ),
     },
+
     { path: "admin", element: <Navigate to="dashboard" /> },
+
     {
       path: "admin",
       element: cookies.get("access-token") ? (
@@ -41,8 +47,25 @@ function App() {
         { path: "entries", element: <EntriesAndDocuments /> },
         { path: "users", element: <AllUsers /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
+        // { path: "entries/company/add", element: <CompanyAdd /> },
+       
       ],
     },
+    
+    {
+      path: "admin/entries",
+      element: cookies.get("access-token") ? (
+        <Root />
+      ) : (
+        <Navigate to="../login" />
+      ),
+      children: [
+        { path: "company", element: <Company />},
+        { path: "company/add", element: <CompanyAdd />},
+        { path: "student", element: <Student />},
+        { path: "student/add", element: <StudentAdd />},
+      ]
+    }
   ]);
   return <RouterProvider router={router} />;
 }

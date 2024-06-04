@@ -25,7 +25,7 @@ function Sidebar({ index = -1 }) {
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4`}>
         <li>
           <NavLink
-            to="dashboard"
+            to="/admin/dashboard"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">dashboard</span>
@@ -34,7 +34,7 @@ function Sidebar({ index = -1 }) {
         </li>
         <li>
           <NavLink
-            to="entries"
+            to="/admin/entries"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
@@ -43,7 +43,7 @@ function Sidebar({ index = -1 }) {
         </li>
         <li>
           <NavLink
-            to="users"
+            to="/admin/users"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">manage_accounts</span>
@@ -52,7 +52,7 @@ function Sidebar({ index = -1 }) {
         </li>
         <li>
           <NavLink
-            to="settings"
+            to="/admin/settings"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">settings</span>

@@ -80,6 +80,7 @@ function EntriesTable() {
             <th>Tanggal Permintaan</th>
             <th>Data Input</th>
             <th>Verifikasi</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody className="box-content">
@@ -108,7 +109,17 @@ function EntriesTable() {
                 </button>
               </td>
               <td>{row.verifikasi ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
+              <td>
+                <button className="btn btn-info btn-xs rounded-lg mr-2">
+                  Data Input
+                </button>
+                <button className="btn btn-warning btn-xs rounded-lg mr-2">
+                  Export
+                </button>
+                
+              </td>
             </tr>
+            
           ))}
         </tbody>
       </table>

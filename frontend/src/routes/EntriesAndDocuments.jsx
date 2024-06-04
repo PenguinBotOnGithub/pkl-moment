@@ -1,8 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Search from "../components/Search";
-import Endoc from "../components/tables/EntriesTable";
 import Statistic from "../components/count/Statistic";
+import EntriesTable from "../components/tables/EntriesTable";
 
 function EntriesAndDocuments() {
   const { t } = useTranslation();
@@ -14,7 +14,7 @@ function EntriesAndDocuments() {
     <>
       <Search addOnClick={onAddHandle} />
       <Statistic />
-      <Endoc />
+      <EntriesTable />
     </>
   );
 }
