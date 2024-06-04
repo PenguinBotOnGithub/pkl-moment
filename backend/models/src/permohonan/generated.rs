@@ -37,6 +37,21 @@ pub struct Permohonan {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PermohonanJoined {
+    pub id: i32,
+    pub user: User,
+    pub company: Company,
+    pub start_date: chrono::NaiveDate,
+    pub end_date: chrono::NaiveDate,
+    pub verified: bool,
+    pub verified_date: Option<chrono::NaiveDate>,
+    pub wave: Wave,
+    pub students: Vec<crate::student::Student>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=permohonan)]
 pub struct CreatePermohonan {
@@ -89,6 +104,50 @@ impl Permohonan {
             .first::<Self>(db)
             .await
             .optional()
+    }
+
+    pub async fn read_with_joins(
+        db: &mut Connection,
+        param_id: i32,
+    ) -> QueryResult<Option<PermohonanJoined>> {
+        use crate::permohonan_student::PermohonanStudent;
+        use crate::schema::company;
+        use crate::schema::permohonan::dsl::*;
+        use crate::schema::student;
+        use crate::schema::user;
+        use crate::schema::wave;
+
+        let (item, wave, user, company) = permohonan
+            .filter(id.eq(param_id))
+            .inner_join(wave::table)
+            .inner_join(user::table)
+            .inner_join(company::table)
+            .first::<(Permohonan, Wave, User, crate::company::Company)>(db)
+            .await
+            .optional()?
+            .map_or(Ok::<_, result::Error>(None), |v| Ok(Some(v)))?
+            .unwrap();
+
+        let students = PermohonanStudent::belonging_to(&item)
+            .inner_join(student::table)
+            .get_results::<(PermohonanStudent, crate::student::Student)>(db)
+            .await
+            .optional()?
+            .map_or(Vec::new(), |v| v.into_iter().map(|v| v.1).collect());
+
+        Ok(Some(PermohonanJoined {
+            id: item.id,
+            user,
+            company,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            verified: item.verified,
+            verified_date: item.verified_date,
+            wave,
+            students,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }))
     }
 
     pub async fn paginate_by_user(
