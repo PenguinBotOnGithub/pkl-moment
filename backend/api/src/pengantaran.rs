@@ -191,7 +191,7 @@ async fn read_pengantaran(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let pengantaran = Pengantaran::read(&mut db, id)
+    let pengantaran = Pengantaran::read_with_joins(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -199,7 +199,7 @@ async fn read_pengantaran(
         match &claims.role[..] {
             "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
             _ => {
-                if v.user_id != claims.id {
+                if v.user.id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to view other users data".to_owned(),
                     )));
