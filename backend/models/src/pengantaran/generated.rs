@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::company::Company;
 use crate::schema::*;
-use crate::user::User;
+use crate::user::{User, UserPublic};
 use crate::wave::Wave;
 
 type Connection = diesel_async::AsyncPgConnection;
@@ -34,6 +34,21 @@ pub struct Pengantaran {
     pub verified: bool,
     pub verified_date: Option<chrono::NaiveDate>,
     pub wave_id: i32,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PengantaranJoined {
+    pub id: i32,
+    pub user: UserPublic,
+    pub company: Company,
+    pub start_date: chrono::NaiveDate,
+    pub end_date: chrono::NaiveDate,
+    pub verified: bool,
+    pub verified_date: Option<chrono::NaiveDate>,
+    pub wave: Wave,
+    pub students: Vec<crate::student::Student>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -90,6 +105,53 @@ impl Pengantaran {
             .first::<Self>(db)
             .await
             .optional()
+    }
+
+    pub async fn read_with_joins(
+        db: &mut Connection,
+        param_id: i32,
+    ) -> QueryResult<Option<PengantaranJoined>> {
+        use crate::pengantaran_student::PengantaranStudent;
+        use crate::schema::company;
+        use crate::schema::pengantaran::dsl::*;
+        use crate::schema::student;
+        use crate::schema::user;
+        use crate::schema::wave;
+
+        let res = pengantaran
+            .filter(id.eq(param_id))
+            .inner_join(wave::table)
+            .inner_join(user::table)
+            .inner_join(company::table)
+            .first::<(Pengantaran, Wave, User, Company)>(db)
+            .await
+            .optional()?;
+
+        let (item, wave, mut user, company) = match res {
+            Some(v) => v,
+            None => return Ok(None),
+        };
+
+        let students = PengantaranStudent::belonging_to(&item)
+            .inner_join(student::table)
+            .get_results::<(PengantaranStudent, crate::student::Student)>(db)
+            .await
+            .optional()?
+            .map_or(Vec::new(), |v| v.into_iter().map(|v| v.1).collect());
+
+        Ok(Some(PengantaranJoined {
+            id: item.id,
+            user: user.public(),
+            company,
+            start_date: item.start_date,
+            end_date: item.end_date,
+            verified: item.verified,
+            verified_date: item.verified_date,
+            wave,
+            students,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        }))
     }
 
     pub async fn paginate_by_user(
