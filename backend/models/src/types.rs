@@ -1,4 +1,3 @@
-use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Deserialize, Copy)]
