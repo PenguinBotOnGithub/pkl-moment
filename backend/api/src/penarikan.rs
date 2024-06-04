@@ -165,9 +165,7 @@ async fn create_penarikan(
             }
         }
         _ => {
-            if let Some(_) = payload.user_id {
-                payload.user_id = Some(claims.id);
-            }
+            payload.user_id = Some(claims.id);
 
             if payload.verified {
                 payload.verified = false;

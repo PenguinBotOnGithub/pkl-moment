@@ -168,9 +168,7 @@ async fn create_pengantaran(
             }
         }
         _ => {
-            if let Some(_) = payload.user_id {
-                payload.user_id = Some(claims.id);
-            }
+            payload.user_id = Some(claims.id);
 
             if payload.verified {
                 payload.verified = false;
