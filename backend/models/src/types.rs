@@ -1,7 +1,7 @@
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 
-#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Deserialize)]
+#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Deserialize, Copy)]
 #[ExistingTypePath = "crate::schema::sql_types::UserRole"]
 pub enum UserRole {
     Admin,
