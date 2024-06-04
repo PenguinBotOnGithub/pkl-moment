@@ -22,7 +22,7 @@ function CompanyAddTable() {
 
   return (
     <div className="overflow-x-auto">
-      <table className="table border-0 overflow-hidden rounded-lg">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
         <thead className="bg-neutral">
           <tr className="border-0">
             <th className="w-0">No</th>

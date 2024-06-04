@@ -2,7 +2,7 @@ import React from "react";
 
 function Navbar({ title = "Title", href = "" }) {
   return (
-    <div className="navbar flex-none pl-0">
+    <div className="navbar flex-none">
       <div className="flex-1">
         <a className="btn btn-ghost text-2xl" href={href}>{title}</a>
       </div>

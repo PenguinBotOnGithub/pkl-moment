@@ -4,9 +4,9 @@ import Clock from "../assets/strings/Clock";
 
 function Search({addOnClick}) {
   return (
-    <div className="flex flex-row">
-      <div className="grow-[1] flex flex-row gap-2">
-        <label className="input flex-1 flex items-center gap-2">
+    <div className="flex flex-row gap-2 justify-between">
+      <div className="flex flex-row flex-none gap-2">
+        <label className="input flex items-center gap-2">
           <input
             type="text"
             className="grow placeholder:text-neutral-content placeholder:opacity-50"
@@ -23,18 +23,18 @@ function Search({addOnClick}) {
           {Clock()}
         </button>
       </div>
-      <div className="grow-[3] flex flex-row-reverse gap-2">
+      <div className="flex flex-row-reverse flex-none gap-2">
         {addOnClick && <button className="flex-none btn bg-base-100" onClick={addOnClick}>
           <span className="material-symbols-rounded icon-size-20">add</span>
-          Add
+          <span className="hidden lg:block">Add</span>
         </button>}
         <button className="flex-none btn bg-base-100">
           <span className="material-symbols-rounded icon-size-20">edit</span>
-          Edit
+          <span className="hidden lg:block">Edit</span>
         </button>
         <button className="flex-none btn bg-base-100">
           <span className="material-symbols-rounded icon-size-20">refresh</span>
-          Refresh
+          <span className="hidden lg:block">Refresh</span>
         </button>
       </div>
     </div>

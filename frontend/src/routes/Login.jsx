@@ -21,6 +21,24 @@ function Login({ cookies }) {
     e.preventDefault();
 
     // Add your login logic here, such as sending a request to your server
+    // fetch("https://warp-pkl-moment.shuttleapp.rs/api/auth/login", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type":"application/json"
+    //   } ,
+    //   body: JSON.stringify({
+    //     username: formData.username,
+    //     password: formData.password,
+    //   }),
+    // })
+    //   .then((response) => response.json())
+    //   .then((result) => {
+    //     if (result.status === "success") {
+    //       alert(result);
+    //     } else {
+    //       alert("Please check your login information.");
+    //     }
+    //   });
     cookies.set("access-token", getCurrentDate());
     window.location.reload();
 

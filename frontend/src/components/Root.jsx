@@ -31,6 +31,12 @@ function Root() {
           case "/admin/entries/company/add":
             setTitle(t("Entries & Document > Perusahaan > Tambah"));
             break;
+      case "/admin/entries/student":
+          setTitle(t("Entries & Document > Siswa"));
+          break;
+          case "/admin/entries/student/add":
+            setTitle(t("Entries & Document > Siswa > Tambah"));
+            break;
       
       default:
         setTitle(t("Default Title"));
@@ -42,7 +48,7 @@ function Root() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Navbar title={title} sidebar={true} />
-        <div className="flex-1 flex flex-col flex-nowrap bg-base-200 rounded-tl-xl p-2 gap-2">
+        <div className="flex-1 flex flex-col flex-nowrap bg-base-200 rounded-tl-xl p-2 gap-2 overflow-x-auto">
           <Outlet />
         </div>
       </div>

@@ -23,7 +23,7 @@ function App() {
   const isLoggedIn = cookies.get("access-token");
   const router = createBrowserRouter([
     { path: "*", element: <NotFound /> },
-    
+
     {
       path: "login",
       element: !isLoggedIn ? (
@@ -47,11 +47,9 @@ function App() {
         { path: "entries", element: <EntriesAndDocuments /> },
         { path: "users", element: <AllUsers /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
-        // { path: "entries/company/add", element: <CompanyAdd /> },
-       
       ],
     },
-    
+
     {
       path: "admin/entries",
       element: cookies.get("access-token") ? (
@@ -60,12 +58,12 @@ function App() {
         <Navigate to="../login" />
       ),
       children: [
-        { path: "company", element: <Company />},
-        { path: "company/add", element: <CompanyAdd />},
-        { path: "student", element: <Student />},
-        { path: "student/add", element: <StudentAdd />},
-      ]
-    }
+        { path: "company", element: <Company /> },
+        { path: "company/add", element: <CompanyAdd /> },
+        { path: "student", element: <Student /> },
+        { path: "student/add", element: <StudentAdd /> },
+      ],
+    },
   ]);
   return <RouterProvider router={router} />;
 }

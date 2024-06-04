@@ -1,9 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 function EntriesTable() {
-  const [selectedRows, setSelectedRows] = useState([]);
+  const newData1 = [
+    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
+    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false },
+    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true }
+  ];
+  const newData2 = [
+    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false },
+    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
+    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true }
+  ];
+  const newData3 = [
+    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
+    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
+    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false }
+  ];
 
-  const handleSelectRow = (rowIndex) => {
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [currentEntry, setCurrentEntry] = useState(0);
+  //? 0 = "permohonan" | 1 = "pengantaran" | 2 = "penjemputan"
+
+  const [data, setData] = useState(newData1);
+
+  function handleSelectRow (rowIndex) {
     if (selectedRows.includes(rowIndex)) {
       setSelectedRows(selectedRows.filter((index) => index !== rowIndex));
     } else {
@@ -11,19 +31,19 @@ function EntriesTable() {
     }
   };
 
-  const data = [
-    { id:1, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: true },
-    { id:2, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: false },
-    { id:3, pembimbing: 'Cy Ganderton', tanggalPermintaan: '23/05/2024', verifikasi: true }
-  ];
+  function handleSelectTab(index){
+    setCurrentEntry(index);
+    const newData = [newData1, newData2, newData3];
+    setData(newData[index]);
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex justify-between items-center mb-2">
-        <div role="tablist" className= "tabs-boxed p-0 bg-base-100">
-          <a role="tab" className="tab">Permohonan</a>
-          <a role="tab" className="tab tab-active">Pengantaran</a>
-          <a role="tab" className="tab">Penjemputan</a>
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-center gap-2">
+        <div role="tablist" className= "tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap">
+          <button role="tab" onClick={() => handleSelectTab(0)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 0 && `tab-active`}`}>Permohonan</button>
+          <button role="tab" onClick={() => handleSelectTab(1)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 1 && `tab-active`}`}>Pengantaran</button>
+          <button role="tab" onClick={() => handleSelectTab(2)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 2 && `tab-active`}`}>Penjemputan</button>
         </div>
         <div className="flex gap-2">
           <button
@@ -32,7 +52,7 @@ function EntriesTable() {
             }`}
             disabled={selectedRows.length === 0}
           >
-            <span>Verifikasi yang terpilih</span>
+            Verifikasi {<span className="hidden lg:block">yang terpilih</span>}
           </button>
           <button
             className={`btn btn-warning btn-sm text-black ${
@@ -40,7 +60,7 @@ function EntriesTable() {
             }`}
             disabled={selectedRows.length === 0}
           >
-            <span>Export yang terpilih</span>
+            Export {<span className="hidden lg:block">yang terpilih</span>}
           </button>
           <button
             className={`btn btn-error btn-sm text-black ${
@@ -48,11 +68,11 @@ function EntriesTable() {
             }`}
             disabled={selectedRows.length === 0}
           >
-            <span>Delete yang terpilih</span>
+            Delete {<span className="hidden lg:block">yang terpilih</span>}
           </button>
         </div>
       </div>
-      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
         <thead className="bg-neutral">
           <tr className="border-0">
             <th className="pl-3 pb-2 pr-0 w-0">
@@ -77,8 +97,8 @@ function EntriesTable() {
               </label>
             </th>
             <th>Pembimbing</th>
+            <th>Perusahaan</th>
             <th>Tanggal Permintaan</th>
-            <th>Data Input</th>
             <th>Verifikasi</th>
             <th>Aksi</th>
           </tr>
@@ -101,22 +121,15 @@ function EntriesTable() {
                   </span>
                 </label>
               </td>
-              <td>{row.pembimbing}</td>
-              <td>{row.tanggalPermintaan}</td>
-              <td>
-                <button className="btn btn-info btn-xs rounded-lg mr-2">
-                  Detail
-                </button>
-              </td>
-              <td>{row.verifikasi ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
-              <td>
-                <button className="btn btn-info btn-xs rounded-lg mr-2">
+              <td>{row.adviser}</td>
+              <td>{row.company}</td>
+              <td>{row.createdAt}</td>
+              <td>{row.isVerified ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
+              <td className="flex flex-row flex-nowrap gap-2">
+                <button className="btn btn-info btn-xs rounded-lg">
                   Data Input
                 </button>
-                <button className="btn btn-warning btn-xs rounded-lg mr-2">
-                  Export
-                </button>
-                
+                {row.isVerified && <button className="btn btn-warning btn-xs">Export</button>}
               </td>
             </tr>
             
