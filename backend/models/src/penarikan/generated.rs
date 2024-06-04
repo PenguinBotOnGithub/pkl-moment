@@ -57,7 +57,7 @@ pub struct CreatePenarikan {
     pub user_id: Option<i32>,
     pub company_id: i32,
     pub end_date: chrono::NaiveDate,
-    pub verified: bool,
+    pub verified: Option<bool>,
     pub verified_date: Option<chrono::NaiveDate>,
     pub wave_id: i32,
 }
