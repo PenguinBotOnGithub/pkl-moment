@@ -7,7 +7,7 @@ use parking_lot::Mutex;
 use shuttle_runtime::SecretStore;
 use warp::Filter;
 use warp::Reply;
-use warp_pkl_moment::assets_route;
+use warp_pkl_moment::{assets_route, with_cors};
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -30,6 +30,8 @@ async fn warp(
 
     let route = assets_route()
         .or(api::routes::routes(arc_db, jwt_key))
+        .with(with_cors())
         .recover(handle_rejection);
+
     Ok(route.boxed().into())
 }

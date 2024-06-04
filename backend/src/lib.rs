@@ -9,3 +9,14 @@ pub fn assets_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection>
 
     static_dir.or(signatures_dir)
 }
+
+pub fn with_cors() -> warp::cors::Cors {
+    warp::cors()
+        .allow_origins([
+            "localhost:5173",
+            "127.0.0.1:5173",
+            "warp-pkl-moment.shuttleapp.rs",
+        ])
+        .allow_methods(["GET", "POST", "PATCH", "DELETE"])
+        .build()
+}
