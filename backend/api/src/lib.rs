@@ -11,11 +11,8 @@ pub mod auth;
 pub mod company;
 pub mod error;
 pub mod penarikan;
-pub mod penarikan_student;
 pub mod pengantaran;
-pub mod pengantaran_student;
 pub mod permohonan;
-pub mod permohonan_student;
 pub mod routes;
 pub mod signature;
 pub mod student;
@@ -82,4 +79,9 @@ impl<T> ApiResponse<T> {
             data: None::<u8>,
         }
     }
+}
+
+#[derive(serde::Deserialize, Debug, Clone)]
+struct AddStudentRequest {
+    student_id: i32,
 }

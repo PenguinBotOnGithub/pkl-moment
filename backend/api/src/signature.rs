@@ -38,7 +38,7 @@ pub fn signatures_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .and(with_auth(true, jwt_key.clone(), db.clone()))
         .untuple_one()
         .and(with_json())
         .and(with_db(db.clone()))
@@ -57,7 +57,7 @@ pub fn signatures_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_signature);

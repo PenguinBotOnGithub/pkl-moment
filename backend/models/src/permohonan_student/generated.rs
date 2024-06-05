@@ -73,6 +73,36 @@ impl PermohonanStudent {
             .optional()
     }
 
+    pub async fn filter_by_letter_and_return_letter_id(
+        db: &mut Connection,
+        param_letter_id: i32,
+    ) -> QueryResult<Option<(i32, Vec<Student>)>> {
+        use crate::schema::permohonan;
+        use crate::schema::permohonan_student::dsl::*;
+        use crate::schema::student;
+
+        let letter = permohonan::dsl::permohonan
+            .filter(permohonan::dsl::id.eq(param_letter_id))
+            .select(permohonan::user_id)
+            .first::<i32>(db)
+            .await
+            .optional()?;
+
+        match letter {
+            Some(n) => {
+                let students = permohonan_student
+                    .filter(permohonan_id.eq(param_letter_id))
+                    .inner_join(student::table)
+                    .inner_join(permohonan::table)
+                    .select(student::all_columns)
+                    .load::<Student>(db)
+                    .await?;
+                Ok(Some((n, students)))
+            }
+            None => Ok(None),
+        }
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
@@ -117,6 +147,19 @@ impl PermohonanStudent {
         use crate::schema::permohonan_student::dsl::*;
 
         diesel::delete(permohonan_student.filter(id.eq(param_id)))
+            .execute(db)
+            .await
+    }
+
+    pub async fn delete_by_student_and_letter_id(
+        db: &mut Connection,
+        param_student_id: i32,
+        param_letter_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::permohonan_student::dsl::*;
+
+        diesel::delete(permohonan_student.filter(student_id.eq(param_student_id)))
+            .filter(permohonan_id.eq(param_letter_id))
             .execute(db)
             .await
     }

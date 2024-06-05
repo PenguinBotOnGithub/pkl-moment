@@ -2,6 +2,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
+use models::permohonan_student::{CreatePermohonanStudent, PermohonanStudent};
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -13,7 +14,7 @@ use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, ApiResponse,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn permohonans_routes(
@@ -66,11 +67,44 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(delete_permohonan);
 
+    let get_permohonan_students_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(get_permohonan_students);
+
+    let add_permohonan_student_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path("add"))
+        .and(warp::path::end())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(add_permohonan_student);
+
+    let remove_permohonan_student_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path::param::<i32>())
+        .and(warp::path("remove"))
+        .and(warp::path::end())
+        .and(warp::delete())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(remove_permohonan_student);
+
     get_permohonans_route
         .or(create_permohonan_route)
         .or(read_permohonan_route)
         .or(update_permohonan_route)
         .or(delete_permohonan_route)
+        .or(get_permohonan_students_route)
+        .or(add_permohonan_student_route)
+        .or(remove_permohonan_student_route)
 }
 
 async fn get_permohonans(
@@ -108,7 +142,7 @@ async fn get_permohonans(
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let permohonans = Permohonan::paginate(&mut db, page, page_size)
+                    let permohonans = Permohonan::paginate_brief(&mut db, page, page_size)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -126,7 +160,7 @@ async fn get_permohonans(
                     })?;
 
                     let permohonans =
-                        Permohonan::paginate_by_user(&mut db, by_user, page, page_size)
+                        Permohonan::paginate_brief_by_user(&mut db, by_user, page, page_size)
                             .await
                             .map_err(|e| {
                                 reject::custom(InternalError::DatabaseError(e.to_string()))
@@ -140,9 +174,10 @@ async fn get_permohonans(
             }
         }
         _ => {
-            let permohonans = Permohonan::paginate_by_user(&mut db, claims.id, page, page_size)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let permohonans =
+                Permohonan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             Ok(reply::json(&ApiResponse::ok(
                 "success".to_owned(),
@@ -228,47 +263,52 @@ async fn update_permohonan(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let letter = Permohonan::read(&mut db, id)
+    let Some(v) = Permohonan::read(&mut db, id)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
-
-    if let Some(v) = letter {
-        match &claims.role[..] {
-            "admin" => {
-                if let Some(b) = payload.verified {
-                    if b {
-                        if v.verified {
-                            ()
-                        } else {
-                            payload.verified_date = Some(chrono::Local::now().date_naive());
-                        }
-                    } else {
-                        if v.verified {
-                            payload.verified_date = None;
-                        } else {
-                            ()
-                        }
-                    }
-                }
-            }
-            _ => {
-                if v.user_id != claims.id {
-                    return Err(reject::custom(ClientError::Authorization(
-                        "insufficient privilege to update other users data".to_owned(),
-                    )));
-                }
-
-                if let Some(_) = payload.verified {
-                    return Err(reject::custom(ClientError::Authorization(
-                        "insufficient privilege to verify data".to_owned(),
-                    )));
-                }
-            }
-        }
-    } else {
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
         return Err(reject::custom(ClientError::NotFound(
             "permohonan not found".to_owned(),
         )));
+    };
+
+    match &claims.role[..] {
+        "admin" => {
+            if let Some(b) = payload.verified {
+                if b {
+                    if v.verified {
+                        ()
+                    } else {
+                        payload.verified_date = Some(chrono::Local::now().date_naive());
+                    }
+                } else {
+                    if v.verified {
+                        payload.verified_date = None;
+                    } else {
+                        ()
+                    }
+                }
+            }
+        }
+        _ => {
+            if v.user_id != claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to update other users data".to_owned(),
+                )));
+            }
+
+            if let Some(_) = payload.verified {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to verify data".to_owned(),
+                )));
+            }
+
+            if let Some(_) = payload.user_id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to verify data".to_owned(),
+                )));
+            }
+        }
     }
 
     let result = Permohonan::update(&mut db, id, &payload)
@@ -322,5 +362,139 @@ async fn delete_permohonan(
         Err(reject::custom(ClientError::NotFound(
             "permohonan not found".to_owned(),
         )))
+    }
+}
+
+async fn get_permohonan_students(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = PermohonanStudent::filter_by_letter_and_return_letter_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    match result {
+        Some(v) => match &claims.role[..] {
+            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
+            _ => {
+                if v.0 != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to view others data".to_owned(),
+                    )));
+                }
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1)))
+            }
+        },
+        None => Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_string(),
+        ))),
+    }
+}
+
+async fn add_permohonan_student(
+    id: i32,
+    claims: JwtClaims,
+    payload: AddStudentRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let letter_owner = Permohonan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(n) = letter_owner {
+        match &claims.role[..] {
+            "admin" => {
+                let res = PermohonanStudent::create(
+                    &mut db,
+                    &CreatePermohonanStudent {
+                        permohonan_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+            _ => {
+                if n != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to modify others data".to_owned(),
+                    )));
+                }
+
+                let res = PermohonanStudent::create(
+                    &mut db,
+                    &CreatePermohonanStudent {
+                        permohonan_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+        }
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )))
+    }
+}
+
+async fn remove_permohonan_student(
+    id: i32,
+    student_id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let Some(n) = Permohonan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )));
+    };
+
+    match &claims.role[..] {
+        "admin" => {
+            let res = PermohonanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+            if res > 0 {
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            } else {
+                Err(reject::custom(ClientError::NotFound(
+                    "student not found".to_owned(),
+                )))
+            }
+        }
+        _ => {
+            if n != claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to modify others data".to_owned(),
+                )));
+            }
+
+            let res = PermohonanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+            if res > 0 {
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            } else {
+                Err(reject::custom(ClientError::NotFound(
+                    "student not found".to_owned(),
+                )))
+            }
+        }
     }
 }

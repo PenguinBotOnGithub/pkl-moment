@@ -1,7 +1,7 @@
 /* This file is generated and managed by dsync */
 
-use diesel::*;
 use diesel::QueryResult;
+use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -74,6 +74,36 @@ impl PengantaranStudent {
             .optional()
     }
 
+    pub async fn filter_by_letter_and_return_letter_id(
+        db: &mut Connection,
+        param_letter_id: i32,
+    ) -> QueryResult<Option<(i32, Vec<Student>)>> {
+        use crate::schema::pengantaran;
+        use crate::schema::pengantaran_student::dsl::*;
+        use crate::schema::student;
+
+        let letter = pengantaran::dsl::pengantaran
+            .filter(pengantaran::dsl::id.eq(param_letter_id))
+            .select(pengantaran::user_id)
+            .first::<i32>(db)
+            .await
+            .optional()?;
+
+        match letter {
+            Some(n) => {
+                let students = pengantaran_student
+                    .filter(pengantaran_id.eq(param_letter_id))
+                    .inner_join(student::table)
+                    .inner_join(pengantaran::table)
+                    .select(student::all_columns)
+                    .load::<Student>(db)
+                    .await?;
+                Ok(Some((n, students)))
+            }
+            None => Ok(None),
+        }
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
@@ -118,6 +148,19 @@ impl PengantaranStudent {
         use crate::schema::pengantaran_student::dsl::*;
 
         diesel::delete(pengantaran_student.filter(id.eq(param_id)))
+            .execute(db)
+            .await
+    }
+
+    pub async fn delete_by_student_and_letter_id(
+        db: &mut Connection,
+        param_student_id: i32,
+        param_letter_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::pengantaran_student::dsl::*;
+
+        diesel::delete(pengantaran_student.filter(student_id.eq(param_student_id)))
+            .filter(pengantaran_id.eq(param_letter_id))
             .execute(db)
             .await
     }

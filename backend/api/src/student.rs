@@ -63,7 +63,7 @@ pub fn students_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
         .and(with_db(db.clone()))
         .and_then(delete_student);
 
