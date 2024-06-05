@@ -140,9 +140,10 @@ async fn get_permohonans(
             }
         }
         _ => {
-            let permohonans = Permohonan::paginate_by_user(&mut db, claims.id, page, page_size)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let permohonans =
+                Permohonan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             Ok(reply::json(&ApiResponse::ok(
                 "success".to_owned(),
