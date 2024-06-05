@@ -151,4 +151,17 @@ impl PenarikanStudent {
             .execute(db)
             .await
     }
+
+    pub async fn delete_by_student_and_letter_id(
+        db: &mut Connection,
+        param_student_id: i32,
+        param_letter_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::penarikan_student::dsl::*;
+
+        diesel::delete(penarikan_student.filter(student_id.eq(param_student_id)))
+            .filter(penarikan_id.eq(param_letter_id))
+            .execute(db)
+            .await
+    }
 }
