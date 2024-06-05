@@ -2,6 +2,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use models::penarikan::{CreatePenarikan, Penarikan, UpdatePenarikan};
+use models::penarikan_student::PenarikanStudent;
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -66,11 +67,21 @@ pub fn penarikans_routes(
         .and(with_db(db.clone()))
         .and_then(delete_penarikan);
 
+    let get_penarikan_students_route = penarikan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(get_penarikan_students);
+
     get_penarikans_route
         .or(create_penarikan_route)
         .or(read_penarikan_route)
         .or(update_penarikan_route)
         .or(delete_penarikan_route)
+        .or(get_penarikan_students_route)
 }
 
 async fn get_penarikans(
@@ -322,5 +333,34 @@ async fn delete_penarikan(
         Err(reject::custom(ClientError::NotFound(
             "penarikan not found".to_owned(),
         )))
+    }
+}
+
+async fn get_penarikan_students(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = PenarikanStudent::filter_by_letter_and_return_letter_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    match result {
+        Some(v) => match &claims.role[..] {
+            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
+            _ => {
+                if v.0 != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to view others data".to_owned(),
+                    )));
+                }
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1)))
+            }
+        },
+        None => Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_string(),
+        ))),
     }
 }

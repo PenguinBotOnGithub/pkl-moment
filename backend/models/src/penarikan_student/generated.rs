@@ -1,7 +1,7 @@
 /* This file is generated and managed by dsync */
 
-use diesel::*;
 use diesel::QueryResult;
+use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -72,6 +72,36 @@ impl PenarikanStudent {
             .first::<Self>(db)
             .await
             .optional()
+    }
+
+    pub async fn filter_by_letter_and_return_letter_id(
+        db: &mut Connection,
+        param_letter_id: i32,
+    ) -> QueryResult<Option<(i32, Vec<Student>)>> {
+        use crate::schema::penarikan;
+        use crate::schema::penarikan_student::dsl::*;
+        use crate::schema::student;
+
+        let letter = penarikan::dsl::penarikan
+            .filter(penarikan::dsl::id.eq(param_letter_id))
+            .select(penarikan::user_id)
+            .first::<i32>(db)
+            .await
+            .optional()?;
+
+        match letter {
+            Some(n) => {
+                let students = penarikan_student
+                    .filter(penarikan_id.eq(param_letter_id))
+                    .inner_join(student::table)
+                    .inner_join(penarikan::table)
+                    .select(student::all_columns)
+                    .load::<Student>(db)
+                    .await?;
+                Ok(Some((n, students)))
+            }
+            None => Ok(None),
+        }
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
