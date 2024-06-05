@@ -13,9 +13,9 @@ pub fn assets_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection>
 pub fn with_cors() -> warp::cors::Cors {
     warp::cors()
         .allow_origins([
-            "localhost:5173",
-            "127.0.0.1:5173",
-            "warp-pkl-moment.shuttleapp.rs",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://warp-pkl-moment.shuttleapp.rs",
         ])
         .allow_methods(["GET", "POST", "PATCH", "DELETE"])
         .build()
