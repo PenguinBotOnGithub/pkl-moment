@@ -263,47 +263,52 @@ async fn update_penarikan(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let letter = Penarikan::read(&mut db, id)
+    let Some(v) = Penarikan::read(&mut db, id)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
-
-    if let Some(v) = letter {
-        match &claims.role[..] {
-            "admin" => {
-                if let Some(b) = payload.verified {
-                    if b {
-                        if v.verified {
-                            ()
-                        } else {
-                            payload.verified_date = Some(chrono::Local::now().date_naive());
-                        }
-                    } else {
-                        if v.verified {
-                            payload.verified_date = None;
-                        } else {
-                            ()
-                        }
-                    }
-                }
-            }
-            _ => {
-                if v.user_id != claims.id {
-                    return Err(reject::custom(ClientError::Authorization(
-                        "insufficient privilege to update other users data".to_owned(),
-                    )));
-                }
-
-                if let Some(_) = payload.verified {
-                    return Err(reject::custom(ClientError::Authorization(
-                        "insufficient privilege to verify data".to_owned(),
-                    )));
-                }
-            }
-        }
-    } else {
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
         return Err(reject::custom(ClientError::NotFound(
             "penarikan not found".to_owned(),
         )));
+    };
+
+    match &claims.role[..] {
+        "admin" => {
+            if let Some(b) = payload.verified {
+                if b {
+                    if v.verified {
+                        ()
+                    } else {
+                        payload.verified_date = Some(chrono::Local::now().date_naive());
+                    }
+                } else {
+                    if v.verified {
+                        payload.verified_date = None;
+                    } else {
+                        ()
+                    }
+                }
+            }
+        }
+        _ => {
+            if v.user_id != claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to update other users data".to_owned(),
+                )));
+            }
+
+            if let Some(_) = payload.verified {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to verify data".to_owned(),
+                )));
+            }
+
+            if let Some(_) = payload.user_id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to verify data".to_owned(),
+                )));
+            }
+        }
     }
 
     let result = Penarikan::update(&mut db, id, &payload)
