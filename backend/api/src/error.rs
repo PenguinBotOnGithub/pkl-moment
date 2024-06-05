@@ -122,15 +122,15 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
             }
         }
+    } else if let Some(e) = err.find::<BodyDeserializeError>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
+    } else if let Some(e) = err.find::<UnsupportedMediaType>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
     } else if err.find::<MethodNotAllowed>().is_some() {
         (
             StatusCode::METHOD_NOT_ALLOWED,
             "method not allowed".to_owned(),
         )
-    } else if let Some(e) = err.find::<BodyDeserializeError>() {
-        (StatusCode::BAD_REQUEST, e.to_string())
-    } else if let Some(e) = err.find::<UnsupportedMediaType>() {
-        (StatusCode::BAD_REQUEST, e.to_string())
     } else {
         error!("unhandled rejection {:?}", err);
         (
