@@ -59,7 +59,7 @@ pub struct CreatePermohonan {
     pub company_id: i32,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
-    pub verified: bool,
+    pub verified: Option<bool>,
     pub verified_date: Option<chrono::NaiveDate>,
     pub wave_id: i32,
 }

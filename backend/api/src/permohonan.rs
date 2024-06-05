@@ -163,17 +163,22 @@ async fn create_permohonan(
                 payload.user_id = Some(claims.id);
             }
 
-            if payload.verified {
-                payload.verified_date = Some(chrono::Local::now().date_naive());
+            if let Some(b) = payload.verified {
+                if b {
+                    payload.verified_date = Some(chrono::Local::now().date_naive());
+                } else {
+                    payload.verified_date = None;
+                }
+            } else {
+                payload.verified = Some(false);
+                payload.verified_date = None;
             }
         }
         _ => {
             payload.user_id = Some(claims.id);
 
-            if payload.verified {
-                payload.verified = false;
-                payload.verified_date = None;
-            }
+            payload.verified = Some(false);
+            payload.verified_date = None;
         }
     }
 
