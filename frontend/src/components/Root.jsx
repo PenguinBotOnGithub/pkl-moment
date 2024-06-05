@@ -11,49 +11,32 @@ function Root() {
   const [title, setTitle] = useState("");
 
   useEffect(() => {
-    switch (location.pathname) {
-      case "/admin/dashboard":
-        setTitle(t("Dashboard"));
-        break;
-
-      case "/admin/entries":
-        setTitle(t("Entries & Document"));
-        break;
-      case "/admin/entries/detail":
-        setTitle(t("Entries & Document > Detail"));
-        break;
-      case "/admin/entries/add":
-        setTitle(t("Entries & Document > Add"));
-        break;
-      case "/admin/entries/company":
-        setTitle(t("Entries & Document > Perusahaan"));
-        break;
-      case "/admin/entries/company/add":
-        setTitle(t("Entries & Document > Perusahaan > Tambah"));
-        break;
-      case "/admin/entries/student":
-        setTitle(t("Entries & Document > Siswa"));
-        break;
-      case "/admin/entries/student/add":
-        setTitle(t("Entries & Document > Siswa > Tambah"));
-        break;
-      case "/admin/entries/wave":
-        setTitle(t("Entries & Document > Gelombang"));
-        break;
-      case "/admin/entries/wave/add":
-        setTitle(t("Entries & Document > Gelombang > Tambah"));
-        break;
-
-      case "/admin/users":
-        setTitle(t("All Users"));
-        break;
-
-      case "/admin/settings":
-        setTitle(t("Settings"));
-        break;
-
-      default:
-        setTitle(t("Default Title"));
+    if (location.pathname === "/admin/dashboard") {
+      setTitle(t("Dashboard"));
+    } else if (location.pathname === "/admin/entries") {
+      setTitle(t("Entries & Document"));
+    } else if (/^\/admin\/entries\/[^/]+\/\d+$/.test(location.pathname)) {
+      setTitle(t("Entries & Document > Detail"));
+    } else if (/^\/admin\/entries\/[^/]+\/add$/.test(location.pathname)) {
+      setTitle(t("Entries & Document > Add"));
+    } else if (location.pathname === "/admin/entries/company") {
+      setTitle(t("Entries & Document > Perusahaan"));
+    } else if (/^\/admin\/entries\/company\/add$/.test(location.pathname)) {
+      setTitle(t("Entries & Document > Perusahaan > Tambah"));
+    } else if (location.pathname === "/admin/entries/student") {
+      setTitle(t("Entries & Document > Siswa"));
+    } else if (/^\/admin\/entries\/student\/add$/.test(location.pathname)) {
+      setTitle(t("Entries & Document > Siswa > Tambah"));
+    } else if (location.pathname === "/admin/entries/wave") {
+      setTitle(t("Entries & Document > Gelombang"));
+    } else if (/^\/admin\/entries\/wave\/add$/.test(location.pathname)) {
+      setTitle(t("Entries & Document > Gelombang > Tambah"));
+    } else if (location.pathname === "/admin/users") {
+      setTitle(t("All Users"));
+    } else if (location.pathname === "/admin/settings") {
+      setTitle(t("Settings"));
+    } else {
+      setTitle(t("Default Title"));
     }
   }, [location, t]);
 

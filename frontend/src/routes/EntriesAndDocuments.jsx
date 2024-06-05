@@ -7,15 +7,9 @@ import { useNavigate } from "react-router-dom";
 
 function EntriesAndDocuments() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  function onAddHandle() {
-    navigate("/admin/entries/add");
-  }
 
   return (
     <>
-      <Search addOnClick={onAddHandle} />
-      <Statistic />
       <EntriesTable />
     </>
   );

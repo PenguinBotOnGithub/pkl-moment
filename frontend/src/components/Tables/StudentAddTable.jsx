@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 function StudentAddTable() {
-  const [rows, setRows] = useState([{ name: "", address: "" }]);
+  const [rows, setRows] = useState([{ name: "", grade: "", nis:"" }]);
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -11,7 +11,7 @@ function StudentAddTable() {
   };
 
   const addRow = () => {
-    setRows([...rows, { name: "", address: "" }]);
+    setRows([...rows, { name: "", grade: "", nis:"" }]);
   };
 
   const deleteRow = (index) => {
@@ -26,8 +26,9 @@ function StudentAddTable() {
         <thead className="bg-neutral">
           <tr className="border-0">
             <th className="w-0">No</th>
-            <th>Nama Perusahaan</th>
-            <th>Alamat</th>
+            <th>Nama Siswa</th>
+            <th>Kelas</th>
+            <th>NIS</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -47,8 +48,17 @@ function StudentAddTable() {
               <td>
                 <input
                   type="text"
-                  name="address"
-                  value={row.address}
+                  name="grade"
+                  value={row.grade}
+                  onChange={(event) => handleInputChange(index, event)}
+                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  name="nis"
+                  value={row.nis}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
                 />
@@ -64,8 +74,8 @@ function StudentAddTable() {
       </table>
 
       <div className="flex justify-end mt-2 gap-2">
-        <button className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</button>
-        <button className="btn btn-success btn-sm">Kirim</button>
+        <div className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</div>
+        <div className="btn btn-success btn-sm">Kirim</div>
       </div>
     </div>
   );

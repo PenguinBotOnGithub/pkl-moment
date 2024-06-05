@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 
 function WaveTable() {
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(1);
+
 
   const data = [
     { id: 1, tahunPembelajaran: '2024/2025', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
@@ -11,7 +12,7 @@ function WaveTable() {
   ];
 
   const handleSelect = (id) => {
-    setSelectedIds((prevSelectedIds) => [...prevSelectedIds, id]);
+    setSelectedIds(id);
   };
 
   return (
@@ -35,8 +36,8 @@ function WaveTable() {
               <td>{row.startDate}</td>
               <td>{row.endDate}</td>
               <td>
-                {selectedIds.includes(row.id) ? (
-                  <span>Terpilih</span>
+                {selectedIds == row.id ? (
+                  <span className="opacity-60">Terpilih</span>
                 ) : (
                   <button
                     className="btn btn-success btn-xs rounded-lg mr-2"

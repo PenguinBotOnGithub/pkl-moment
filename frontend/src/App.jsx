@@ -63,7 +63,7 @@ function App() {
       ),
       children: [
         { path: ":entry/:id", element: <Entry /> },
-        { path: "add", element: <EntryAdd /> },
+        { path: ":entry/add", element: <EntryAdd /> },
         { path: "wave", element: <Wave /> },
         { path: "wave/add", element: <WaveAdd /> },
         { path: "company", element: <Company /> },
