@@ -11,8 +11,8 @@ function StudentEntryAddTable({
   const [visibleStudents, setVisibleStudents] = useState([]);
 
   useEffect(() => {
-    onSearchStudent("", setVisibleStudents)
-  });
+    onSearchStudent("", setVisibleStudents);
+  }, [onSearchStudent]);
 
   function handleSearchChange(value) {
     setSearchStudentValue(value);
@@ -57,7 +57,11 @@ function StudentEntryAddTable({
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => setIsOpenStudent(true)}
               onBlur={() => setTimeout(() => setIsOpenStudent(false), 200)}
-              style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                outline: "none",
+              }}
             />
             {isOpenStudent && (
               <div className="absolute bg-base-100 border-2 border-neutral rounded-lg -bottom-18 left-16 right-10 px-4 py-3 flex flex-col gap-2">
