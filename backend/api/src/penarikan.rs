@@ -9,9 +9,9 @@ use warp::{
     Filter,
 };
 
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
-    auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
 };
@@ -25,8 +25,7 @@ pub fn penarikans_routes(
     let get_penarikans_route = penarikan
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(warp::query::query::<HashMap<String, String>>())
         .and(with_db(db.clone()))
         .and_then(get_penarikans);
@@ -35,8 +34,7 @@ pub fn penarikans_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(create_penarikan);
@@ -45,7 +43,7 @@ pub fn penarikans_routes(
         .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(read_penarikan);
 
@@ -54,7 +52,7 @@ pub fn penarikans_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_penarikan);
@@ -64,7 +62,7 @@ pub fn penarikans_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_penarikan);
 
@@ -76,6 +74,7 @@ pub fn penarikans_routes(
 }
 
 async fn get_penarikans(
+    claims: JwtClaims,
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -104,20 +103,82 @@ async fn get_penarikans(
     };
 
     let mut db = db.lock();
-    let penarikans = Penarikan::paginate(&mut db, page, page_size)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    match &claims.role[..] {
+        "admin" => {
+            let by_user = queries.get("user");
+            match by_user {
+                None => {
+                    let penarikans = Penarikan::paginate(&mut db, page, page_size)
+                        .await
+                        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    Ok(reply::json(&ApiResponse::ok(
-        "success".to_owned(),
-        penarikans,
-    )))
+                    Ok(reply::json(&ApiResponse::ok(
+                        "success".to_owned(),
+                        penarikans,
+                    )))
+                }
+                Some(v) => {
+                    let by_user = v.parse::<i32>().map_err(|e| {
+                        reject::custom(ClientError::InvalidInput(format!(
+                            "invalid user id: {}",
+                            e.to_string()
+                        )))
+                    })?;
+
+                    let penarikans = Penarikan::paginate_by_user(&mut db, by_user, page, page_size)
+                        .await
+                        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                    Ok(reply::json(&ApiResponse::ok(
+                        "success".to_owned(),
+                        penarikans,
+                    )))
+                }
+            }
+        }
+        _ => {
+            let penarikans = Penarikan::paginate_by_user(&mut db, claims.id, page, page_size)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+            Ok(reply::json(&ApiResponse::ok(
+                "success".to_owned(),
+                penarikans,
+            )))
+        }
+    }
 }
 
 async fn create_penarikan(
-    payload: CreatePenarikan,
+    claims: JwtClaims,
+    mut payload: CreatePenarikan,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    match &claims.role[..] {
+        "admin" => {
+            if let None = payload.user_id {
+                payload.user_id = Some(claims.id);
+            }
+
+            if let Some(b) = payload.verified {
+                if b {
+                    payload.verified_date = Some(chrono::Local::now().date_naive());
+                } else {
+                    payload.verified_date = None;
+                }
+            } else {
+                payload.verified = Some(false);
+                payload.verified_date = None;
+            }
+        }
+        _ => {
+            payload.user_id = Some(claims.id);
+
+            payload.verified = Some(false);
+            payload.verified_date = None;
+        }
+    }
+
     let mut db = db.lock();
     let result = Penarikan::create(&mut db, &payload)
         .await
@@ -128,15 +189,27 @@ async fn create_penarikan(
 
 async fn read_penarikan(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let penarikan = Penarikan::read(&mut db, id)
+    let penarikan = Penarikan::read_with_joins(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(v) = penarikan {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+        match &claims.role[..] {
+            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+            _ => {
+                if v.user.id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to view other users data".to_owned(),
+                    )));
+                }
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+            }
+        }
     } else {
         Err(reject::custom(ClientError::NotFound(
             "penarikan not found".to_owned(),
@@ -146,10 +219,55 @@ async fn read_penarikan(
 
 async fn update_penarikan(
     id: i32,
-    payload: UpdatePenarikan,
+    claims: JwtClaims,
+    mut payload: UpdatePenarikan,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let letter = Penarikan::read(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = letter {
+        match &claims.role[..] {
+            "admin" => {
+                if let Some(b) = payload.verified {
+                    if b {
+                        if v.verified {
+                            ()
+                        } else {
+                            payload.verified_date = Some(chrono::Local::now().date_naive());
+                        }
+                    } else {
+                        if v.verified {
+                            payload.verified_date = None;
+                        } else {
+                            ()
+                        }
+                    }
+                }
+            }
+            _ => {
+                if v.user_id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to update other users data".to_owned(),
+                    )));
+                }
+
+                if let Some(_) = payload.verified {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to verify data".to_owned(),
+                    )));
+                }
+            }
+        }
+    } else {
+        return Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )));
+    }
+
     let result = Penarikan::update(&mut db, id, &payload)
         .await
         .map_err(handle_fk_data_not_exists)?;
@@ -165,9 +283,32 @@ async fn update_penarikan(
 
 async fn delete_penarikan(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let letter = Penarikan::read(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = letter {
+        match &claims.role[..] {
+            "admin" => (),
+            _ => {
+                if v.user_id != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to delete other users data".to_owned(),
+                    )));
+                }
+            }
+        }
+    } else {
+        return Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )));
+    }
+
     let result = Penarikan::delete(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
