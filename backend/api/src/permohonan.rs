@@ -2,6 +2,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
+use models::permohonan_student::PermohonanStudent;
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -66,11 +67,21 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(delete_permohonan);
 
+    let get_permohonan_students_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(get_permohonan_students);
+
     get_permohonans_route
         .or(create_permohonan_route)
         .or(read_permohonan_route)
         .or(update_permohonan_route)
         .or(delete_permohonan_route)
+        .or(get_permohonan_students_route)
 }
 
 async fn get_permohonans(
@@ -323,5 +334,34 @@ async fn delete_permohonan(
         Err(reject::custom(ClientError::NotFound(
             "permohonan not found".to_owned(),
         )))
+    }
+}
+
+async fn get_permohonan_students(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = PermohonanStudent::filter_by_letter_and_return_letter_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    match result {
+        Some(v) => match &claims.role[..] {
+            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
+            _ => {
+                if v.0 != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to view others data".to_owned(),
+                    )));
+                }
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1)))
+            }
+        },
+        None => Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_string(),
+        ))),
     }
 }
