@@ -14,13 +14,8 @@ use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, ApiResponse,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
-
-#[derive(serde::Deserialize, Debug, Clone)]
-struct AddStudentRequest {
-    student_id: i32,
-}
 
 pub fn permohonans_routes(
     jwt_key: String,

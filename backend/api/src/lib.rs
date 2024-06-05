@@ -83,3 +83,8 @@ impl<T> ApiResponse<T> {
         }
     }
 }
+
+#[derive(serde::Deserialize, Debug, Clone)]
+struct AddStudentRequest {
+    student_id: i32,
+}
