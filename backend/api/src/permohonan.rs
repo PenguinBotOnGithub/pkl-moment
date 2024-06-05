@@ -108,7 +108,7 @@ async fn get_permohonans(
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let permohonans = Permohonan::paginate(&mut db, page, page_size)
+                    let permohonans = Permohonan::paginate_brief(&mut db, page, page_size)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -126,7 +126,7 @@ async fn get_permohonans(
                     })?;
 
                     let permohonans =
-                        Permohonan::paginate_by_user(&mut db, by_user, page, page_size)
+                        Permohonan::paginate_brief_by_user(&mut db, by_user, page, page_size)
                             .await
                             .map_err(|e| {
                                 reject::custom(InternalError::DatabaseError(e.to_string()))

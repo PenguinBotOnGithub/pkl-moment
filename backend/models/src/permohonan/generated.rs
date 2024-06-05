@@ -262,6 +262,51 @@ impl Permohonan {
         })
     }
 
+    pub async fn paginate_brief(
+        db: &mut Connection,
+        page: i64,
+        page_size: i64,
+    ) -> QueryResult<PaginationResult<PermohonanBrief>> {
+        use crate::schema::company;
+        use crate::schema::permohonan::dsl::*;
+        use crate::schema::user;
+
+        let page_size = if page_size < 1 { 1 } else { page_size };
+        let total_items = permohonan.count().get_result(db).await?;
+        let items = permohonan
+            .inner_join(user::table)
+            .inner_join(company::table)
+            .limit(page_size)
+            .offset(page * page_size)
+            .select((
+                id,
+                created_at,
+                verified,
+                user::dsl::username,
+                company::dsl::name,
+            ))
+            .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
+            .await?
+            .into_iter()
+            .map(|v| PermohonanBrief {
+                id: v.0,
+                user: v.3,
+                company: v.4,
+                created_at: v.1,
+                verified: v.2,
+            })
+            .collect();
+
+        Ok(PaginationResult {
+            items,
+            total_items,
+            page,
+            page_size,
+            /* ceiling division of integers */
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
+        })
+    }
+
     pub async fn update(
         db: &mut Connection,
         param_id: i32,
