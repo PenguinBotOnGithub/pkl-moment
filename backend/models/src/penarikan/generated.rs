@@ -93,6 +93,17 @@ pub struct PaginationResult<T> {
 }
 
 impl Penarikan {
+    pub async fn get_owner_id(db: &mut Connection, param_id: i32) -> QueryResult<Option<i32>> {
+        use crate::schema::penarikan::dsl::*;
+
+        penarikan
+            .filter(id.eq(param_id))
+            .select(user_id)
+            .first::<i32>(db)
+            .await
+            .optional()
+    }
+
     pub async fn create(db: &mut Connection, item: &CreatePenarikan) -> QueryResult<Self> {
         use crate::schema::penarikan::dsl::*;
 

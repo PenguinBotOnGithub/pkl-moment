@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use models::penarikan::{CreatePenarikan, Penarikan, UpdatePenarikan};
-use models::penarikan_student::PenarikanStudent;
+use models::penarikan_student::{CreatePenarikanStudent, PenarikanStudent};
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -14,7 +14,7 @@ use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, ApiResponse,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn penarikans_routes(
@@ -76,12 +76,24 @@ pub fn penarikans_routes(
         .and(with_db(db.clone()))
         .and_then(get_penarikan_students);
 
+    let add_penarikan_student_route = penarikan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path("add"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(add_penarikan_student);
+
     get_penarikans_route
         .or(create_penarikan_route)
         .or(read_penarikan_route)
         .or(update_penarikan_route)
         .or(delete_penarikan_route)
         .or(get_penarikan_students_route)
+        .or(add_penarikan_student_route)
 }
 
 async fn get_penarikans(
@@ -362,5 +374,58 @@ async fn get_penarikan_students(
         None => Err(reject::custom(ClientError::NotFound(
             "penarikan not found".to_string(),
         ))),
+    }
+}
+
+async fn add_penarikan_student(
+    id: i32,
+    claims: JwtClaims,
+    payload: AddStudentRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let letter_owner = Penarikan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(n) = letter_owner {
+        match &claims.role[..] {
+            "admin" => {
+                let res = PenarikanStudent::create(
+                    &mut db,
+                    &CreatePenarikanStudent {
+                        penarikan_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+            _ => {
+                if n != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to modify others data".to_owned(),
+                    )));
+                }
+
+                let res = PenarikanStudent::create(
+                    &mut db,
+                    &CreatePenarikanStudent {
+                        penarikan_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+        }
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )))
     }
 }
