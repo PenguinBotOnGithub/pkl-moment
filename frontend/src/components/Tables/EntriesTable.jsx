@@ -1,24 +1,28 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function EntriesTable() {
+  const navigate = useNavigate();
+
   const newData1 = [
-    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
-    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false },
-    { adviser: 'Cy Ganderton', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true }
+    { id:0, adviser: 'Cy Ganderton', company: 'Google .inc', created_at: '23/05/2024', verified: true },
+    { id:1, adviser: 'Cy Ganderton', company: 'Google .inc', created_at: '23/05/2024', verified: false },
+    { id:2, adviser: 'Cy Ganderton', company: 'Google .inc', created_at: '23/05/2024', verified: true }
   ];
   const newData2 = [
-    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false },
-    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
-    { adviser: 'Ridho Jago', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true }
+    { id:0, adviser: 'Ridho Jago', company: 'Google .inc', created_at: '23/05/2024', verified: false },
+    { id:1, adviser: 'Ridho Jago', company: 'Google .inc', created_at: '23/05/2024', verified: true },
+    { id:2, adviser: 'Ridho Jago', company: 'Google .inc', created_at: '23/05/2024', verified: true }
   ];
   const newData3 = [
-    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
-    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: true },
-    { adviser: 'Rawrr', company: 'Google .inc', createdAt: '23/05/2024', isVerified: false }
+    { id:0, adviser: 'Rawrr', company: 'Google .inc', created_at: '23/05/2024', verified: true },
+    { id:1, adviser: 'Rawrr', company: 'Google .inc', created_at: '23/05/2024', verified: true },
+    { id:2, adviser: 'Rawrr', company: 'Google .inc', created_at: '23/05/2024', verified: false }
   ];
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentEntry, setCurrentEntry] = useState(0);
+  const entryValue = ["permohonan", "pengantaran", "penjemputan"];
   //? 0 = "permohonan" | 1 = "pengantaran" | 2 = "penjemputan"
 
   const [data, setData] = useState(newData1);
@@ -123,13 +127,13 @@ function EntriesTable() {
               </td>
               <td>{row.adviser}</td>
               <td>{row.company}</td>
-              <td>{row.createdAt}</td>
-              <td>{row.isVerified ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
+              <td>{row.created_at}</td>
+              <td>{row.verified ? <p className="opacity-60">Terverifikasi</p> : <button className="btn btn-success btn-xs">Verifikasi</button>}</td>
               <td className="flex flex-row flex-nowrap gap-2">
-                <button className="btn btn-info btn-xs rounded-lg">
-                  Data Input
+                <button className="btn btn-info btn-xs rounded-lg" onClick={()=>{navigate(`/admin/entries/${entryValue[currentEntry]}/${row.id}`)}}>
+                  Detail
                 </button>
-                {row.isVerified && <button className="btn btn-warning btn-xs">Export</button>}
+                {row.verified && <button className="btn btn-warning btn-xs">Export</button>}
               </td>
             </tr>
             

@@ -17,6 +17,10 @@ import Company from "./routes/detail/Company";
 import Student from "./routes/detail/Student";
 import CompanyAdd from "./routes/detail/CompanyAdd";
 import StudentAdd from "./routes/detail/StudentAdd";
+import Entry from "./routes/detail/Entry";
+import EntryAdd from "./routes/detail/EntryAdd";
+import Wave from "./routes/detail/Wave";
+import WaveAdd from "./routes/detail/WaveAdd";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -58,6 +62,10 @@ function App() {
         <Navigate to="../login" />
       ),
       children: [
+        { path: ":entry/:id", element: <Entry /> },
+        { path: "add", element: <EntryAdd /> },
+        { path: "wave", element: <Wave /> },
+        { path: "wave/add", element: <WaveAdd /> },
         { path: "company", element: <Company /> },
         { path: "company/add", element: <CompanyAdd /> },
         { path: "student", element: <Student /> },

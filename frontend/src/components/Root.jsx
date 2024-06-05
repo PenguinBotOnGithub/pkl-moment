@@ -11,33 +11,47 @@ function Root() {
   const [title, setTitle] = useState("");
 
   useEffect(() => {
-    
     switch (location.pathname) {
       case "/admin/dashboard":
         setTitle(t("Dashboard"));
         break;
+
       case "/admin/entries":
         setTitle(t("Entries & Document"));
         break;
+      case "/admin/entries/detail":
+        setTitle(t("Entries & Document > Detail"));
+        break;
+      case "/admin/entries/add":
+        setTitle(t("Entries & Document > Add"));
+        break;
+      case "/admin/entries/company":
+        setTitle(t("Entries & Document > Perusahaan"));
+        break;
+      case "/admin/entries/company/add":
+        setTitle(t("Entries & Document > Perusahaan > Tambah"));
+        break;
+      case "/admin/entries/student":
+        setTitle(t("Entries & Document > Siswa"));
+        break;
+      case "/admin/entries/student/add":
+        setTitle(t("Entries & Document > Siswa > Tambah"));
+        break;
+      case "/admin/entries/wave":
+        setTitle(t("Entries & Document > Gelombang"));
+        break;
+      case "/admin/entries/wave/add":
+        setTitle(t("Entries & Document > Gelombang > Tambah"));
+        break;
+
       case "/admin/users":
         setTitle(t("All Users"));
         break;
+
       case "/admin/settings":
         setTitle(t("Settings"));
         break;
-      case "/admin/entries/company":
-          setTitle(t("Entries & Document > Perusahaan"));
-          break;
-          case "/admin/entries/company/add":
-            setTitle(t("Entries & Document > Perusahaan > Tambah"));
-            break;
-      case "/admin/entries/student":
-          setTitle(t("Entries & Document > Siswa"));
-          break;
-          case "/admin/entries/student/add":
-            setTitle(t("Entries & Document > Siswa > Tambah"));
-            break;
-      
+
       default:
         setTitle(t("Default Title"));
     }
