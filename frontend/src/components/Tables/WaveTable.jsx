@@ -1,20 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 
-function CompanyTable() {
+function WaveTable() {
+  const [selectedIds, setSelectedIds] = useState([]);
+
   const data = [
-    { id: 1, namaPerusahaan: 'Company A', alamat: 'Address A' },
-    { id: 2, namaPerusahaan: 'Company B', alamat: 'Address B' },
-    { id: 3, namaPerusahaan: 'Company C', alamat: 'Address C' }
+    { id: 1, tahunPembelajaran: '2024/2025', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
+    { id: 2, tahunPembelajaran: '2023/2024', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
+    { id: 3, tahunPembelajaran: '2022/2023', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
+    { id: 4, tahunPembelajaran: '2021/2022', startDate: '10 Juli 2024', endDate: '12 Juni 2025' }
   ];
+
+  const handleSelect = (id) => {
+    setSelectedIds((prevSelectedIds) => [...prevSelectedIds, id]);
+  };
 
   return (
     <div className="overflow-x-auto">
       <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
         <thead className="bg-neutral">
           <tr className="border-0">
-          <th className="w-0">No</th>
-            <th>Nama Perusahaan</th>
-            <th>Alamat</th>
+            <th className="w-0">No</th>
+            <th>Tahun Pembelajaran</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Terpilih</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -22,8 +31,21 @@ function CompanyTable() {
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
               <td>{index + 1}</td>
-              <td>{row.namaPerusahaan}</td>
-              <td>{row.alamat}</td>
+              <td>{row.tahunPembelajaran}</td>
+              <td>{row.startDate}</td>
+              <td>{row.endDate}</td>
+              <td>
+                {selectedIds.includes(row.id) ? (
+                  <span>Terpilih</span>
+                ) : (
+                  <button
+                    className="btn btn-success btn-xs rounded-lg mr-2"
+                    onClick={() => handleSelect(row.id)}
+                  >
+                    Pilih
+                  </button>
+                )}
+              </td>
               <td>
                 <button className="btn btn-info btn-xs rounded-lg mr-2">
                   Edit
@@ -59,4 +81,4 @@ function CompanyTable() {
   );
 }
 
-export default CompanyTable;
+export default WaveTable;

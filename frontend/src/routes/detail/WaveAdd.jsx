@@ -1,8 +1,9 @@
 import React from 'react'
+import WaveAddTable from '../../components/tables/WaveAddTable'
 
 function WaveAdd() {
   return (
-    <div>WaveAdd</div>
+    <WaveAddTable />
   )
 }
 

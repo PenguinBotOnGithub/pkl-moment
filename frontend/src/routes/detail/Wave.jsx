@@ -1,15 +1,21 @@
-import React from 'react'
-import Search from '../../components/Search'
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
+import Search from '../../components/Search';
+import { useNavigate } from 'react-router-dom';
+import WaveTable from '../../components/tables/WaveTable';
 
 function Wave() {
-  const navigate = useNavigate()
-  function onAddHandle(){
+  const navigate = useNavigate();
+
+  function onAddHandle() {
     navigate("add");
   }
+
   return (
-    <Search addOnClick={onAddHandle} />
-  )
+    <>
+      <Search addOnClick={onAddHandle} />
+      <WaveTable />
+    </>
+  );
 }
 
-export default Wave
+export default Wave;
