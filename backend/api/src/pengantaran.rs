@@ -2,6 +2,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
 use models::pengantaran::{CreatePengantaran, Pengantaran, UpdatePengantaran};
+use models::pengantaran_student::CreatePengantaranStudent;
 use models::pengantaran_student::PengantaranStudent;
 use parking_lot::Mutex;
 use warp::{
@@ -14,7 +15,7 @@ use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, ApiResponse,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn pengantarans_routes(
@@ -76,12 +77,24 @@ pub fn pengantarans_routes(
         .and(with_db(db.clone()))
         .and_then(get_pengantaran_students);
 
+    let add_pengantaran_student_route = pengantaran
+        .and(warp::path::param::<i32>())
+        .and(warp::path("student"))
+        .and(warp::path("add"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(add_pengantaran_student);
+
     get_pengantarans_route
         .or(create_pengantaran_route)
         .or(read_pengantaran_route)
         .or(update_pengantaran_route)
         .or(delete_pengantaran_route)
         .or(get_pengantaran_students_route)
+        .or(add_pengantaran_student_route)
 }
 
 async fn get_pengantarans(
@@ -363,5 +376,58 @@ async fn get_pengantaran_students(
         None => Err(reject::custom(ClientError::NotFound(
             "pengantaran not found".to_string(),
         ))),
+    }
+}
+
+async fn add_pengantaran_student(
+    id: i32,
+    claims: JwtClaims,
+    payload: AddStudentRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let letter_owner = Pengantaran::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(n) = letter_owner {
+        match &claims.role[..] {
+            "admin" => {
+                let res = PengantaranStudent::create(
+                    &mut db,
+                    &CreatePengantaranStudent {
+                        pengantaran_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+            _ => {
+                if n != claims.id {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "insufficient privilege to modify others data".to_owned(),
+                    )));
+                }
+
+                let res = PengantaranStudent::create(
+                    &mut db,
+                    &CreatePengantaranStudent {
+                        pengantaran_id: id,
+                        student_id: payload.student_id,
+                    },
+                )
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+        }
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "pengantaran not found".to_owned(),
+        )))
     }
 }
