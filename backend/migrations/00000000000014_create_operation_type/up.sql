@@ -4,5 +4,6 @@ CREATE TYPE "operation" AS ENUM (
     'update', 
     'delete', 
     'verify', 
-    'unverify'
+    'unverify',
+    'register'
 );
