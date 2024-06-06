@@ -17,6 +17,36 @@ pub fn with_cors() -> warp::cors::Cors {
             "http://127.0.0.1:5173",
             "https://warp-pkl-moment.shuttleapp.rs",
         ])
+        .allow_headers([
+            "Accept",
+            "Content-Type",
+            "Authorization",
+            "User-Agent",
+            "Sec-Fetch-Mode",
+            "Referer",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+        ])
+        .allow_methods(["GET", "POST", "PATCH", "DELETE"])
+        .build()
+}
+
+pub fn with_dev_cors() -> warp::cors::Cors {
+    warp::cors()
+        .allow_any_origin()
+        .allow_headers([
+            "Accept",
+            "Content-Type",
+            "Authorization",
+            "User-Agent",
+            "Sec-Fetch-Mode",
+            "Referer",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+        ])
+        .expose_headers(["Access-Control-Allow-Origin"])
         .allow_methods(["GET", "POST", "PATCH", "DELETE"])
         .build()
 }
