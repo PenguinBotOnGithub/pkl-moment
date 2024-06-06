@@ -2,8 +2,9 @@ use std::convert::Infallible;
 
 use thiserror::Error;
 use tracing::error;
-use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection};
-use warp::{http::StatusCode, reject::MethodNotAllowed, reply::Reply};
+use warp::filters::body::BodyDeserializeError;
+use warp::reject::{InvalidHeader, MissingHeader, Reject, Rejection, UnsupportedMediaType};
+use warp::{http::StatusCode, reject, reject::MethodNotAllowed, reply::Reply};
 
 use crate::ApiResponse;
 
@@ -19,6 +20,8 @@ pub enum InternalError {
     NotImplemented(String),
     #[error("chrono time error")]
     ChronoError(String),
+    #[error("filesystem error")]
+    FilesystemError(String),
 }
 
 impl Reject for InternalError {}
@@ -38,6 +41,36 @@ pub enum ClientError {
 }
 
 impl Reject for ClientError {}
+
+pub fn handle_fk_data_not_exists(e: diesel::result::Error) -> Rejection {
+    if let diesel::result::Error::DatabaseError(v1, v2) = &e {
+        if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
+            return reject::custom(ClientError::NotFound(format!(
+                "the row the foreign key points to doesn't exists; constraint: {:?}",
+                v2.constraint_name().unwrap_or(
+                    "none found; please contact administrator or developer for further info"
+                )
+            )));
+        }
+    }
+    reject::custom(InternalError::DatabaseError(e.to_string()))
+}
+
+pub fn handle_fk_depended_data_delete(e: diesel::result::Error) -> Rejection {
+    if let diesel::result::Error::DatabaseError(v1, v2) = &e {
+        if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
+            return reject::custom(ClientError::Conflict(
+                format!("there are data that depends on the data you are trying to delete; fk: {:?}; table: {:?}", 
+                        v2.constraint_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info"), 
+                        v2.table_name()
+                            .unwrap_or("none found; please contact administrator or developer for further info")
+                ))
+            );
+        }
+    }
+    reject::custom(InternalError::DatabaseError(e.to_string()))
+}
 
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (code, message) = if err.is_not_found() {
@@ -84,7 +117,15 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
                 error!("chrono time error: {}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
             }
+            InternalError::FilesystemError(e) => {
+                error!("filesystem error: {}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
+            }
         }
+    } else if let Some(e) = err.find::<BodyDeserializeError>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
+    } else if let Some(e) = err.find::<UnsupportedMediaType>() {
+        (StatusCode::BAD_REQUEST, e.to_string())
     } else if err.find::<MethodNotAllowed>().is_some() {
         (
             StatusCode::METHOD_NOT_ALLOWED,

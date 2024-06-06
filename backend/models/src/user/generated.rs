@@ -5,6 +5,7 @@ use diesel::QueryResult;
 use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use std::mem;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -14,6 +15,13 @@ pub struct User {
     pub id: i32,
     pub username: String,
     pub password: String,
+    pub role: crate::types::UserRole,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserPublic {
+    pub id: i32,
+    pub username: String,
     pub role: crate::types::UserRole,
 }
 
@@ -44,6 +52,14 @@ pub struct PaginationResult<T> {
 }
 
 impl User {
+    pub fn public(&mut self) -> UserPublic {
+        UserPublic {
+            id: self.id,
+            username: mem::take(&mut self.username),
+            role: self.role,
+        }
+    }
+
     pub async fn create(db: &mut Connection, item: &CreateUser) -> QueryResult<Self> {
         use crate::schema::user::dsl::*;
 
@@ -101,13 +117,14 @@ impl User {
         db: &mut Connection,
         param_id: i32,
         item: &UpdateUser,
-    ) -> QueryResult<Self> {
+    ) -> QueryResult<Option<Self>> {
         use crate::schema::user::dsl::*;
 
         diesel::update(user.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
+            .optional()
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {

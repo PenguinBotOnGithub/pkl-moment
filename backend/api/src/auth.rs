@@ -22,7 +22,7 @@ use warp::{
 
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_jwt_key, ApiResponse,
+    with_db, with_json, with_jwt_key, ApiResponse,
 };
 
 const BEARER: &'static str = "Bearer ";
@@ -48,7 +48,44 @@ pub struct RegisterRequest {
     role: String,
 }
 
-pub async fn login_handler(
+pub fn auth_routes(
+    jwt_key: String,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    let auth = warp::any().and(warp::path("auth"));
+
+    let login_route = auth
+        .and(warp::path("login"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_jwt_key(jwt_key.clone()))
+        .and(with_db(db.clone()))
+        .and(with_json())
+        .and_then(login_handler);
+
+    let register_route = auth
+        .and(warp::path("register"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth(true, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(register_handler);
+
+    let refresh_route = auth
+        .and(warp::path("refresh"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_jwt_key(jwt_key.clone()))
+        .and(with_db(db.clone()))
+        .and_then(refresh_token_handler);
+
+    login_route.or(register_route).or(refresh_route)
+}
+
+async fn login_handler(
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
     payload: LoginRequest,
@@ -114,7 +151,7 @@ pub async fn login_handler(
     Ok(reply::json(&ApiResponse::ok("logged in".to_owned(), jwt)))
 }
 
-pub async fn register_handler(
+async fn register_handler(
     payload: RegisterRequest,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -140,9 +177,15 @@ pub async fn register_handler(
     };
 
     let mut db = db.lock();
-    let result = User::create(&mut db, &user)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let result = User::create(&mut db, &user).await.map_err(|e| {
+        if let diesel::result::Error::DatabaseError(v1, _) = &e {
+            if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
+                return reject::custom(ClientError::Conflict("username already taken".to_owned()));
+            }
+        }
+
+        reject::custom(InternalError::DatabaseError(e.to_string()))
+    })?;
 
     Ok(reply::json(&ApiResponse::ok(
         "registered".to_owned(),
@@ -264,7 +307,7 @@ pub fn with_auth(
         )
 }
 
-pub async fn refresh_token_handler(
+async fn refresh_token_handler(
     claims: JwtClaims,
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
