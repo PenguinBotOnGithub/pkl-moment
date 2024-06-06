@@ -4,6 +4,7 @@ CREATE TABLE "log" (
         operation_type operation NOT NULL,
         table_affected table_ref NOT NULL,
         user_id INT NOT NULL,
+        snapshot TEXT NOT NULL,
         logged_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_user FOREIGN KEY ("user_id") REFERENCES "user" ("id")
 );
