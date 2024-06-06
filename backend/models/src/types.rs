@@ -1,6 +1,8 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt::Formatter;
 
-#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Deserialize, Copy)]
+#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy)]
 #[ExistingTypePath = "crate::schema::sql_types::UserRole"]
 pub enum UserRole {
     Admin,
@@ -16,5 +18,57 @@ impl Serialize for UserRole {
             UserRole::Admin => serializer.serialize_unit_variant("UserRole", 0, "admin"),
             UserRole::Advisor => serializer.serialize_unit_variant("UserRole", 0, "advisor"),
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for UserRole {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct UserRoleVisitor;
+
+        impl<'de> Visitor<'de> for UserRoleVisitor {
+            type Value = UserRole;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("expected values: 'admin' or 'string'")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                match v {
+                    "admin" => Ok(UserRole::Admin),
+                    "advisor" => Ok(UserRole::Advisor),
+                    _ => Err(E::custom(format!("unknown variant: {v}"))),
+                }
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                match v {
+                    "admin" => Ok(UserRole::Admin),
+                    "advisor" => Ok(UserRole::Advisor),
+                    _ => Err(E::custom(format!("unknown variant: {v}"))),
+                }
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                match &v[..] {
+                    "admin" => Ok(UserRole::Admin),
+                    "advisor" => Ok(UserRole::Advisor),
+                    _ => Err(E::custom(format!("unknown variant: {v}"))),
+                }
+            }
+        }
+
+        deserializer.deserialize_string(UserRoleVisitor)
     }
 }
