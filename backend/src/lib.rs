@@ -20,3 +20,10 @@ pub fn with_cors() -> warp::cors::Cors {
         .allow_methods(["GET", "POST", "PATCH", "DELETE"])
         .build()
 }
+
+pub fn with_dev_cors() -> warp::cors::Cors {
+    warp::cors()
+        .allow_any_origin()
+        .allow_methods(["GET", "POST", "PATCH", "DELETE"])
+        .build()
+}
