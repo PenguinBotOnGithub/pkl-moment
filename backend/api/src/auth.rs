@@ -236,10 +236,11 @@ pub fn with_auth_with_claims(
                     &DecodingKey::from_secret(secret.as_bytes()),
                     &Validation::new(jsonwebtoken::Algorithm::HS512),
                 )
-                .map_err(|_| {
-                    reject::custom(ClientError::Authentication(
-                        "jwt signature invalid or validation failed".to_owned(),
-                    ))
+                .map_err(|e| {
+                    reject::custom(ClientError::Authentication(format!(
+                        "jwt signature invalid or validation failed: {}",
+                        e.to_string()
+                    )))
                 })?;
 
                 let mut db = db.lock();
