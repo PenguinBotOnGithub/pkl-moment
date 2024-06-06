@@ -60,16 +60,6 @@ pub struct CreateLog {
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name=log)]
-pub struct UpdateLog {
-    pub operation_type: Option<crate::types::Operation>,
-    pub table_affected: Option<crate::types::TableRef>,
-    pub user_id: Option<i32>,
-    pub snapshot: Option<String>,
-    pub logged_at: Option<chrono::DateTime<chrono::Utc>>,
-}
-
 #[derive(Debug, Serialize)]
 pub struct PaginationResult<T> {
     pub items: Vec<T>,
@@ -211,22 +201,5 @@ impl Log {
             /* ceiling division of integers */
             num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
         })
-    }
-
-    pub async fn update(db: &mut Connection, param_id: i32, item: &UpdateLog) -> QueryResult<Self> {
-        use crate::schema::log::dsl::*;
-
-        diesel::update(log.filter(id.eq(param_id)))
-            .set(item)
-            .get_result(db)
-            .await
-    }
-
-    pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
-        use crate::schema::log::dsl::*;
-
-        diesel::delete(log.filter(id.eq(param_id)))
-            .execute(db)
-            .await
     }
 }
