@@ -7,6 +7,7 @@ use argon2::{
 use chrono::{Duration, Utc};
 use diesel_async::AsyncPgConnection;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use models::types::UserRole;
 use models::{
     invalidated_jwt::InvalidatedJwt,
     user::{CreateUser, User},
@@ -31,7 +32,7 @@ const BEARER: &'static str = "Bearer ";
 pub struct JwtClaims {
     pub id: i32,
     pub name: String,
-    pub role: String,
+    pub role: UserRole,
     pub exp: i64,
 }
 
@@ -124,10 +125,7 @@ async fn login_handler(
             let claims = JwtClaims {
                 id: user.as_ref().unwrap().id,
                 name: user.as_ref().unwrap().username.clone(),
-                role: match &user.as_ref().unwrap().role {
-                    models::types::UserRole::Admin => "admin".to_owned(),
-                    models::types::UserRole::Advisor => "advisor".to_owned(),
-                },
+                role: user.as_ref().unwrap().role,
                 exp: exp,
             };
 
@@ -333,10 +331,7 @@ async fn refresh_token_handler(
     let claims = JwtClaims {
         id: claims.id,
         name: user.as_ref().unwrap().username.clone(),
-        role: match user.unwrap().role {
-            models::types::UserRole::Admin => "admin".to_owned(),
-            models::types::UserRole::Advisor => "advisor".to_owned(),
-        },
+        role: user.as_ref().unwrap().role,
         exp: exp,
     };
 
