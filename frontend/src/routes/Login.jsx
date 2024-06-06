@@ -21,26 +21,26 @@ function Login({ cookies }) {
     e.preventDefault();
 
     // Add your login logic here, such as sending a request to your server
-    // fetch("https://warp-pkl-moment.shuttleapp.rs/api/auth/login", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type":"application/json"
-    //   } ,
-    //   body: JSON.stringify({
-    //     username: formData.username,
-    //     password: formData.password,
-    //   }),
-    // })
-    //   .then((response) => response.json())
-    //   .then((result) => {
-    //     if (result.status === "success") {
-    //       alert(result);
-    //     } else {
-    //       alert("Please check your login information.");
-    //     }
-    //   });
-    cookies.set("access-token", getCurrentDate());
-    window.location.reload();
+    fetch("https://warp-pkl-moment.shuttleapp.rs/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          cookies.set("access-token", result.data);
+          window.location.reload();
+        }
+      })
+      .catch(() => {
+        alert("Please check your login information.");
+      });
 
     console.log("Form data submitted:", formData);
     // You can use Axios or the Fetch API to send the data to your server for authentication

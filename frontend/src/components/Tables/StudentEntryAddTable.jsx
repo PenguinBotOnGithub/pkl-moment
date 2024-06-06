@@ -5,6 +5,7 @@ function StudentEntryAddTable({
   onAddRow,
   onDeleteRow,
   onSearchStudent,
+  isMaxWidth,
 }) {
   const [searchStudentValue, setSearchStudentValue] = useState("");
   const [isOpenStudent, setIsOpenStudent] = useState(false);
@@ -21,10 +22,11 @@ function StudentEntryAddTable({
   }
 
   return (
-    <table className="table bg-base-100 border-0 rounded-lg max-w-screen-sm">
-      <thead className="">
-        <tr className="border-0">
-          <th className="w-0">No</th>
+    <table className={`table bg-base-100 border-0 rounded-lg ${isMaxWidth && "max-w-screen-sm"}`}>
+      <thead className="relative">
+        <div className="bg-neutral-content absolute left-0 right-0 bottom-0 top-0 opacity-5 rounded-t-lg" />
+        <tr className="border-0 ">
+          <th className="w-0 z-20">No</th>
           <th>Nama Siswa</th>
           <th>Aksi</th>
         </tr>
@@ -64,7 +66,7 @@ function StudentEntryAddTable({
               }}
             />
             {isOpenStudent && (
-              <div className="absolute bg-base-100 border-2 border-neutral rounded-lg -bottom-18 left-16 right-10 px-4 py-3 flex flex-col gap-2">
+              <div className="absolute bg-base-100 border-2 border-neutral rounded-lg -bottom-18 left-16 right-10 px-4 py-3 flex flex-col gap-2 z-10">
                 {visibleStudents.map((student) => (
                   <div
                     key={student.id}

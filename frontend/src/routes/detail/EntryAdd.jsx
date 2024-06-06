@@ -66,6 +66,7 @@ function EntryAdd() {
         onAddRow={addRow}
         onDeleteRow={deleteRow}
         onSearchStudent={searchStudent}
+        isMaxWidth={true}
       />
       <button className="btn btn-primary max-w-screen-sm w-full">Send</button>
     </form>

@@ -1,7 +1,49 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+import host from "../../assets/strings/host";
 
 function CompanyAddTable() {
   const [rows, setRows] = useState([{ name: "", address: "" }]);
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const navigate = useNavigate();
+
+  const handleSubmit = (formData) => {
+    fetch(`${ host }/api/company/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        address: formData.address,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          navigate("/admin/entries/company");
+        }
+      })
+      .catch(() => {
+        alert("Please check your companies information.");
+      });
+
+    console.log("Form data submitted:", formData);
+    // You can use Axios or the Fetch API to send the data to your server for authentication
+  };
+
+  function execBulkPost(){
+    rows.forEach((row) => {
+      if(row.name.trim() == "" || row.address.trim() == "") {
+        alert("Please fill every data before submitting");
+      }else{
+        handleSubmit(row);
+      }
+    });
+  }
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -42,6 +84,7 @@ function CompanyAddTable() {
                   value={row.name}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  required
                 />
               </td>
               <td>
@@ -51,6 +94,7 @@ function CompanyAddTable() {
                   value={row.address}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  required
                 />
               </td>
               <td>
@@ -65,7 +109,7 @@ function CompanyAddTable() {
 
       <div className="flex justify-end mt-2 gap-2">
         <button className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</button>
-        <button className="btn btn-success btn-sm">Kirim</button>
+        <button className="btn btn-success btn-sm" onClick={execBulkPost}>Kirim</button>
       </div>
     </div>
   );
