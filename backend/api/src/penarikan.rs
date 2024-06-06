@@ -144,7 +144,7 @@ async fn get_penarikans(
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let penarikans = Penarikan::paginate_brief(&mut db, page, page_size)
+                    let penarikans = Penarikan::paginate_brief(&mut db, page, page_size, None)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -162,7 +162,7 @@ async fn get_penarikans(
                     })?;
 
                     let penarikans =
-                        Penarikan::paginate_brief_by_user(&mut db, by_user, page, page_size)
+                        Penarikan::paginate_brief(&mut db, page, page_size, Some(by_user))
                             .await
                             .map_err(|e| {
                                 reject::custom(InternalError::DatabaseError(e.to_string()))
@@ -176,7 +176,7 @@ async fn get_penarikans(
             }
         }
         UserRole::Advisor => {
-            let penarikans = Penarikan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
+            let penarikans = Penarikan::paginate_brief(&mut db, page, page_size, Some(claims.id))
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
