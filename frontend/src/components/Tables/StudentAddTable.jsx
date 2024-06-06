@@ -1,7 +1,48 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+import host from "../../assets/strings/host";
 
 function StudentAddTable() {
-  const [rows, setRows] = useState([{ name: "", grade: "", nis:"" }]);
+  const [rows, setRows] = useState([{ name: "", class: "", nis:"" }]);
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (formData) => {
+    console.log("Form data submitted:", formData);
+    await fetch(`${host}/api/student/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        class: formData.class,
+        nis: formData.nis,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          navigate("/admin/entries/student");
+        }
+      })
+      .catch(() => {
+        alert("Something went wrong");
+      });
+  };
+
+  function execBulkPost() {
+    rows.forEach((row) => {
+      if (row.name.trim() == "" || row.class.trim() == "" || row.nis.trim() == "") {
+        alert("Please fill every data before submitting");
+      } else {
+        handleSubmit(row);
+      }
+    });
+  }
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -11,7 +52,7 @@ function StudentAddTable() {
   };
 
   const addRow = () => {
-    setRows([...rows, { name: "", grade: "", nis:"" }]);
+    setRows([...rows, { name: "", class: "", nis:"" }]);
   };
 
   const deleteRow = (index) => {
@@ -48,8 +89,8 @@ function StudentAddTable() {
               <td>
                 <input
                   type="text"
-                  name="grade"
-                  value={row.grade}
+                  name="class"
+                  value={row.class}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
                 />
@@ -75,7 +116,7 @@ function StudentAddTable() {
 
       <div className="flex justify-end mt-2 gap-2">
         <div className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</div>
-        <div className="btn btn-success btn-sm">Kirim</div>
+        <div className="btn btn-success btn-sm" onClick={execBulkPost}>Kirim</div>
       </div>
     </div>
   );

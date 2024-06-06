@@ -95,6 +95,7 @@ function Settings({ cookies }) {
                   className="btn text-error"
                   onClick={() => {
                     cookies.remove("access-token");
+                    cookies.remove("role");
                     window.location.reload();
                   }}
                 >

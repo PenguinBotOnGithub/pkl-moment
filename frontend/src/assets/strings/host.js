@@ -1,3 +1,3 @@
-const host = "https://warp-pkl-moment.shuttleapp.rs";
+const host = "http://127.0.0.1:8000";
 
 export default host;

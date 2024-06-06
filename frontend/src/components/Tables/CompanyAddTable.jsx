@@ -9,12 +9,13 @@ function CompanyAddTable() {
   const token = cookies.get("access-token");
   const navigate = useNavigate();
 
-  const handleSubmit = (formData) => {
-    fetch(`${ host }/api/company/create`, {
+  const handleSubmit = async (formData) => {
+    console.log("Form data submitted:", formData);
+    await fetch(`${host}/api/company/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": token
+        Authorization: token,
       },
       body: JSON.stringify({
         name: formData.name,
@@ -30,16 +31,13 @@ function CompanyAddTable() {
       .catch(() => {
         alert("Please check your companies information.");
       });
-
-    console.log("Form data submitted:", formData);
-    // You can use Axios or the Fetch API to send the data to your server for authentication
   };
 
-  function execBulkPost(){
+  function execBulkPost() {
     rows.forEach((row) => {
-      if(row.name.trim() == "" || row.address.trim() == "") {
+      if (row.name.trim() == "" || row.address.trim() == "") {
         alert("Please fill every data before submitting");
-      }else{
+      } else {
         handleSubmit(row);
       }
     });
@@ -83,7 +81,11 @@ function CompanyAddTable() {
                   name="name"
                   value={row.name}
                   onChange={(event) => handleInputChange(index, event)}
-                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                   required
                 />
               </td>
@@ -93,12 +95,19 @@ function CompanyAddTable() {
                   name="address"
                   value={row.address}
                   onChange={(event) => handleInputChange(index, event)}
-                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                   required
                 />
               </td>
               <td>
-                <button className="btn btn-error btn-xs rounded-lg mr-2" onClick={() => deleteRow(index)}>
+                <button
+                  className="btn btn-error btn-xs rounded-lg mr-2"
+                  onClick={() => deleteRow(index)}
+                >
                   Delete
                 </button>
               </td>
@@ -108,8 +117,12 @@ function CompanyAddTable() {
       </table>
 
       <div className="flex justify-end mt-2 gap-2">
-        <button className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</button>
-        <button className="btn btn-success btn-sm" onClick={execBulkPost}>Kirim</button>
+        <button className="btn btn-neutral btn-sm" onClick={addRow}>
+          Tambah Baris
+        </button>
+        <button className="btn btn-success btn-sm" onClick={execBulkPost}>
+          Kirim
+        </button>
       </div>
     </div>
   );

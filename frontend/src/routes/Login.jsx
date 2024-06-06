@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
 import getCurrentDate from "../assets/strings/getCurrentDate";
+import host from "../assets/strings/host";
 
 function Login({ cookies }) {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ function Login({ cookies }) {
     e.preventDefault();
 
     // Add your login logic here, such as sending a request to your server
-    fetch("https://warp-pkl-moment.shuttleapp.rs/api/auth/login", {
+    fetch(`${ host }/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -34,7 +35,8 @@ function Login({ cookies }) {
       .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
-          cookies.set("access-token", result.data);
+          cookies.set("access-token", result.data.token);
+          cookies.set("role", result.data.role);
           window.location.reload();
         }
       })

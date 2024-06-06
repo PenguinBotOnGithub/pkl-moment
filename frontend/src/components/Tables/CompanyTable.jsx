@@ -6,36 +6,37 @@ function CompanyTable() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const [data, setData] = useState([]);
+  const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchDataForCompanies = async () => {
-      try {
-        const response = await fetch(`${host}/api/company?page=0`, {
-          headers: {
-            Authorization: token,
-          },
-        });
-        if (!response.status) {
-          throw new Error(`HTTP error: Status ${response.status}`);
-        }
-        let companiesData = await response.json();
-        setData(companiesData.data.items);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-        setData(null);
-      } finally {
-        setLoading(false);
+  const fetchDataForCompanies = async () => {
+    try {
+      const response = await fetch(`${host}/api/company?page=0`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
       }
-    };
+      let companiesData = await response.json();
+      setData(companiesData.data.items);
+      setIsDataEdited(companiesData.data.items.map(() => false));
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDataForCompanies();
-  });
+  }, []);
 
   const deleteCompany = async (index) => {
-    console.log("dfasdfasf");
     try {
       const response = await fetch(`${host}/api/company/${index}/delete`, {
         headers: {
@@ -43,17 +44,59 @@ function CompanyTable() {
         },
         method: "DELETE",
       });
-      if (!response.status) {
+      if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let companiesData = await response.json();
+      await response.json();
       setError(null);
+      fetchDataForCompanies();
     } catch (err) {
       setError(err.message);
-      setData(null);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handleInputChange = (index, field, value) => {
+    const newData = [...data];
+    newData[index][field] = value;
+    setData(newData);
+
+    const newIsDataEdited = [...isDataEdited];
+    newIsDataEdited[index] = true;
+    setIsDataEdited(newIsDataEdited);
+  };
+
+  const saveChanges = async (index, id) => {
+    // Implement the logic to save the changes to the server
+    console.log("Form data submitted:", data[index]);
+    await fetch(`${host}/api/company/${id}/update`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        name: data[index].name,
+        address: data[index].address,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          fetchDataForCompanies();
+        }
+      })
+      .catch(() => {
+        alert("Something went wrong");
+        fetchDataForCompanies();
+      });
+
+    const newIsDataEdited = [...isDataEdited];
+    newIsDataEdited[index] = false;
+    setIsDataEdited(newIsDataEdited);
+  };
+
+  const cancelChanges = () => {
+    fetchDataForCompanies();
   };
 
   return (
@@ -71,15 +114,44 @@ function CompanyTable() {
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
               <td>{index + 1}</td>
-              <td>{row.name}</td>
-              <td>{row.address}</td>
               <td>
-                <button className="btn btn-info btn-xs rounded-lg mr-2">
-                  Edit
-                </button>
+                <input
+                  type="text"
+                  value={row.name}
+                  className="w-full"
+                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
+                  onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={row.address}
+                  className="w-full"
+                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
+                  onChange={(e) => handleInputChange(index, "address", e.target.value)}
+                />
+              </td>
+              <td>
+                {isDataEdited[index] && (
+                  <>
+                    <button
+                      className="btn btn-success btn-xs rounded-lg mr-2"
+                      onClick={() => saveChanges(index,row.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn btn-warning btn-xs rounded-lg mr-2"
+                      onClick={() => cancelChanges()}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
                 <button
                   className="btn btn-error btn-xs rounded-lg"
-                  onClick={deleteCompany(row.id)}
+                  onClick={() => deleteCompany(row.id)}
                 >
                   Delete
                 </button>

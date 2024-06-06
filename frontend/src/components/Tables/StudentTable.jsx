@@ -1,11 +1,104 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import host from "../../assets/strings/host";
 
-function CompanyTable() {
-  const data = [
-    { id: 1, namaSiswa: 'Student A', kelas: 'Class A', nis: '6576' },
-    { id: 2, namaSiswa: 'Student B', kelas: 'Class B', nis: '8767' },
-    { id: 3, namaSiswa: 'Student C', kelas: 'Class C', nis: '6545' }
-  ];
+function StudentTable() {
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const [data, setData] = useState([]);
+  const [isDataEdited, setIsDataEdited] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDataForStudents = async () => {
+    try {
+      const response = await fetch(`${host}/api/student?page=0`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let studentsData = await response.json();
+      setData(studentsData.data.items);
+      setIsDataEdited(studentsData.data.items.map(() => false));
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataForStudents();
+  }, []);
+
+  const deleteStudent = async (index) => {
+    try {
+      const response = await fetch(`${host}/api/student/${index}/delete`, {
+        headers: {
+          Authorization: token,
+        },
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      await response.json();
+      setError(null);
+      fetchDataForStudents();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleInputChange = (index, field, value) => {
+    const newData = [...data];
+    newData[index][field] = value;
+    setData(newData);
+
+    const newIsDataEdited = [...isDataEdited];
+    newIsDataEdited[index] = true;
+    setIsDataEdited(newIsDataEdited);
+  };
+
+  const saveChanges = async (index, id) => {
+    // Implement the logic to save the changes to the server
+    console.log("Form data submitted:", data[index]);
+    await fetch(`${host}/api/student/${id}/update`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        name: data[index].name,
+        class: data[index].class,
+        nis: data[index].nis,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          fetchDataForStudents();
+        }
+      })
+      .catch(() => {
+        alert("Something went wrong");
+        fetchDataForStudents();
+      });
+
+    const newIsDataEdited = [...isDataEdited];
+    newIsDataEdited[index] = false;
+    setIsDataEdited(newIsDataEdited);
+  };
+
+  const cancelChanges = () => {
+    fetchDataForStudents();
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -23,14 +116,54 @@ function CompanyTable() {
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
               <td>{index + 1}</td>
-              <td>{row.namaSiswa}</td>
-              <td>{row.kelas}</td>
-              <td>{row.nis}</td>
               <td>
-                <button className="btn btn-info btn-xs rounded-lg mr-2">
-                  Edit
-                </button>
-                <button className="btn btn-error btn-xs rounded-lg">
+                <input
+                  type="text"
+                  value={row.name}
+                  className="w-full"
+                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
+                  onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={row.class}
+                  className="w-full"
+                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
+                  onChange={(e) => handleInputChange(index, "class", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={row.nis}
+                  className="w-full"
+                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
+                  onChange={(e) => handleInputChange(index, "nis", e.target.value)}
+                />
+              </td>
+              <td>
+                {isDataEdited[index] && (
+                  <>
+                    <button
+                      className="btn btn-success btn-xs rounded-lg mr-2"
+                      onClick={() => saveChanges(index, row.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn btn-warning btn-xs rounded-lg mr-2"
+                      onClick={() => cancelChanges()}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+                <button
+                  className="btn btn-error btn-xs rounded-lg"
+                  onClick={() => deleteStudent(row.id)}
+                >
                   Delete
                 </button>
               </td>
@@ -61,4 +194,4 @@ function CompanyTable() {
   );
 }
 
-export default CompanyTable;
+export default StudentTable;
