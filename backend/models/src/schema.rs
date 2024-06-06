@@ -2,6 +2,14 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "operation"))]
+    pub struct Operation;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "table_ref"))]
+    pub struct TableRef;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "user_role"))]
     pub struct UserRole;
 }
@@ -20,6 +28,20 @@ diesel::table! {
         jwt -> Text,
         invalidated_timestamp -> Timestamptz,
         expires_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Operation;
+    use super::sql_types::TableRef;
+
+    log (id) {
+        id -> Int4,
+        operation_type -> Operation,
+        table_affected -> TableRef,
+        user_id -> Int4,
+        logged_at -> Timestamptz,
     }
 }
 
@@ -130,6 +152,7 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(log -> user (user_id));
 diesel::joinable!(penarikan -> company (company_id));
 diesel::joinable!(penarikan -> user (user_id));
 diesel::joinable!(penarikan -> wave (wave_id));
@@ -149,6 +172,7 @@ diesel::joinable!(permohonan_student -> student (student_id));
 diesel::allow_tables_to_appear_in_same_query!(
     company,
     invalidated_jwt,
+    log,
     penarikan,
     penarikan_student,
     pengantaran,
