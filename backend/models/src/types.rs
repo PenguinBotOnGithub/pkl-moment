@@ -2,6 +2,32 @@ use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;
 
+#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::TableRef"]
+pub enum TableRef {
+    User,
+    Wave,
+    Company,
+    Student,
+    Signature,
+    Permohonan,
+    PermohonanStudent,
+    Pengantaran,
+    PengantaranStudent,
+    Penarikan,
+    PenarikanStudent,
+}
+
+#[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Operation"]
+pub enum Operation {
+    Create,
+    Update,
+    Delete,
+    Verify,
+    Unverify,
+}
+
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy)]
 #[ExistingTypePath = "crate::schema::sql_types::UserRole"]
 pub enum UserRole {

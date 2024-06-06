@@ -41,6 +41,7 @@ diesel::table! {
         operation_type -> Operation,
         table_affected -> TableRef,
         user_id -> Int4,
+        snapshot -> Text,
         logged_at -> Timestamptz,
     }
 }
