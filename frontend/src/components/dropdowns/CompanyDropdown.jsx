@@ -7,19 +7,15 @@ function CompanyDropdown({ value }) {
 
   const items = value;
 
-  useEffect(() => {
-    setVisibleCompanies(items.map((item) => ({ ...item, visible: true })));
-  }, []);
-
   function handleSearchChange(value) {
     setSearchValue(value);
     const searchTerm = value.toLowerCase();
 
     const updatedItems = items.map((item) => {
-      const text = item.company.toLowerCase();
+      const text = item.name.toLowerCase();
       return {
         id: item.id,
-        company: item.company,
+        name: item.name,
         visible: text.includes(searchTerm),
       };
     });
@@ -28,8 +24,8 @@ function CompanyDropdown({ value }) {
     setIsOpen(true);
   }
 
-  function selectItem(company) {
-    setSearchValue(company);
+  function selectItem(name) {
+    setSearchValue(name);
     setIsOpen(false);
   }
 
@@ -40,7 +36,12 @@ function CompanyDropdown({ value }) {
         className="input w-full"
         value={searchValue}
         onChange={(e) => handleSearchChange(e.target.value)}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          setIsOpen(true);
+          setVisibleCompanies(
+            items.map((item) => ({ ...item, visible: true }))
+          );
+        }}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
       />
       {isOpen && (
@@ -51,9 +52,12 @@ function CompanyDropdown({ value }) {
               <div
                 key={item.id}
                 className="cursor-pointer"
-                onMouseDown={() => selectItem(item.company)}
+                onMouseDown={() => {
+                  selectItem(item.name);
+                  console.log(items);
+                }}
               >
-                {item.company}
+                {item.name}
               </div>
             ))}
         </div>

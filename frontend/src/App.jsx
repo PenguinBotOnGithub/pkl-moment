@@ -21,6 +21,8 @@ import Entry from "./routes/detail/Entry";
 import EntryAdd from "./routes/detail/EntryAdd";
 import Wave from "./routes/detail/Wave";
 import WaveAdd from "./routes/detail/WaveAdd";
+import User from "./routes/detail/User";
+import UserAdd from "./routes/detail/UserAdd";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -50,6 +52,8 @@ function App() {
         { path: "dashboard", element: <Dashboard /> },
         { path: "entries", element: <EntriesAndDocuments /> },
         { path: "users", element: <AllUsers /> },
+        { path: "user", element: <User /> },
+        { path: "user/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
       ],
     },

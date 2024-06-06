@@ -12,9 +12,9 @@ function Search({ addOnClick }) {
             className="grow placeholder:text-neutral-content placeholder:opacity-50"
             placeholder="Search"
           />
-          <span className="material-symbols-rounded icon-size-20 opacity-50">
-            Search
-          </span>
+          <button className="btn btn-sm btn-ghost px-0 material-symbols-rounded icon-size-20 opacity-50">
+            tune
+          </button>
         </label>
       </div>
       <div className="flex flex-row-reverse flex-none gap-2">

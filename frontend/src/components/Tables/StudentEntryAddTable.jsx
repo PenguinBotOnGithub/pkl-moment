@@ -11,10 +11,6 @@ function StudentEntryAddTable({
   const [isOpenStudent, setIsOpenStudent] = useState(false);
   const [visibleStudents, setVisibleStudents] = useState([]);
 
-  useEffect(() => {
-    onSearchStudent("", setVisibleStudents);
-  }, [onSearchStudent]);
-
   function handleSearchChange(value) {
     setSearchStudentValue(value);
     onSearchStudent(value, setVisibleStudents);
@@ -22,7 +18,11 @@ function StudentEntryAddTable({
   }
 
   return (
-    <table className={`table bg-base-100 border-0 rounded-lg ${isMaxWidth && "max-w-screen-sm"}`}>
+    <table
+      className={`table bg-base-100 border-0 rounded-lg ${
+        isMaxWidth && "max-w-screen-sm"
+      }`}
+    >
       <thead className="relative">
         <div className="bg-neutral-content absolute left-0 right-0 bottom-0 top-0 opacity-5 rounded-t-lg" />
         <tr className="border-0 ">
@@ -39,7 +39,9 @@ function StudentEntryAddTable({
             <td>
               <div
                 className="btn btn-error btn-xs rounded-lg mr-2"
-                onMouseDown={() => onDeleteRow(index)}
+                onMouseDown={() => {
+                  onDeleteRow(index);
+                }}
               >
                 Delete
               </div>
@@ -57,7 +59,10 @@ function StudentEntryAddTable({
               type="text"
               value={searchStudentValue}
               onChange={(e) => handleSearchChange(e.target.value)}
-              onFocus={() => setIsOpenStudent(true)}
+              onFocus={() => {
+                setIsOpenStudent(true);
+                onSearchStudent("", setVisibleStudents);
+              }}
               onBlur={() => setTimeout(() => setIsOpenStudent(false), 200)}
               style={{
                 backgroundColor: "transparent",
@@ -72,7 +77,7 @@ function StudentEntryAddTable({
                     key={student.id}
                     className="cursor-pointer"
                     onMouseDown={() => {
-                      onAddRow(student.name);
+                      onAddRow(student.id, student.name);
                       setSearchStudentValue("");
                       setIsOpenStudent(false);
                     }}

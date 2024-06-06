@@ -16,10 +16,10 @@ function AdviserDropdown({ value }) {
     const searchTerm = value.toLowerCase();
 
     const updatedItems = items.map((item) => {
-      const text = item.name.toLowerCase();
+      const text = item.username.toLowerCase();
       return {
         id: item.id,
-        name: item.name,
+        username: item.username,
         visible: text.includes(searchTerm),
       };
     });
@@ -28,8 +28,8 @@ function AdviserDropdown({ value }) {
     setIsOpen(true);
   }
 
-  function selectItem(name) {
-    setSearchValue(name);
+  function selectItem(username) {
+    setSearchValue(username);
     setIsOpen(false);
   }
 
@@ -51,9 +51,9 @@ function AdviserDropdown({ value }) {
               <div
                 key={item.id}
                 className="cursor-pointer"
-                onMouseDown={() => selectItem(item.name)}
+                onMouseDown={() => selectItem(item.username)}
               >
-                {item.name}
+                {item.username}
               </div>
             ))}
         </div>
