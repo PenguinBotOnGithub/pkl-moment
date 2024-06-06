@@ -27,7 +27,7 @@ pub struct Log {
     pub operation_type: crate::types::Operation,
     pub table_affected: crate::types::TableRef,
     pub user_id: i32,
-    pub snapshot: String,
+    pub snapshot: Option<String>,
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -46,7 +46,7 @@ pub struct LogDetail {
     pub operation_type: crate::types::Operation,
     pub table_affected: crate::types::TableRef,
     pub user: crate::user::UserPublic,
-    pub snapshot: String,
+    pub snapshot: Option<String>,
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -56,7 +56,7 @@ pub struct CreateLog {
     pub operation_type: crate::types::Operation,
     pub table_affected: crate::types::TableRef,
     pub user_id: i32,
-    pub snapshot: String,
+    pub snapshot: Option<String>,
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -97,7 +97,7 @@ impl Log {
                 i32,
                 crate::types::Operation,
                 crate::types::TableRef,
-                String,
+                Option<String>,
                 chrono::DateTime<chrono::Utc>,
                 i32,
                 String,
