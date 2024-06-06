@@ -31,6 +31,15 @@ pub struct Log {
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct LogBrief {
+    pub id: i32,
+    pub operation_type: crate::types::Operation,
+    pub table_affected: crate::types::TableRef,
+    pub user: String,
+    pub logged_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=log)]
 pub struct CreateLog {
@@ -83,25 +92,70 @@ impl Log {
         page: i64,
         page_size: i64,
         param_user_id: Option<i32>,
-    ) -> QueryResult<PaginationResult<Self>> {
+    ) -> QueryResult<PaginationResult<LogBrief>> {
         use crate::schema::log::dsl::*;
+        use crate::schema::user;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = log.count().get_result(db).await?;
         let items = match param_user_id {
-            Some(n) => {
-                log.filter(user_id.eq(n))
-                    .limit(page_size)
-                    .offset(page * page_size)
-                    .load::<Self>(db)
-                    .await?
-            }
-            None => {
-                log.limit(page_size)
-                    .offset(page * page_size)
-                    .load::<Self>(db)
-                    .await?
-            }
+            Some(n) => log
+                .filter(user_id.eq(n))
+                .inner_join(user::table)
+                .select((
+                    id,
+                    operation_type,
+                    table_affected,
+                    logged_at,
+                    user::dsl::username,
+                ))
+                .limit(page_size)
+                .offset(page * page_size)
+                .load::<(
+                    i32,
+                    crate::types::Operation,
+                    crate::types::TableRef,
+                    chrono::DateTime<chrono::Utc>,
+                    String,
+                )>(db)
+                .await?
+                .into_iter()
+                .map(|v| LogBrief {
+                    id: v.0,
+                    operation_type: v.1,
+                    table_affected: v.2,
+                    user: v.4,
+                    logged_at: v.3,
+                })
+                .collect(),
+            None => log
+                .limit(page_size)
+                .offset(page * page_size)
+                .inner_join(user::table)
+                .select((
+                    id,
+                    operation_type,
+                    table_affected,
+                    logged_at,
+                    user::dsl::username,
+                ))
+                .load::<(
+                    i32,
+                    crate::types::Operation,
+                    crate::types::TableRef,
+                    chrono::DateTime<chrono::Utc>,
+                    String,
+                )>(db)
+                .await?
+                .into_iter()
+                .map(|v| LogBrief {
+                    id: v.0,
+                    operation_type: v.1,
+                    table_affected: v.2,
+                    user: v.4,
+                    logged_at: v.3,
+                })
+                .collect(),
         };
 
         Ok(PaginationResult {
