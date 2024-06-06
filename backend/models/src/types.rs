@@ -27,6 +27,7 @@ pub enum Operation {
     Verify,
     Unverify,
     Register,
+    Upload,
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy)]
