@@ -7,6 +7,7 @@ use argon2::{
 use chrono::{Duration, Utc};
 use diesel_async::AsyncPgConnection;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use models::types::UserRole;
 use models::{
     invalidated_jwt::InvalidatedJwt,
     user::{CreateUser, User},
@@ -27,11 +28,19 @@ use crate::{
 
 const BEARER: &'static str = "Bearer ";
 
+#[derive(Debug, Serialize)]
+struct LoginResponse {
+    token: String,
+    id: i32,
+    username: String,
+    role: UserRole,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
     pub id: i32,
     pub name: String,
-    pub role: String,
+    pub role: UserRole,
     pub exp: i64,
 }
 
@@ -124,10 +133,7 @@ async fn login_handler(
             let claims = JwtClaims {
                 id: user.as_ref().unwrap().id,
                 name: user.as_ref().unwrap().username.clone(),
-                role: match &user.as_ref().unwrap().role {
-                    models::types::UserRole::Admin => "admin".to_owned(),
-                    models::types::UserRole::Advisor => "advisor".to_owned(),
-                },
+                role: user.as_ref().unwrap().role,
                 exp: exp,
             };
 
@@ -148,7 +154,15 @@ async fn login_handler(
         },
     };
 
-    Ok(reply::json(&ApiResponse::ok("logged in".to_owned(), jwt)))
+    Ok(reply::json(&ApiResponse::ok(
+        "logged in".to_owned(),
+        LoginResponse {
+            token: jwt,
+            id: user.as_ref().unwrap().id,
+            username: user.as_ref().unwrap().username.clone(),
+            role: user.as_ref().unwrap().role,
+        },
+    )))
 }
 
 async fn register_handler(
@@ -166,8 +180,8 @@ async fn register_handler(
         username: payload.username.trim().to_owned(),
         password: hash,
         role: match &payload.role[..] {
-            "admin" => models::types::UserRole::Admin,
-            "advisor" => models::types::UserRole::Advisor,
+            "admin" => UserRole::Admin,
+            "advisor" => UserRole::Advisor,
             _ => {
                 return Err(reject::custom(ClientError::InvalidInput(
                     "field 'role' must be either 'admin' or 'advisor'".to_owned(),
@@ -189,7 +203,11 @@ async fn register_handler(
 
     Ok(reply::json(&ApiResponse::ok(
         "registered".to_owned(),
-        result,
+        models::user::UserPublic {
+            id: result.id,
+            username: result.username,
+            role: result.role,
+        },
     )))
 }
 
@@ -333,10 +351,7 @@ async fn refresh_token_handler(
     let claims = JwtClaims {
         id: claims.id,
         name: user.as_ref().unwrap().username.clone(),
-        role: match user.unwrap().role {
-            models::types::UserRole::Admin => "admin".to_owned(),
-            models::types::UserRole::Advisor => "advisor".to_owned(),
-        },
+        role: user.as_ref().unwrap().role,
         exp: exp,
     };
 
@@ -349,7 +364,12 @@ async fn refresh_token_handler(
     .map_err(|e| reject::custom(InternalError::JwtError(e.to_string())))?;
 
     Ok(reply::json(&ApiResponse::ok(
-        "refreshed token".to_owned(),
-        jwt,
+        "logged in".to_owned(),
+        LoginResponse {
+            token: jwt,
+            id: user.as_ref().unwrap().id,
+            username: user.as_ref().unwrap().username.clone(),
+            role: user.as_ref().unwrap().role,
+        },
     )))
 }
