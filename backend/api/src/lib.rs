@@ -10,6 +10,7 @@ use crate::error::ClientError;
 pub mod auth;
 pub mod company;
 pub mod error;
+pub mod log;
 pub mod penarikan;
 pub mod pengantaran;
 pub mod permohonan;
