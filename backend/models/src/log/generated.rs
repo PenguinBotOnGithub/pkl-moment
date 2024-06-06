@@ -40,6 +40,16 @@ pub struct LogBrief {
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct LogDetail {
+    pub id: i32,
+    pub operation_type: crate::types::Operation,
+    pub table_affected: crate::types::TableRef,
+    pub user: crate::user::UserPublic,
+    pub snapshot: String,
+    pub logged_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=log)]
 pub struct CreateLog {
@@ -77,13 +87,48 @@ impl Log {
         insert_into(log).values(item).get_result::<Self>(db).await
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<LogDetail>> {
         use crate::schema::log::dsl::*;
+        use crate::schema::user;
 
         log.filter(id.eq(param_id))
-            .first::<Self>(db)
+            .inner_join(user::table)
+            .select((
+                id,
+                operation_type,
+                table_affected,
+                snapshot,
+                logged_at,
+                user::dsl::id,
+                user::dsl::username,
+                user::dsl::role,
+            ))
+            .first::<(
+                i32,
+                crate::types::Operation,
+                crate::types::TableRef,
+                String,
+                chrono::DateTime<chrono::Utc>,
+                i32,
+                String,
+                crate::types::UserRole,
+            )>(db)
             .await
-            .optional()
+            .optional()?
+            .map_or(Ok(None), |v| {
+                Ok(Some(LogDetail {
+                    id: v.0,
+                    operation_type: v.1,
+                    table_affected: v.2,
+                    user: crate::user::UserPublic {
+                        id: v.5,
+                        username: v.6,
+                        role: v.7,
+                    },
+                    snapshot: v.3,
+                    logged_at: v.4,
+                }))
+            })
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
