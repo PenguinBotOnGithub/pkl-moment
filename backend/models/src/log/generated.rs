@@ -57,7 +57,6 @@ pub struct CreateLog {
     pub table_affected: crate::types::TableRef,
     pub user_id: i32,
     pub snapshot: Option<String>,
-    pub logged_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize)]
