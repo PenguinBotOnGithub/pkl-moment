@@ -10,6 +10,7 @@ use warp::{
 
 use models::user::{UpdateUser, User};
 
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_depended_data_delete;
 use crate::{
     auth::with_auth,
@@ -45,7 +46,7 @@ pub fn users_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_user);
@@ -55,7 +56,7 @@ pub fn users_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_user);
 
@@ -118,19 +119,24 @@ async fn read_user(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Re
 
 async fn update_user(
     id: i32,
+    claims: JwtClaims,
     payload: UpdateUser,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = User::update(&mut db, id, &payload).await.map_err(|e| {
-        if let diesel::result::Error::DatabaseError(v1, _) = &e {
-            if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
-                return reject::custom(ClientError::Conflict("username already taken".to_owned()));
+    let result = User::update(&mut db, id, &payload, claims.id)
+        .await
+        .map_err(|e| {
+            if let diesel::result::Error::DatabaseError(v1, _) = &e {
+                if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
+                    return reject::custom(ClientError::Conflict(
+                        "username already taken".to_owned(),
+                    ));
+                }
             }
-        }
 
-        reject::custom(InternalError::DatabaseError(e.to_string()))
-    })?;
+            reject::custom(InternalError::DatabaseError(e.to_string()))
+        })?;
 
     if let Some(v) = result {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
@@ -141,9 +147,13 @@ async fn update_user(
     }
 }
 
-async fn delete_user(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
+async fn delete_user(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = User::delete(&mut db, id)
+    let result = User::delete(&mut db, id, claims.id)
         .await
         .map_err(handle_fk_depended_data_delete)?;
 
