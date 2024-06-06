@@ -174,95 +174,34 @@ impl Pengantaran {
         }))
     }
 
-    pub async fn paginate_by_user(
-        db: &mut Connection,
-        param_id: i32,
-        page: i64,
-        page_size: i64,
-    ) -> QueryResult<PaginationResult<Self>> {
-        use crate::schema::pengantaran::dsl::*;
-
-        let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = pengantaran.count().get_result(db).await?;
-        let items = pengantaran
-            .filter(user_id.eq(param_id))
-            .limit(page_size)
-            .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
-
-        Ok(PaginationResult {
-            items,
-            total_items,
-            page,
-            page_size,
-            /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
-        })
-    }
-
-    pub async fn paginate_brief_by_user(
-        db: &mut Connection,
-        param_id: i32,
-        page: i64,
-        page_size: i64,
-    ) -> QueryResult<PaginationResult<PengantaranBrief>> {
-        use crate::schema::company;
-        use crate::schema::pengantaran::dsl::*;
-        use crate::schema::user;
-
-        let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = pengantaran.count().get_result(db).await?;
-        let items = pengantaran
-            .filter(user_id.eq(param_id))
-            .inner_join(user::table)
-            .inner_join(company::table)
-            .limit(page_size)
-            .offset(page * page_size)
-            .select((
-                id,
-                created_at,
-                verified,
-                user::dsl::username,
-                company::dsl::name,
-            ))
-            .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
-            .await?
-            .into_iter()
-            .map(|v| PengantaranBrief {
-                id: v.0,
-                user: v.3,
-                company: v.4,
-                created_at: v.1,
-                verified: v.2,
-            })
-            .collect();
-
-        Ok(PaginationResult {
-            items,
-            total_items,
-            page,
-            page_size,
-            /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
-        })
-    }
-
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
         page: i64,
         page_size: i64,
+        param_user_id: Option<i32>,
     ) -> QueryResult<PaginationResult<Self>> {
         use crate::schema::pengantaran::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = pengantaran.count().get_result(db).await?;
-        let items = pengantaran
-            .limit(page_size)
-            .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
+        let items = match param_user_id {
+            Some(n) => {
+                pengantaran
+                    .filter(user_id.eq(n))
+                    .limit(page_size)
+                    .offset(page * page_size)
+                    .load::<Self>(db)
+                    .await?
+            }
+            None => {
+                pengantaran
+                    .limit(page_size)
+                    .offset(page * page_size)
+                    .load::<Self>(db)
+                    .await?
+            }
+        };
 
         Ok(PaginationResult {
             items,
@@ -278,6 +217,7 @@ impl Pengantaran {
         db: &mut Connection,
         page: i64,
         page_size: i64,
+        param_user_id: Option<i32>,
     ) -> QueryResult<PaginationResult<PengantaranBrief>> {
         use crate::schema::company;
         use crate::schema::pengantaran::dsl::*;
@@ -285,29 +225,55 @@ impl Pengantaran {
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = pengantaran.count().get_result(db).await?;
-        let items = pengantaran
-            .inner_join(user::table)
-            .inner_join(company::table)
-            .limit(page_size)
-            .offset(page * page_size)
-            .select((
-                id,
-                created_at,
-                verified,
-                user::dsl::username,
-                company::dsl::name,
-            ))
-            .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
-            .await?
-            .into_iter()
-            .map(|v| PengantaranBrief {
-                id: v.0,
-                user: v.3,
-                company: v.4,
-                created_at: v.1,
-                verified: v.2,
-            })
-            .collect();
+        let items = match param_user_id {
+            Some(n) => pengantaran
+                .filter(user_id.eq(n))
+                .inner_join(user::table)
+                .inner_join(company::table)
+                .limit(page_size)
+                .offset(page * page_size)
+                .select((
+                    id,
+                    created_at,
+                    verified,
+                    user::dsl::username,
+                    company::dsl::name,
+                ))
+                .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
+                .await?
+                .into_iter()
+                .map(|v| PengantaranBrief {
+                    id: v.0,
+                    user: v.3,
+                    company: v.4,
+                    created_at: v.1,
+                    verified: v.2,
+                })
+                .collect(),
+            None => pengantaran
+                .inner_join(user::table)
+                .inner_join(company::table)
+                .limit(page_size)
+                .offset(page * page_size)
+                .select((
+                    id,
+                    created_at,
+                    verified,
+                    user::dsl::username,
+                    company::dsl::name,
+                ))
+                .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
+                .await?
+                .into_iter()
+                .map(|v| PengantaranBrief {
+                    id: v.0,
+                    user: v.3,
+                    company: v.4,
+                    created_at: v.1,
+                    verified: v.2,
+                })
+                .collect(),
+        };
 
         Ok(PaginationResult {
             items,

@@ -142,7 +142,7 @@ async fn get_permohonans(
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let permohonans = Permohonan::paginate_brief(&mut db, page, page_size)
+                    let permohonans = Permohonan::paginate_brief(&mut db, page, page_size, None)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -160,7 +160,7 @@ async fn get_permohonans(
                     })?;
 
                     let permohonans =
-                        Permohonan::paginate_brief_by_user(&mut db, by_user, page, page_size)
+                        Permohonan::paginate_brief(&mut db, page, page_size, Some(by_user))
                             .await
                             .map_err(|e| {
                                 reject::custom(InternalError::DatabaseError(e.to_string()))
@@ -174,10 +174,9 @@ async fn get_permohonans(
             }
         }
         _ => {
-            let permohonans =
-                Permohonan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
-                    .await
-                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let permohonans = Permohonan::paginate_brief(&mut db, page, page_size, Some(claims.id))
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             Ok(reply::json(&ApiResponse::ok(
                 "success".to_owned(),
