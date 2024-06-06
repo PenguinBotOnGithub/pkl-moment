@@ -219,7 +219,7 @@ async fn create_permohonan(
     }
 
     let mut db = db.lock();
-    let result = Permohonan::create(&mut db, &payload)
+    let result = Permohonan::create(&mut db, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
@@ -353,7 +353,7 @@ async fn delete_permohonan(
         )));
     }
 
-    let result = Permohonan::delete(&mut db, id)
+    let result = Permohonan::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
