@@ -3,6 +3,7 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 use diesel_async::AsyncPgConnection;
 use models::penarikan::{CreatePenarikan, Penarikan, UpdatePenarikan};
 use models::penarikan_student::{CreatePenarikanStudent, PenarikanStudent};
+use models::types::UserRole;
 use parking_lot::Mutex;
 use warp::{
     reject::{self, Rejection},
@@ -138,8 +139,8 @@ async fn get_penarikans(
     };
 
     let mut db = db.lock();
-    match &claims.role[..] {
-        "admin" => {
+    match &claims.role {
+        UserRole::Admin => {
             let by_user = queries.get("user");
             match by_user {
                 None => {
@@ -174,7 +175,7 @@ async fn get_penarikans(
                 }
             }
         }
-        _ => {
+        UserRole::Advisor => {
             let penarikans = Penarikan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -192,8 +193,8 @@ async fn create_penarikan(
     mut payload: CreatePenarikan,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
-    match &claims.role[..] {
-        "admin" => {
+    match &claims.role {
+        UserRole::Admin => {
             if let None = payload.user_id {
                 payload.user_id = Some(claims.id);
             }
@@ -209,7 +210,7 @@ async fn create_penarikan(
                 payload.verified_date = None;
             }
         }
-        _ => {
+        UserRole::Advisor => {
             payload.user_id = Some(claims.id);
 
             payload.verified = Some(false);
@@ -236,9 +237,9 @@ async fn read_penarikan(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(v) = penarikan {
-        match &claims.role[..] {
-            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
-            _ => {
+        match &claims.role {
+            UserRole::Admin => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+            UserRole::Advisor => {
                 if v.user.id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to view other users data".to_owned(),
@@ -272,8 +273,8 @@ async fn update_penarikan(
         )));
     };
 
-    match &claims.role[..] {
-        "admin" => {
+    match &claims.role {
+        UserRole::Admin => {
             if let Some(b) = payload.verified {
                 if b {
                     if v.verified {
@@ -290,7 +291,7 @@ async fn update_penarikan(
                 }
             }
         }
-        _ => {
+        UserRole::Advisor => {
             if v.user_id != claims.id {
                 return Err(reject::custom(ClientError::Authorization(
                     "insufficient privilege to update other users data".to_owned(),
@@ -336,9 +337,9 @@ async fn delete_penarikan(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(v) = letter {
-        match &claims.role[..] {
-            "admin" => (),
-            _ => {
+        match &claims.role {
+            UserRole::Admin => (),
+            UserRole::Advisor => {
                 if v.user_id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to delete other users data".to_owned(),
@@ -376,9 +377,9 @@ async fn get_penarikan_students(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     match result {
-        Some(v) => match &claims.role[..] {
-            "admin" => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
-            _ => {
+        Some(v) => match &claims.role {
+            UserRole::Admin => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
+            UserRole::Advisor => {
                 if v.0 != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to view others data".to_owned(),
@@ -406,8 +407,8 @@ async fn add_penarikan_student(
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(n) = letter_owner {
-        match &claims.role[..] {
-            "admin" => {
+        match &claims.role {
+            UserRole::Admin => {
                 let res = PenarikanStudent::create(
                     &mut db,
                     &CreatePenarikanStudent {
@@ -420,7 +421,7 @@ async fn add_penarikan_student(
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
-            _ => {
+            UserRole::Advisor => {
                 if n != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to modify others data".to_owned(),
@@ -463,8 +464,8 @@ async fn remove_penarikan_student(
         )));
     };
 
-    match &claims.role[..] {
-        "admin" => {
+    match &claims.role {
+        UserRole::Admin => {
             let res = PenarikanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -477,7 +478,7 @@ async fn remove_penarikan_student(
                 )))
             }
         }
-        _ => {
+        UserRole::Advisor => {
             if n != claims.id {
                 return Err(reject::custom(ClientError::Authorization(
                     "insufficient privilege to modify others data".to_owned(),
