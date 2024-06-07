@@ -290,7 +290,7 @@ async fn update_penarikan(
     payload.verified = Some(false);
     payload.verified_date = Some(None);
 
-    let result = Penarikan::update(&mut db, id, &payload)
+    let result = Penarikan::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 

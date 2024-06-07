@@ -290,7 +290,7 @@ async fn update_permohonan(
     payload.verified = Some(false);
     payload.verified_date = Some(None);
 
-    let result = Permohonan::update(&mut db, id, &payload)
+    let result = Permohonan::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
