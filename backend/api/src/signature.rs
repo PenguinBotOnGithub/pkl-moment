@@ -1,10 +1,11 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
+use models::log::{CreateLog, Log};
 use parking_lot::Mutex;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use tracing::debug;
+use tracing::{debug, error};
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -12,7 +13,9 @@ use warp::{
 };
 
 use models::signature::{CreateSignature, Signature, UpdateSignature};
+use models::types::{Operation, TableRef};
 
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -38,8 +41,7 @@ pub fn signatures_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(true, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(create_signature);
@@ -57,7 +59,7 @@ pub fn signatures_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_signature);
@@ -67,7 +69,7 @@ pub fn signatures_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_signature);
 
@@ -76,7 +78,7 @@ pub fn signatures_routes(
         .and(warp::path("upload"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_image_upload())
         .and(with_db(db.clone()))
         .and_then(upload_signature);
@@ -130,15 +132,16 @@ async fn get_signatures(
 
 async fn upload_signature(
     id: i32,
+    claims: JwtClaims,
     mut body: impl Buf,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let signature = Signature::read(&mut db, id)
+    let mut db_ = db.lock();
+    let signature = Signature::read(&mut db_, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    drop(db);
+    drop(db_);
 
     if let None = signature {
         return Err(reject::custom(ClientError::NotFound(
@@ -162,6 +165,21 @@ async fn upload_signature(
         .await
         .map_err(|e| reject::custom(InternalError::FilesystemError(e.to_string())))?;
 
+    let mut db = db.lock();
+    if let Err(e) = Log::create(
+        &mut db,
+        &CreateLog {
+            operation_type: Operation::Upload,
+            table_affected: TableRef::Signature,
+            snapshot: None,
+            user_id: claims.id,
+        },
+    )
+    .await
+    {
+        error!("error logging action: {}", e.to_string());
+    }
+
     Ok(reply::json(&ApiResponse::ok(
         "success".to_owned(),
         None::<u8>,
@@ -169,11 +187,12 @@ async fn upload_signature(
 }
 
 async fn create_signature(
+    claims: JwtClaims,
     payload: CreateSignature,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Signature::create(&mut db, &payload)
+    let result = Signature::create(&mut db, &payload, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -200,11 +219,12 @@ async fn read_signature(
 
 async fn update_signature(
     id: i32,
+    claims: JwtClaims,
     payload: UpdateSignature,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Signature::update(&mut db, id, &payload)
+    let result = Signature::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -219,10 +239,11 @@ async fn update_signature(
 
 async fn delete_signature(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Signature::delete(&mut db, id)
+    let result = Signature::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 

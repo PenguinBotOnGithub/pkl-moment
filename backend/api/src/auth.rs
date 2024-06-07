@@ -76,8 +76,7 @@ pub fn auth_routes(
         .and(warp::path("register"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(true, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(register_handler);
@@ -166,6 +165,7 @@ async fn login_handler(
 }
 
 async fn register_handler(
+    claims: JwtClaims,
     payload: RegisterRequest,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -191,7 +191,7 @@ async fn register_handler(
     };
 
     let mut db = db.lock();
-    let result = User::create(&mut db, &user).await.map_err(|e| {
+    let result = User::create(&mut db, &user, claims.id).await.map_err(|e| {
         if let diesel::result::Error::DatabaseError(v1, _) = &e {
             if let diesel::result::DatabaseErrorKind::UniqueViolation = v1 {
                 return reject::custom(ClientError::Conflict("username already taken".to_owned()));

@@ -5,6 +5,7 @@ use parking_lot::Mutex;
 use tracing::log::debug;
 use warp::{reject::Rejection, Filter, Reply};
 
+use crate::log::logs_routes;
 use crate::user::users_routes;
 use crate::{
     auth::auth_routes, company::companies_routes, penarikan::penarikans_routes,
@@ -32,4 +33,5 @@ pub fn routes(
         .or(api.and(penarikans_routes(jwt_key.clone(), db.clone())))
         .or(api.and(signatures_routes(jwt_key.clone(), db.clone())))
         .or(api.and(users_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(logs_routes(jwt_key.clone(), db.clone())))
 }

@@ -144,7 +144,7 @@ async fn get_penarikans(
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let penarikans = Penarikan::paginate_brief(&mut db, page, page_size)
+                    let penarikans = Penarikan::paginate_brief(&mut db, page, page_size, None)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -162,7 +162,7 @@ async fn get_penarikans(
                     })?;
 
                     let penarikans =
-                        Penarikan::paginate_brief_by_user(&mut db, by_user, page, page_size)
+                        Penarikan::paginate_brief(&mut db, page, page_size, Some(by_user))
                             .await
                             .map_err(|e| {
                                 reject::custom(InternalError::DatabaseError(e.to_string()))
@@ -176,7 +176,7 @@ async fn get_penarikans(
             }
         }
         UserRole::Advisor => {
-            let penarikans = Penarikan::paginate_brief_by_user(&mut db, claims.id, page, page_size)
+            let penarikans = Penarikan::paginate_brief(&mut db, page, page_size, Some(claims.id))
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -219,7 +219,7 @@ async fn create_penarikan(
     }
 
     let mut db = db.lock();
-    let result = Penarikan::create(&mut db, &payload)
+    let result = Penarikan::create(&mut db, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
@@ -353,7 +353,7 @@ async fn delete_penarikan(
         )));
     }
 
-    let result = Penarikan::delete(&mut db, id)
+    let result = Penarikan::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -415,6 +415,7 @@ async fn add_penarikan_student(
                         penarikan_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -434,6 +435,7 @@ async fn add_penarikan_student(
                         penarikan_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -466,9 +468,11 @@ async fn remove_penarikan_student(
 
     match &claims.role {
         UserRole::Admin => {
-            let res = PenarikanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PenarikanStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
@@ -485,9 +489,11 @@ async fn remove_penarikan_student(
                 )));
             }
 
-            let res = PenarikanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PenarikanStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))

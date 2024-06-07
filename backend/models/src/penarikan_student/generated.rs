@@ -1,13 +1,16 @@
 /* This file is generated and managed by dsync */
 
+use crate::log::{CreateLog, Log};
 use diesel::QueryResult;
 use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 use crate::penarikan::Penarikan;
 use crate::schema::*;
 use crate::student::Student;
+use crate::types::{Operation, TableRef};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -55,13 +58,37 @@ pub struct PaginationResult<T> {
 }
 
 impl PenarikanStudent {
-    pub async fn create(db: &mut Connection, item: &CreatePenarikanStudent) -> QueryResult<Self> {
+    pub async fn create(
+        db: &mut Connection,
+        item: &CreatePenarikanStudent,
+        param_user_id: i32,
+    ) -> QueryResult<Self> {
         use crate::schema::penarikan_student::dsl::*;
 
-        insert_into(penarikan_student)
+        let res = insert_into(penarikan_student)
             .values(item)
             .get_result::<Self>(db)
-            .await
+            .await;
+
+        let Ok(_) = res else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Create,
+                table_affected: TableRef::PenarikanStudent,
+                user_id: param_user_id,
+                snapshot: None,
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
@@ -156,12 +183,52 @@ impl PenarikanStudent {
         db: &mut Connection,
         param_student_id: i32,
         param_letter_id: i32,
+        param_user_id: i32,
     ) -> QueryResult<usize> {
         use crate::schema::penarikan_student::dsl::*;
 
-        diesel::delete(penarikan_student.filter(student_id.eq(param_student_id)))
+        let previous = penarikan_student
+            .filter(student_id.eq(param_student_id))
+            .filter(penarikan_id.eq(param_letter_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(0);
+        };
+
+        let res = diesel::delete(penarikan_student.filter(student_id.eq(param_student_id)))
             .filter(penarikan_id.eq(param_letter_id))
             .execute(db)
-            .await
+            .await;
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Delete,
+                table_affected: TableRef::PenarikanStudent,
+                user_id: param_user_id,
+                snapshot: match serde_json::to_string(&previous) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        error!("error serializing snapshot to json: {}", e.to_string());
+                        Some(format!(
+                            "error serializing snapshot to json: {}",
+                            e.to_string()
+                        ))
+                    }
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
     }
 }

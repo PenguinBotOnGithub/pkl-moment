@@ -4,9 +4,12 @@ use diesel::QueryResult;
 use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 use crate::company::Company;
+use crate::log::{CreateLog, Log};
 use crate::schema::*;
+use crate::types::{Operation, TableRef};
 use crate::user::{User, UserPublic};
 use crate::wave::Wave;
 
@@ -104,13 +107,37 @@ impl Penarikan {
             .optional()
     }
 
-    pub async fn create(db: &mut Connection, item: &CreatePenarikan) -> QueryResult<Self> {
+    pub async fn create(
+        db: &mut Connection,
+        item: &CreatePenarikan,
+        param_user_id: i32,
+    ) -> QueryResult<Self> {
         use crate::schema::penarikan::dsl::*;
 
-        insert_into(penarikan)
+        let res = insert_into(penarikan)
             .values(item)
             .get_result::<Self>(db)
-            .await
+            .await;
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Create,
+                table_affected: TableRef::Penarikan,
+                user_id: param_user_id,
+                snapshot: None,
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
@@ -169,95 +196,34 @@ impl Penarikan {
         }))
     }
 
-    pub async fn paginate_by_user(
-        db: &mut Connection,
-        param_id: i32,
-        page: i64,
-        page_size: i64,
-    ) -> QueryResult<PaginationResult<Self>> {
-        use crate::schema::penarikan::dsl::*;
-
-        let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = penarikan.count().get_result(db).await?;
-        let items = penarikan
-            .filter(user_id.eq(param_id))
-            .limit(page_size)
-            .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
-
-        Ok(PaginationResult {
-            items,
-            total_items,
-            page,
-            page_size,
-            /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
-        })
-    }
-
-    pub async fn paginate_brief_by_user(
-        db: &mut Connection,
-        param_id: i32,
-        page: i64,
-        page_size: i64,
-    ) -> QueryResult<PaginationResult<PenarikanBrief>> {
-        use crate::schema::company;
-        use crate::schema::penarikan::dsl::*;
-        use crate::schema::user;
-
-        let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = penarikan.count().get_result(db).await?;
-        let items = penarikan
-            .filter(user_id.eq(param_id))
-            .inner_join(user::table)
-            .inner_join(company::table)
-            .limit(page_size)
-            .offset(page * page_size)
-            .select((
-                id,
-                created_at,
-                verified,
-                user::dsl::username,
-                company::dsl::name,
-            ))
-            .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
-            .await?
-            .into_iter()
-            .map(|v| PenarikanBrief {
-                id: v.0,
-                user: v.3,
-                company: v.4,
-                created_at: v.1,
-                verified: v.2,
-            })
-            .collect();
-
-        Ok(PaginationResult {
-            items,
-            total_items,
-            page,
-            page_size,
-            /* ceiling division of integers */
-            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
-        })
-    }
-
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
         page: i64,
         page_size: i64,
+        param_user_id: Option<i32>,
     ) -> QueryResult<PaginationResult<Self>> {
         use crate::schema::penarikan::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = penarikan.count().get_result(db).await?;
-        let items = penarikan
-            .limit(page_size)
-            .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
+        let items = match param_user_id {
+            Some(n) => {
+                penarikan
+                    .filter(user_id.eq(n))
+                    .limit(page_size)
+                    .offset(page * page_size)
+                    .load::<Self>(db)
+                    .await?
+            }
+            None => {
+                penarikan
+                    .limit(page_size)
+                    .offset(page * page_size)
+                    .load::<Self>(db)
+                    .await?
+            }
+        };
 
         Ok(PaginationResult {
             items,
@@ -273,6 +239,7 @@ impl Penarikan {
         db: &mut Connection,
         page: i64,
         page_size: i64,
+        param_user_id: Option<i32>,
     ) -> QueryResult<PaginationResult<PenarikanBrief>> {
         use crate::schema::company;
         use crate::schema::penarikan::dsl::*;
@@ -280,29 +247,55 @@ impl Penarikan {
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = penarikan.count().get_result(db).await?;
-        let items = penarikan
-            .inner_join(user::table)
-            .inner_join(company::table)
-            .limit(page_size)
-            .offset(page * page_size)
-            .select((
-                id,
-                created_at,
-                verified,
-                user::dsl::username,
-                company::dsl::name,
-            ))
-            .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
-            .await?
-            .into_iter()
-            .map(|v| PenarikanBrief {
-                id: v.0,
-                user: v.3,
-                company: v.4,
-                created_at: v.1,
-                verified: v.2,
-            })
-            .collect();
+        let items = match param_user_id {
+            Some(n) => penarikan
+                .filter(user_id.eq(n))
+                .inner_join(user::table)
+                .inner_join(company::table)
+                .limit(page_size)
+                .offset(page * page_size)
+                .select((
+                    id,
+                    created_at,
+                    verified,
+                    user::dsl::username,
+                    company::dsl::name,
+                ))
+                .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
+                .await?
+                .into_iter()
+                .map(|v| PenarikanBrief {
+                    id: v.0,
+                    user: v.3,
+                    company: v.4,
+                    created_at: v.1,
+                    verified: v.2,
+                })
+                .collect(),
+            None => penarikan
+                .inner_join(user::table)
+                .inner_join(company::table)
+                .limit(page_size)
+                .offset(page * page_size)
+                .select((
+                    id,
+                    created_at,
+                    verified,
+                    user::dsl::username,
+                    company::dsl::name,
+                ))
+                .load::<(i32, chrono::DateTime<chrono::Utc>, bool, String, String)>(db)
+                .await?
+                .into_iter()
+                .map(|v| PenarikanBrief {
+                    id: v.0,
+                    user: v.3,
+                    company: v.4,
+                    created_at: v.1,
+                    verified: v.2,
+                })
+                .collect(),
+        };
 
         Ok(crate::penarikan::PaginationResult {
             items,
@@ -328,11 +321,53 @@ impl Penarikan {
             .optional()
     }
 
-    pub async fn delete(db: &mut Connection, param_id: i32) -> QueryResult<usize> {
+    pub async fn delete(
+        db: &mut Connection,
+        param_id: i32,
+        param_user_id: i32,
+    ) -> QueryResult<usize> {
         use crate::schema::penarikan::dsl::*;
 
-        diesel::delete(penarikan.filter(id.eq(param_id)))
-            .execute(db)
+        let previous = penarikan
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
             .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(0);
+        };
+
+        let res = diesel::delete(penarikan.filter(id.eq(param_id)))
+            .execute(db)
+            .await;
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Delete,
+                table_affected: TableRef::Penarikan,
+                user_id: param_user_id,
+                snapshot: match serde_json::to_string(&previous) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        error!("error serializing snapshot to json: {}", e.to_string());
+                        Some(format!(
+                            "error serializing snapshot to json: {}",
+                            e.to_string()
+                        ))
+                    }
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
     }
 }
