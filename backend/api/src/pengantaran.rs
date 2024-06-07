@@ -308,7 +308,7 @@ async fn update_pengantaran(
 
             if let Some(_) = payload.user_id {
                 return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to verify data".to_owned(),
+                    "insufficient privilege to update data ownership".to_owned(),
                 )));
             }
         }
