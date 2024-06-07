@@ -266,7 +266,7 @@ async fn update_pengantaran(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let Some(v) = Pengantaran::read(&mut db, id)
+    let Some(v) = Pengantaran::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
     else {
@@ -275,44 +275,22 @@ async fn update_pengantaran(
         )));
     };
 
-    match &claims.role {
-        UserRole::Admin => {
-            if let Some(b) = payload.verified {
-                if b {
-                    if v.verified {
-                        ()
-                    } else {
-                        payload.verified_date = Some(chrono::Local::now().date_naive());
-                    }
-                } else {
-                    if v.verified {
-                        payload.verified_date = None;
-                    } else {
-                        ()
-                    }
-                }
-            }
+    if let UserRole::Advisor = &claims.role {
+        if v != claims.id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to update other users data".to_owned(),
+            )));
         }
-        UserRole::Advisor => {
-            if v.user_id != claims.id {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to update other users data".to_owned(),
-                )));
-            }
 
-            if let Some(_) = payload.verified {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to verify data".to_owned(),
-                )));
-            }
-
-            if let Some(_) = payload.user_id {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to update data ownership".to_owned(),
-                )));
-            }
+        if let Some(_) = payload.user_id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to update data ownership".to_owned(),
+            )));
         }
     }
+
+    payload.verified = Some(false);
+    payload.verified_date = Some(None);
 
     let result = Pengantaran::update(&mut db, id, &payload)
         .await
