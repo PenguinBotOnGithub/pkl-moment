@@ -415,6 +415,7 @@ async fn add_permohonan_student(
                         permohonan_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -434,6 +435,7 @@ async fn add_permohonan_student(
                         permohonan_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -466,9 +468,11 @@ async fn remove_permohonan_student(
 
     match &claims.role {
         UserRole::Admin => {
-            let res = PermohonanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PermohonanStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
@@ -485,9 +489,11 @@ async fn remove_permohonan_student(
                 )));
             }
 
-            let res = PermohonanStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PermohonanStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
