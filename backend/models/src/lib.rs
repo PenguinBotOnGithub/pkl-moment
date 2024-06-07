@@ -1,5 +1,6 @@
 pub mod company;
 pub mod invalidated_jwt;
+pub mod log;
 pub mod penarikan;
 pub mod penarikan_student;
 pub mod pengantaran;

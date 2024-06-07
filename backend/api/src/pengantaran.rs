@@ -221,7 +221,7 @@ async fn create_pengantaran(
     }
 
     let mut db = db.lock();
-    let result = Pengantaran::create(&mut db, &payload)
+    let result = Pengantaran::create(&mut db, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
@@ -355,7 +355,7 @@ async fn delete_pengantaran(
         )));
     }
 
-    let result = Pengantaran::delete(&mut db, id)
+    let result = Pengantaran::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -417,6 +417,7 @@ async fn add_pengantaran_student(
                         pengantaran_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -436,6 +437,7 @@ async fn add_pengantaran_student(
                         pengantaran_id: id,
                         student_id: payload.student_id,
                     },
+                    claims.id,
                 )
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -468,9 +470,11 @@ async fn remove_pengantaran_student(
 
     match &claims.role {
         UserRole::Admin => {
-            let res = PengantaranStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PengantaranStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
@@ -487,9 +491,11 @@ async fn remove_pengantaran_student(
                 )));
             }
 
-            let res = PengantaranStudent::delete_by_student_and_letter_id(&mut db, student_id, id)
-                .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res = PengantaranStudent::delete_by_student_and_letter_id(
+                &mut db, student_id, id, claims.id,
+            )
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))

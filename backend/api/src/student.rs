@@ -9,6 +9,7 @@ use warp::{
     Filter,
 };
 
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -34,8 +35,7 @@ pub fn students_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(create_student);
@@ -53,7 +53,7 @@ pub fn students_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_student);
@@ -63,7 +63,7 @@ pub fn students_routes(
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
-        .and(with_auth(true, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(delete_student);
 
@@ -114,11 +114,12 @@ async fn get_students(
 }
 
 async fn create_student(
+    claims: JwtClaims,
     payload: CreateStudent,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Student::create(&mut db, &payload)
+    let result = Student::create(&mut db, &payload, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -142,11 +143,12 @@ async fn read_student(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl
 
 async fn update_student(
     id: i32,
+    claims: JwtClaims,
     payload: UpdateStudent,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Student::update(&mut db, id, &payload)
+    let result = Student::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -161,10 +163,11 @@ async fn update_student(
 
 async fn delete_student(
     id: i32,
+    claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Student::delete(&mut db, id)
+    let result = Student::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
