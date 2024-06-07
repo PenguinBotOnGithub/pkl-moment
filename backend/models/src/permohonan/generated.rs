@@ -84,7 +84,7 @@ pub struct UpdatePermohonan {
     pub start_date: Option<chrono::NaiveDate>,
     pub end_date: Option<chrono::NaiveDate>,
     pub verified: Option<bool>,
-    pub verified_date: Option<chrono::NaiveDate>,
+    pub verified_date: Option<Option<chrono::NaiveDate>>,
     pub wave_id: Option<i32>,
 }
 
@@ -315,14 +315,53 @@ impl Permohonan {
         db: &mut Connection,
         param_id: i32,
         item: &UpdatePermohonan,
+        param_user_id: i32,
     ) -> QueryResult<Option<Self>> {
         use crate::schema::permohonan::dsl::*;
 
-        diesel::update(permohonan.filter(id.eq(param_id)))
+        let previous = permohonan
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(None);
+        };
+
+        let res = diesel::update(permohonan.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
-            .optional()
+            .optional();
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Update,
+                table_affected: TableRef::Permohonan,
+                user_id: param_user_id,
+                snapshot: match serde_json::to_string(&previous) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        error!("error serializing snapshot to json: {}", e.to_string());
+                        Some(format!(
+                            "error serializing snapshot to json: {}",
+                            e.to_string()
+                        ))
+                    }
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
     }
 
     pub async fn delete(
@@ -353,6 +392,126 @@ impl Permohonan {
             db,
             &CreateLog {
                 operation_type: Operation::Delete,
+                table_affected: TableRef::Permohonan,
+                user_id: param_user_id,
+                snapshot: match serde_json::to_string(&previous) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        error!("error serializing snapshot to json: {}", e.to_string());
+                        Some(format!(
+                            "error serializing snapshot to json: {}",
+                            e.to_string()
+                        ))
+                    }
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
+    }
+
+    pub async fn verify(
+        db: &mut Connection,
+        param_id: i32,
+        param_user_id: i32,
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::permohonan::dsl::*;
+
+        let previous = permohonan
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(None);
+        };
+
+        let res = diesel::update(permohonan.filter(id.eq(param_id)))
+            .set(UpdatePermohonan {
+                user_id: None,
+                company_id: None,
+                start_date: None,
+                end_date: None,
+                verified: Some(true),
+                verified_date: Some(Some(chrono::Utc::now().date_naive())),
+                wave_id: None,
+            })
+            .get_result(db)
+            .await
+            .optional();
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Verify,
+                table_affected: TableRef::Permohonan,
+                user_id: param_user_id,
+                snapshot: match serde_json::to_string(&previous) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        error!("error serializing snapshot to json: {}", e.to_string());
+                        Some(format!(
+                            "error serializing snapshot to json: {}",
+                            e.to_string()
+                        ))
+                    }
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+
+        res
+    }
+
+    pub async fn unverify(
+        db: &mut Connection,
+        param_id: i32,
+        param_user_id: i32,
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::permohonan::dsl::*;
+
+        let previous = permohonan
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(None);
+        };
+
+        let res = diesel::update(permohonan.filter(id.eq(param_id)))
+            .set(UpdatePermohonan {
+                user_id: None,
+                company_id: None,
+                start_date: None,
+                end_date: None,
+                verified: Some(false),
+                verified_date: Some(None),
+                wave_id: None,
+            })
+            .get_result(db)
+            .await
+            .optional();
+
+        let Ok(_) = res.as_ref() else {
+            return res;
+        };
+
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: Operation::Unverify,
                 table_affected: TableRef::Permohonan,
                 user_id: param_user_id,
                 snapshot: match serde_json::to_string(&previous) {

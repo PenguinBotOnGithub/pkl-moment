@@ -99,6 +99,24 @@ pub fn penarikans_routes(
         .and(with_db(db.clone()))
         .and_then(remove_penarikan_student);
 
+    let verify_penarikan_route = penarikan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("verify"))
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(verify_penarikan);
+
+    let unverify_penarikan_route = penarikan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("unverify"))
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(unverify_penarikan);
+
     get_penarikans_route
         .or(create_penarikan_route)
         .or(read_penarikan_route)
@@ -107,6 +125,8 @@ pub fn penarikans_routes(
         .or(get_penarikan_students_route)
         .or(add_penarikan_student_route)
         .or(remove_penarikan_student_route)
+        .or(verify_penarikan_route)
+        .or(unverify_penarikan_route)
 }
 
 async fn get_penarikans(
@@ -264,7 +284,7 @@ async fn update_penarikan(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let Some(v) = Penarikan::read(&mut db, id)
+    let Some(v) = Penarikan::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
     else {
@@ -273,46 +293,24 @@ async fn update_penarikan(
         )));
     };
 
-    match &claims.role {
-        UserRole::Admin => {
-            if let Some(b) = payload.verified {
-                if b {
-                    if v.verified {
-                        ()
-                    } else {
-                        payload.verified_date = Some(chrono::Local::now().date_naive());
-                    }
-                } else {
-                    if v.verified {
-                        payload.verified_date = None;
-                    } else {
-                        ()
-                    }
-                }
-            }
+    if let UserRole::Advisor = &claims.role {
+        if v != claims.id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to update other users data".to_owned(),
+            )));
         }
-        UserRole::Advisor => {
-            if v.user_id != claims.id {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to update other users data".to_owned(),
-                )));
-            }
 
-            if let Some(_) = payload.verified {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to verify data".to_owned(),
-                )));
-            }
-
-            if let Some(_) = payload.user_id {
-                return Err(reject::custom(ClientError::Authorization(
-                    "insufficient privilege to verify data".to_owned(),
-                )));
-            }
+        if let Some(_) = payload.user_id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to update data ownership".to_owned(),
+            )));
         }
     }
 
-    let result = Penarikan::update(&mut db, id, &payload)
+    payload.verified = Some(false);
+    payload.verified_date = Some(None);
+
+    let result = Penarikan::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
@@ -503,5 +501,42 @@ async fn remove_penarikan_student(
                 )))
             }
         }
+    }
+}
+
+async fn verify_penarikan(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let res = Penarikan::verify(&mut db, id, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = res {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )))
+    }
+}
+async fn unverify_penarikan(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let res = Penarikan::unverify(&mut db, id, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = res {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )))
     }
 }
