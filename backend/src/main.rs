@@ -30,8 +30,8 @@ async fn warp(
 
     let route = assets_route()
         .or(api::routes::routes(arc_db, jwt_key))
-        .with(with_dev_cors())
-        .recover(handle_rejection);
+        .recover(handle_rejection)
+        .with(with_dev_cors());
 
     Ok(route.boxed().into())
 }
