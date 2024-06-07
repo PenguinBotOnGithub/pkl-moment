@@ -51,7 +51,7 @@ function App() {
       children: [
         { path: "dashboard", element: <Dashboard /> },
         { path: "entries", element: <EntriesAndDocuments /> },
-        { path: "users", element: <AllUsers /> },
+        { path: "users/:page", element: <AllUsers /> },
         { path: "user", element: <User /> },
         { path: "user/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
@@ -68,7 +68,7 @@ function App() {
       children: [
         { path: ":entry/:id", element: <Entry /> },
         { path: ":entry/add", element: <EntryAdd /> },
-        { path: "wave", element: <Wave /> },
+        { path: "wave/:page", element: <Wave /> },
         { path: "wave/add", element: <WaveAdd /> },
         { path: "company", element: <Company /> },
         { path: "company/add", element: <CompanyAdd /> },

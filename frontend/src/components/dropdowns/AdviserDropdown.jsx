@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-function AdviserDropdown({ value }) {
+function AdviserDropdown({ value , setSelectedValue }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [visibleAdvisers, setVisibleAdvisers] = useState([]);
@@ -28,8 +28,9 @@ function AdviserDropdown({ value }) {
     setIsOpen(true);
   }
 
-  function selectItem(username) {
-    setSearchValue(username);
+  function selectItem(item) {
+    setSearchValue(item.username);
+    setSelectedValue(item.id);
     setIsOpen(false);
   }
 
@@ -40,7 +41,12 @@ function AdviserDropdown({ value }) {
         className="input w-full"
         value={searchValue}
         onChange={(e) => handleSearchChange(e.target.value)}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          setIsOpen(true);
+          setVisibleAdvisers(
+            items.map((item) => ({ ...item, visible: true }))
+          );
+        }}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
       />
       {isOpen && (
@@ -51,7 +57,7 @@ function AdviserDropdown({ value }) {
               <div
                 key={item.id}
                 className="cursor-pointer"
-                onMouseDown={() => selectItem(item.username)}
+                onMouseDown={() => selectItem(item)}
               >
                 {item.username}
               </div>

@@ -1,7 +1,34 @@
 import React, { useState } from "react";
+import host from "../../assets/strings/host";
+import Cookies from "universal-cookie";
+import { useNavigate } from "react-router-dom";
 
 function WaveAddTable() {
   const [rows, setRows] = useState([{ start_date: "", end_date: "" }]);
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (formData) => {
+    console.log("Form data submitted:", formData);
+    let res = await fetch(`${host}/api/wave/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+      }),
+    });
+
+    let json = await res.json();
+
+    if (json.status === "success") {
+      navigate("/admin/entries/wave/0");
+    }
+  };
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -19,6 +46,16 @@ function WaveAddTable() {
     newRows.splice(index, 1);
     setRows(newRows);
   };
+
+  function execBulkPost() {
+    rows.forEach((row) => {
+      if (row.start_date.trim() == "" || row.end_date.trim() == "") {
+        alert("Please fill every data before submitting");
+      } else {
+        handleSubmit(row);
+      }
+    });
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -63,7 +100,10 @@ function WaveAddTable() {
                 />
               </td>
               <td>
-              <button className="btn btn-error btn-xs rounded-lg mr-2" onClick={() => deleteRow(index)}>
+                <button
+                  className="btn btn-error btn-xs rounded-lg mr-2"
+                  onClick={() => deleteRow(index)}
+                >
                   Delete
                 </button>
               </td>
@@ -76,7 +116,9 @@ function WaveAddTable() {
         <button className="btn btn-neutral btn-sm" onClick={addRow}>
           Tambah Baris
         </button>
-        <button className="btn btn-success btn-sm">Kirim</button>
+        <button className="btn btn-success btn-sm" onClick={execBulkPost}>
+          Kirim
+        </button>
       </div>
     </div>
   );

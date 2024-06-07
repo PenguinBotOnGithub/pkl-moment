@@ -43,7 +43,7 @@ function Sidebar({ index = -1 }) {
         </li>
         <li>
           <NavLink
-            to="/admin/users"
+            to="/admin/users/0"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">manage_accounts</span>

@@ -7,7 +7,7 @@ function Wave() {
   const navigate = useNavigate();
 
   function onAddHandle() {
-    navigate("add");
+    navigate("/admin/entries/wave/add");
   }
 
   return (

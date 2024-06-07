@@ -12,23 +12,16 @@ function EntryAdd() {
   const { id, entry } = useParams();
   const labelStyle = "max-w-36 min-w-36 overflow-hidden";
   const [rows, setRows] = useState([]);
-  const [rowId, setRowId] = useState([]);
   const [company, setCompany] = useState([]);
+  const [advisers, setAdvisers] = useState([]);
   const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState([true, true, true]);
   const navigate = useNavigate();
 
-  //example dummies. please fetch it for me
+  const [selectedCompany, setSelectedCompany] = useState();
+  const [selectedAdvisers, setSelectedAdvisers] = useState();
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const advisers = [
-    { id: 1, username: "Ahmed" },
-    { id: 2, username: "Akber" },
-  ];
-
-  // const company = [
-  //   { id: 1, company: "Google .Inc" },
-  //   { id: 2, company: "Microsoft" },
-  // ];
   const fetchDataForCompanies = async () => {
     try {
       const response = await fetch(`${host}/api/company?page=0&size=1000`, {
@@ -44,14 +37,9 @@ function EntryAdd() {
     } catch (err) {
       alert("something went wrong");
       setCompany([]);
-    } finally {
     }
   };
 
-  // const students = [
-  //   { id: 1, name: "Student 1" },
-  //   { id: 2, name: "Student 2" },
-  // ];
   const fetchDataForStudents = async () => {
     try {
       const response = await fetch(`${host}/api/student?page=0&size=1000`, {
@@ -67,13 +55,32 @@ function EntryAdd() {
     } catch (err) {
       alert("something went wrong");
       setStudents([]);
-    } finally {
+    }
+  };
+
+  const fetchDataForAdvisers = async () => {
+    try {
+      const response = await fetch(`${host}/api/user`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let usersData = await response.json();
+      const advisersData = usersData.data.items.filter(
+        (user) => user.role === "advisor"
+      );
+      setAdvisers(advisersData);
+    } catch (err) {
+      alert("something went wrong");
+      setAdvisers([]);
     }
   };
 
   const addRow = (id, name) => {
     setRows([...rows, { id, name }]);
-    setRowId([...rowId, id]);
   };
 
   const deleteRow = (index) => {
@@ -83,7 +90,6 @@ function EntryAdd() {
   };
 
   const searchStudent = (value, setVisibleStudents) => {
-    // Dummy data for demonstration, replace with actual API call or logic
     const searchTerm = value.toLowerCase();
     const filteredStudents = students.filter((student) =>
       student.name.toLowerCase().includes(searchTerm)
@@ -91,34 +97,113 @@ function EntryAdd() {
     setVisibleStudents(filteredStudents);
   };
 
-  function handleOnSubmit() {
-    //Logic to get form data and post it is here
+  const handleOnSubmit = async () => {
+    console.log(selectedCompany, selectedAdvisers, startDate, endDate);
+    console.log(rows);
+    const selectedWave = cookies.get("selected-wave");
+    
+    // Create the base object for the request body
+    let body = {
+      user_id: selectedAdvisers,
+      company_id: selectedCompany,
+      wave_id: selectedWave,
+      end_date: endDate,
+    };
+  
+    // Conditionally add start_date if entry is not "penarikan"
+    if (entry !== "penarikan") {
+      body.start_date = startDate;
+    }
+  
+    try {
+      const response = await fetch(`${host}/api/${entry}/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(body),
+      });
+      
+      const result = await response.json();
+      if (result.status === "success") {
+        navigate("/admin/entries");
+      } else {
+        alert("Submission failed");
+      }
+    } catch (error) {
+      alert("Something went wrong: " + error.message);
+    }
+  };
+  
 
-    navigate("/admin/entries");
-  }
+  const handleSubmit = async (formData) => {
+    console.log("Form data submitted:", formData);
+    await fetch(`${host}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password,
+        role: formData.role,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          
+          // navigate("/admin/users");
+        }
+      })
+      .catch(() => {
+        alert("Something went wrong");
+      });
+  };
 
   useEffect(() => {
     fetchDataForCompanies();
     fetchDataForStudents();
+    fetchDataForAdvisers();
   }, []);
 
   return (
     <div className="flex-col flex gap-2 items-center">
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
         <label className={labelStyle}>Pembimbing</label>
-        <AdviserDropdown value={advisers} />
+        <AdviserDropdown
+          value={advisers}
+          setSelectedValue={setSelectedAdvisers}
+        />
       </div>
       <div className="w-full max-w-screen-sm relative flex-row flex gap-2 items-center">
         <label className={labelStyle}>Perusahaan</label>
-        <CompanyDropdown value={company} />
+        <CompanyDropdown
+          value={company}
+          setSelectedValue={setSelectedCompany}
+        />
       </div>
-      <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-        <label className={labelStyle}>Tanggal Berangkat</label>
-        <input type="date" className="input w-full" />
-      </div>
+      {entry != "penarikan" && (
+        <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+          <label className={labelStyle}>Tanggal Berangkat</label>
+          <input
+            type="date"
+            className="input w-full"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </div>
+      )}
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
         <label className={labelStyle}>Tanggal Kembali</label>
-        <input type="date" className="input w-full" />
+        <input
+          type="date"
+          className="input w-full"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
       </div>
       <StudentEntryAddTable
         rows={rows}
@@ -127,8 +212,12 @@ function EntryAdd() {
         onSearchStudent={searchStudent}
         isMaxWidth={true}
       />
-      <button className="btn btn-primary max-w-screen-sm w-full" onClick={handleOnSubmit}>Send</button>
-      {/* <button className="btn btn-neutral" onClick={()=>{console.log(company);console.log(students)}}>Send</button> */}
+      <button
+        className="btn btn-primary max-w-screen-sm w-full"
+        onClick={handleOnSubmit}
+      >
+        Send
+      </button>
     </div>
   );
 }

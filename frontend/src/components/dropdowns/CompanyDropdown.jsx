@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-function CompanyDropdown({ value }) {
+function CompanyDropdown({ value , setSelectedValue }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [visibleCompanies, setVisibleCompanies] = useState([]);
@@ -24,8 +24,9 @@ function CompanyDropdown({ value }) {
     setIsOpen(true);
   }
 
-  function selectItem(name) {
-    setSearchValue(name);
+  function selectItem(item) {
+    setSearchValue(item.name);
+    setSelectedValue(item.id);
     setIsOpen(false);
   }
 
@@ -53,7 +54,7 @@ function CompanyDropdown({ value }) {
                 key={item.id}
                 className="cursor-pointer"
                 onMouseDown={() => {
-                  selectItem(item.name);
+                  selectItem(item);
                   console.log(items);
                 }}
               >

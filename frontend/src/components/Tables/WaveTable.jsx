@@ -1,18 +1,72 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import host from "../../assets/strings/host";
+import Cookies from "universal-cookie";
+import { useNavigate, useParams } from "react-router-dom";
 
 function WaveTable() {
-  const [selectedIds, setSelectedIds] = useState(1);
+  const [data, setData] = useState([]);
+  const [pageData, setPageData] = useState();
+  const { page } = useParams();
+  const navigate = useNavigate();
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const [selectedId, setSelectedId] = useState();
 
-
-  const data = [
-    { id: 1, tahunPembelajaran: '2024/2025', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
-    { id: 2, tahunPembelajaran: '2023/2024', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
-    { id: 3, tahunPembelajaran: '2022/2023', startDate: '10 Juli 2024', endDate: '12 Juni 2025' },
-    { id: 4, tahunPembelajaran: '2021/2022', startDate: '10 Juli 2024', endDate: '12 Juni 2025' }
-  ];
+  const fetchWaveData = async () => {
+    try {
+      const response = await fetch(`${host}/api/wave?page=${page}&size=10`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      const waveData = await response.json();
+      setData(waveData.data.items.map((wave, index) => ({
+        ...wave,
+        waveyear: `${new Date(wave.start_date).getFullYear()}/${new Date(wave.end_date).getFullYear()}`,
+        start_date: new Date(wave.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+        end_date: new Date(wave.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      })));
+      setPageData(waveData.data);
+    } catch (err) {
+      alert("Something went wrong: " + err);
+      setData([]);
+    }
+  };
 
   const handleSelect = (id) => {
-    setSelectedIds(id);
+    cookies.set("selected-wave", id);
+    setSelectedId(id);
+  };
+
+  useEffect(() => {
+    fetchWaveData();
+    setSelectedId(cookies.get("selected-wave"));
+  }, [page]);
+
+  const handlePageChange = (newPage) => {
+    navigate(`/admin/entries/wave/${newPage}`);
+  };
+
+  const onDelete = async (index) => {
+    try {
+      const response = await fetch(`${host}/api/wave/${index}/delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      fetchWaveData();
+      cookies.remove("selected-wave");
+    } catch (err) {
+      alert("something went wrong:" + err);
+    } finally {
+    }
   };
 
   return (
@@ -32,11 +86,11 @@ function WaveTable() {
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
               <td>{index + 1}</td>
-              <td>{row.tahunPembelajaran}</td>
-              <td>{row.startDate}</td>
-              <td>{row.endDate}</td>
+              <td>{row.waveyear}</td>
+              <td>{row.start_date}</td>
+              <td>{row.end_date}</td>
               <td>
-                {selectedIds == row.id ? (
+                {selectedId === row.id ? (
                   <span className="opacity-60">Terpilih</span>
                 ) : (
                   <button
@@ -51,7 +105,7 @@ function WaveTable() {
                 <button className="btn btn-info btn-xs rounded-lg mr-2">
                   Edit
                 </button>
-                <button className="btn btn-error btn-xs rounded-lg">
+                <button className="btn btn-error btn-xs rounded-lg" onClick={()=>{onDelete(row.id)}}>
                   Delete
                 </button>
               </td>
@@ -59,25 +113,41 @@ function WaveTable() {
           ))}
         </tbody>
       </table>
-      <div className="flex justify-center items-center gap-2 mt-4">
-        <button className="flex-none btn bg-base-100">
-          <span className="material-symbols-rounded icon-size-20">
-            arrow_back
-          </span>
-        </button>
-        <div className="join flex gap-2">
-          <button className="join-item btn">1</button>
-          <button className="join-item btn">2</button>
-          <button className="join-item btn opacity-50">...</button>
-          <button className="join-item btn">99</button>
-          <button className="join-item btn">100</button>
+      {pageData && (
+        <div className="flex justify-center items-center gap-2 mt-4">
+          <button
+            className="flex-none btn bg-base-100"
+            onClick={() => handlePageChange(pageData.page - 1)}
+            disabled={pageData.page === 1}
+          >
+            <span className="material-symbols-rounded icon-size-20">
+              arrow_back
+            </span>
+          </button>
+          <div className="join flex">
+            {[...Array(pageData.num_pages)].map((_, index) => (
+              <button
+                key={index}
+                className={`join-item btn ${
+                  pageData.page === index ? "btn-neutral" : ""
+                }`}
+                onClick={() => handlePageChange(index)}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+          <button
+            className="flex-none btn bg-base-100"
+            onClick={() => handlePageChange(pageData.page + 1)}
+            disabled={pageData.page === pageData.num_pages}
+          >
+            <span className="material-symbols-rounded icon-size-20">
+              arrow_forward
+            </span>
+          </button>
         </div>
-        <button className="flex-none btn bg-base-100">
-          <span className="material-symbols-rounded icon-size-20">
-            arrow_forward
-          </span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }

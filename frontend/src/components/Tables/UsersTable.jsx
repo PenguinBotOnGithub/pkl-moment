@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import host from "../../assets/strings/host";
 import Cookies from "universal-cookie";
+import { useParams } from "react-router-dom";
 
 function UsersTable() {
   const [data, setData] = useState([]);
+  const [pageData, setPageData] = useState();
+  const { page } = useParams();
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
 
   const fetchDataForCompanies = async () => {
     try {
-      const response = await fetch(`${host}/api/user`, {
+      const response = await fetch(`${host}/api/user?page=${page}`, {
         headers: {
           Authorization: token,
         },
@@ -17,11 +20,12 @@ function UsersTable() {
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let companiesData = await response.json();
-      console.log(companiesData);
-      setData(companiesData.data.items);
+      let usersData = await response.json();
+      console.log(usersData);
+      setData(usersData.data.items);
+      setPageData(usersData.data);
     } catch (err) {
-      alert("something went wrong:"+err);
+      alert("something went wrong:" + err);
       setData([]);
     } finally {
     }
@@ -40,14 +44,14 @@ function UsersTable() {
       }
       fetchDataForCompanies();
     } catch (err) {
-      alert("something went wrong:"+err);
+      alert("something went wrong:" + err);
     } finally {
     }
-  }
+  };
 
   useEffect(() => {
     fetchDataForCompanies();
-  },[]);
+  }, []);
 
   return (
     <div className="overflow-x-auto">
@@ -63,16 +67,23 @@ function UsersTable() {
         <tbody>
           {data.map((row, index) => (
             <tr key={row.id} className="border-t-2 border-neutral">
-              <td>{index}</td>
+              <td>{index + 1}</td>
               <td>{row.username}</td>
               <td>{row.role}</td>
               <td>
                 <button className="btn btn-warning btn-xs rounded-lg mr-2">
                   Ganti Password
                 </button>
-                {row.role != "admin" && <button className="btn btn-error btn-xs rounded-lg" onClick={() => {onDelete(row.id)}}>
-                  Delete
-                </button>}
+                {row.role != "admin" && (
+                  <button
+                    className="btn btn-error btn-xs rounded-lg"
+                    onClick={() => {
+                      onDelete(row.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}
@@ -84,12 +95,18 @@ function UsersTable() {
             arrow_back
           </span>
         </button>
-        <div className="join flex gap-2">
-          <button className="join-item btn">1</button>
-          <button className="join-item btn">2</button>
-          <button className="join-item btn btn-disabled">...</button>
-          <button className="join-item btn">99</button>
-          <button className="join-item btn">100</button>
+        <div className="join flex">
+          { pageData && [...Array(pageData.num_pages)].map((_, index) => (
+            <button
+              key={index}
+              className={`join-item btn ${
+                pageData.page === index ? "btn-neutral" : ""
+              }`}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
         </div>
         <button className="flex-none btn bg-base-100">
           <span className="material-symbols-rounded icon-size-20">
@@ -97,7 +114,13 @@ function UsersTable() {
           </span>
         </button>
       </div>
-      <button onClick={() => {console.log(data)}}>debug button</button>
+      <button
+        onClick={() => {
+          console.log(pageData.page);
+        }}
+      >
+        debug button
+      </button>
     </div>
   );
 }

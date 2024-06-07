@@ -14,6 +14,7 @@ function EntriesTable() {
   const [currentEntry, setCurrentEntry] = useState(0);
   const entryValue = ["permohonan", "pengantaran", "penarikan"];
   const [data, setData] = useState([]);
+  const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,10 +29,12 @@ function EntriesTable() {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
       let entryData = await response.json();
+      console.log(entryData.data.items);
       setData(entryData.data.items);
       setIsDataEdited(entryData.data.items.map(() => false));
       setError(null);
     } catch (err) {
+      console.log("test"+err)
       setError(err.message);
       setData([]);
     } finally {
@@ -93,7 +96,7 @@ function EntriesTable() {
           <div role="tablist" className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap">
             <button role="tab" onClick={() => handleSelectTab(0)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 0 && `tab-active`}`}>Permohonan</button>
             <button role="tab" onClick={() => handleSelectTab(1)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 1 && `tab-active`}`}>Pengantaran</button>
-            <button role="tab" onClick={() => handleSelectTab(2)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 2 && `tab-active`}`}>penarikan</button>
+            <button role="tab" onClick={() => handleSelectTab(2)} className={`tab hover:bg-base-300 ease-in-out duration-150 ${currentEntry === 2 && `tab-active`}`}>Penarikan</button>
           </div>
           <div className="flex gap-2">
             <button
@@ -166,7 +169,7 @@ function EntriesTable() {
                   </label>
                 </td>
                 <td>
-                  {row.adviser}
+                  {row.user}
                 </td>
                 <td>
                   {row.company}
@@ -205,6 +208,7 @@ function EntriesTable() {
             </span>
           </button>
         </div>
+        <button onClick={()=>{console.log(data)}}>debug</button>
       </div>
     </>
   );
