@@ -98,6 +98,24 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(remove_permohonan_student);
 
+    let verify_permohonan_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("verify"))
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(verify_permohonan);
+
+    let unverify_permohonan_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("unverify"))
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(unverify_permohonan);
+
     get_permohonans_route
         .or(create_permohonan_route)
         .or(read_permohonan_route)
@@ -106,6 +124,8 @@ pub fn permohonans_routes(
         .or(get_permohonan_students_route)
         .or(add_permohonan_student_route)
         .or(remove_permohonan_student_route)
+        .or(verify_permohonan_route)
+        .or(unverify_permohonan_route)
 }
 
 async fn get_permohonans(
@@ -481,5 +501,42 @@ async fn remove_permohonan_student(
                 )))
             }
         }
+    }
+}
+
+async fn verify_permohonan(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let res = Permohonan::verify(&mut db, id, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = res {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )))
+    }
+}
+async fn unverify_permohonan(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let res = Permohonan::unverify(&mut db, id, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if let Some(v) = res {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    } else {
+        Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )))
     }
 }
