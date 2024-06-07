@@ -84,7 +84,7 @@ pub struct UpdatePermohonan {
     pub start_date: Option<chrono::NaiveDate>,
     pub end_date: Option<chrono::NaiveDate>,
     pub verified: Option<bool>,
-    pub verified_date: Option<chrono::NaiveDate>,
+    pub verified_date: Option<Option<chrono::NaiveDate>>,
     pub wave_id: Option<i32>,
 }
 
