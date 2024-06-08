@@ -4,8 +4,28 @@ use models::permohonan::PermohonanJoined;
 use std::cell::RefCell;
 use std::io::Write;
 use std::rc::Rc;
+use tokio::io::AsyncReadExt;
 use tracing::debug;
 use warp::{reject, Rejection};
+
+pub async fn example_pdf() -> Result<Vec<u8>, Rejection> {
+    let mut file = tokio::fs::File::open("assets/pdf/example.pdf")
+        .await
+        .map_err(|e| {
+            reject::custom(InternalError::FilesystemError(
+                "error opening example pdf".to_owned(),
+            ))
+        })?;
+
+    let mut buffer = vec![];
+    file.read_to_end(&mut buffer).await.map_err(|e| {
+        reject::custom(InternalError::FilesystemError(
+            "error opening example pdf".to_owned(),
+        ))
+    })?;
+
+    Ok(buffer)
+}
 
 pub fn gen_genpdf(detail: &PermohonanJoined) -> Result<Vec<u8>, Rejection> {
     let font_family =
