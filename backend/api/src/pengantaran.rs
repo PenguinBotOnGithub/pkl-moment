@@ -112,15 +112,6 @@ pub fn pengantarans_routes(
         .and(with_db(db.clone()))
         .and_then(verify_pengantaran);
 
-    let unverify_pengantaran_route = pengantaran
-        .and(warp::path::param::<i32>())
-        .and(warp::path("unverify"))
-        .and(warp::path::end())
-        .and(warp::patch())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
-        .and(with_db(db.clone()))
-        .and_then(unverify_pengantaran);
-
     let pdf_pengantaran_route = pengantaran
         .and(warp::path::param::<i32>())
         .and(warp::path("pdf"))
@@ -139,7 +130,6 @@ pub fn pengantarans_routes(
         .or(add_pengantaran_student_route)
         .or(remove_pengantaran_student_route)
         .or(verify_pengantaran_route)
-        .or(unverify_pengantaran_route)
         .or(pdf_pengantaran_route)
 }
 
@@ -526,24 +516,6 @@ async fn verify_pengantaran(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
     let res = Pengantaran::verify(&mut db, id, claims.id)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
-
-    if let Some(v) = res {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
-    } else {
-        Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
-        )))
-    }
-}
-async fn unverify_pengantaran(
-    id: i32,
-    claims: JwtClaims,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let res = Pengantaran::unverify(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
