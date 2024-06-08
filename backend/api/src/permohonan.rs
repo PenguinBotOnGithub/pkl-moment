@@ -19,7 +19,7 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
-use crate::pdf::{gen_genpdf, gen_lopdf};
+use crate::pdf::{example_pdf, gen_genpdf, gen_lopdf};
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
@@ -641,7 +641,7 @@ async fn gen_permohonan_pdf(
         )));
     };
 
-    let buffer = gen_lopdf(&detail)?;
+    let buffer = example_pdf().await?;
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",
