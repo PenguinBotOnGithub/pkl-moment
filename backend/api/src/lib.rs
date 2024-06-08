@@ -11,6 +11,7 @@ pub mod auth;
 pub mod company;
 pub mod error;
 pub mod log;
+mod pdf;
 pub mod penarikan;
 pub mod pengantaran;
 pub mod permohonan;
@@ -85,4 +86,10 @@ impl<T> ApiResponse<T> {
 #[derive(serde::Deserialize, Debug, Clone)]
 struct AddStudentRequest {
     student_id: i32,
+}
+
+#[derive(serde::Deserialize, Debug, Clone)]
+struct GenPdfRequest {
+    signature_1_id: i32,
+    signature_2_id: i32,
 }

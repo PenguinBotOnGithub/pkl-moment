@@ -1,10 +1,16 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
+use genpdf::error::Error;
+use genpdf::{elements, fonts, Document};
 use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
 use models::permohonan_student::{CreatePermohonanStudent, PermohonanStudent};
+use models::signature::Signature;
 use models::types::UserRole;
 use parking_lot::Mutex;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
+use tracing::debug;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -13,9 +19,10 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
+use crate::pdf::{gen_genpdf, gen_lopdf};
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, AddStudentRequest, ApiResponse,
+    with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
 };
 
 pub fn permohonans_routes(
@@ -116,6 +123,16 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(unverify_permohonan);
 
+    let gen_permohonan_pdf_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("pdf"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_json())
+        .and(with_db(db.clone()))
+        .and_then(gen_permohonan_pdf);
+
     get_permohonans_route
         .or(create_permohonan_route)
         .or(read_permohonan_route)
@@ -126,6 +143,7 @@ pub fn permohonans_routes(
         .or(remove_permohonan_student_route)
         .or(verify_permohonan_route)
         .or(unverify_permohonan_route)
+        .or(gen_permohonan_pdf_route)
 }
 
 async fn get_permohonans(
@@ -538,4 +556,106 @@ async fn unverify_permohonan(
             "permohonan not found".to_owned(),
         )))
     }
+}
+
+async fn gen_permohonan_pdf(
+    id: i32,
+    claims: JwtClaims,
+    payload: GenPdfRequest,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let Some(n) = Permohonan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )));
+    };
+
+    if let UserRole::Advisor = &claims.role {
+        if n != claims.id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to view others data".to_owned(),
+            )));
+        }
+    }
+    let (sig1, sig2) = match (
+        Signature::read(&mut db, payload.signature_1_id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+        Signature::read(&mut db, payload.signature_2_id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    ) {
+        (Some(h), Some(i)) => (
+            fs::OpenOptions::new()
+                .read(true)
+                .open(format!("assets/signatures/{}", h.id))
+                .await
+                .map_err(|e| {
+                    ClientError::NotFound(format!(
+                        "signature {}'s image not found: {}",
+                        h.id,
+                        e.to_string()
+                    ))
+                })?,
+            fs::OpenOptions::new()
+                .read(true)
+                .open(format!("assets/signatures/{}", i.id))
+                .await
+                .map_err(|e| {
+                    ClientError::NotFound(format!(
+                        "signature {}'s image not found: {}",
+                        i.id,
+                        e.to_string()
+                    ))
+                })?,
+        ),
+        (None, Some(_)) => {
+            return Err(reject::custom(ClientError::NotFound(format!(
+                "signature {} not found",
+                payload.signature_1_id
+            ))));
+        }
+        (Some(_), None) => {
+            return Err(reject::custom(ClientError::NotFound(format!(
+                "signature {} not found",
+                payload.signature_2_id
+            ))));
+        }
+        (None, None) => {
+            return Err(reject::custom(ClientError::NotFound(
+                "no signature found".to_owned(),
+            )));
+        }
+    };
+
+    let detail = Permohonan::read_with_joins(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(detail) = detail else {
+        return Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )));
+    };
+
+    let buffer = gen_lopdf(&detail)?;
+
+    let file = fs::File::create(format!(
+        "assets/pdf/{}.pdf",
+        chrono::Local::now().to_string()
+    ))
+    .await
+    .ok();
+    if let Some(mut v) = file {
+        v.write_all(&buffer.clone()).await.ok();
+    }
+
+    Ok(reply::with_header(
+        buffer,
+        "Content-Type",
+        "application/pdf",
+    ))
 }

@@ -18,3 +18,5 @@ parking_lot = { version = "0.12.2", features = ["send_guard"] }
 thiserror = "1.0.60"
 chrono = "0.4.38"
 serde_json = "1.0.117"
+genpdf = "0.2.0"
+lopdf = "0.32.0"
