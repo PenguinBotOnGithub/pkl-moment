@@ -26,7 +26,7 @@ function UserAddTable() {
       .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
-          navigate("/admin/users");
+          navigate("/admin/users/0");
         }
       })
       .catch(() => {

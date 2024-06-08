@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import Search from "../Search";
-import Statistic from "../count/Statistic";
-import host from "../../assets/strings/host";
+import host from "../assets/strings/host";
+import Statistic from "../components/count/Statistic";
 
-function EntriesTable() {
+function SearchEntry() {
   const navigate = useNavigate();
   const cookies = new Cookies();
   const role = cookies.get("role");
@@ -120,10 +119,6 @@ function EntriesTable() {
     setCurrentEntry(index);
   }
 
-  function onAddHandle() {
-    navigate(`/admin/entries/${entryValue[currentEntry]}/add`);
-  }
-
   function downloadBlob(blob, name = "file") {
     // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
     const blobUrl = URL.createObjectURL(blob);
@@ -186,8 +181,6 @@ function EntriesTable() {
 
   return (
     <>
-      <Search addOnClick={onAddHandle} />
-      <Statistic />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center gap-2">
           <div
@@ -207,28 +200,18 @@ function EntriesTable() {
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <button
-              className={`btn btn-warning btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-            >
-              Export{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
-            <button
-              className={`btn btn-error btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-              onClick={() =>
-                selectedRows.forEach((rowIndex) =>
-                  deleteEntry(data[rowIndex].id)
-                )
-              }
-            >
-              Delete{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
+          <div className="flex gap-2 items-center">
+            Cari Berdasarkan:
+            <details className="dropdown dropdown-bottom dropdown-end">
+              <summary className="m-1 btn btn-sm btn-neutral">Company</summary>
+              <ul className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52">
+                <li>
+                  <button onClick={() => {navigate("")}} className="btn btn-sm btn-ghost">Google .Inc</button>
+                  <button onClick={() => {navigate("/admin/entries/searchdummy")}} className="btn btn-sm btn-ghost">Microsoft Corporation</button>
+                </li>
+              </ul>
+            </details>
+            <button className="btn btn-neutral btn-sm" onClick={() => {navigate("/admin/entries/search/siswa")}}>Siswa</button>
           </div>
         </div>
         {loading ? (
@@ -357,4 +340,4 @@ function EntriesTable() {
   );
 }
 
-export default EntriesTable;
+export default SearchEntry;

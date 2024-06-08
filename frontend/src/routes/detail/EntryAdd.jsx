@@ -8,7 +8,9 @@ import Cookies from "universal-cookie";
 
 function EntryAdd() {
   const cookies = new Cookies(null, { path: "/" });
+  const role = cookies.get("role");
   const token = cookies.get("access-token");
+  const userId = cookies.get("user-id");
   const { id, entry } = useParams();
   const labelStyle = "max-w-36 min-w-36 overflow-hidden";
   const [rows, setRows] = useState([]);
@@ -21,6 +23,8 @@ function EntryAdd() {
   const [selectedAdvisers, setSelectedAdvisers] = useState();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [currentEntry, setCurrentEntry] = useState(0);
+  const entryValue = ["6 Bulan", "1 Tahun"];
 
   const fetchDataForCompanies = async () => {
     try {
@@ -79,8 +83,8 @@ function EntryAdd() {
     }
   };
 
-  const addRow = (id, name) => {
-    setRows([...rows, { id, name }]);
+  const addRow = (id, name, grade) => {
+    setRows([...rows, { id, name, grade }]);
   };
 
   const deleteRow = (index) => {
@@ -101,7 +105,11 @@ function EntryAdd() {
     console.log(selectedCompany, selectedAdvisers, startDate, endDate);
     console.log(rows);
     const selectedWave = cookies.get("selected-wave");
-    
+
+    if (role == "advisor") {
+      setSelectedAdvisers(userId);
+    }
+
     // Create the base object for the request body
     let body = {
       user_id: selectedAdvisers,
@@ -109,12 +117,12 @@ function EntryAdd() {
       wave_id: selectedWave,
       end_date: endDate,
     };
-  
+
     // Conditionally add start_date if entry is not "penarikan"
     if (entry !== "penarikan") {
       body.start_date = startDate;
     }
-  
+
     try {
       const response = await fetch(`${host}/api/${entry}/create`, {
         method: "POST",
@@ -124,7 +132,7 @@ function EntryAdd() {
         },
         body: JSON.stringify(body),
       });
-      
+
       const result = await response.json();
       if (result.status === "success") {
         navigate("/admin/entries");
@@ -135,49 +143,26 @@ function EntryAdd() {
       alert("Something went wrong: " + error.message);
     }
   };
-  
-
-  const handleSubmit = async (formData) => {
-    console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-      body: JSON.stringify({
-        username: formData.username,
-        password: formData.password,
-        role: formData.role,
-      }),
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "success") {
-          
-          // navigate("/admin/users");
-        }
-      })
-      .catch(() => {
-        alert("Something went wrong");
-      });
-  };
 
   useEffect(() => {
     fetchDataForCompanies();
     fetchDataForStudents();
-    fetchDataForAdvisers();
+    if (role != "advisor") {
+      fetchDataForAdvisers();
+    }
   }, []);
 
   return (
     <div className="flex-col flex gap-2 items-center">
-      <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-        <label className={labelStyle}>Pembimbing</label>
-        <AdviserDropdown
-          value={advisers}
-          setSelectedValue={setSelectedAdvisers}
-        />
-      </div>
+      {role != "advisor" && (
+        <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+          <label className={labelStyle}>Pembimbing</label>
+          <AdviserDropdown
+            value={advisers}
+            setSelectedValue={setSelectedAdvisers}
+          />
+        </div>
+      )}
       <div className="w-full max-w-screen-sm relative flex-row flex gap-2 items-center">
         <label className={labelStyle}>Perusahaan</label>
         <CompanyDropdown
@@ -198,6 +183,21 @@ function EntryAdd() {
       )}
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
         <label className={labelStyle}>Tanggal Kembali</label>
+        {/* <div role="tablist"
+            className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap">
+          {entryValue.map((entry, index) => (
+            <button
+              key={index}
+              role="tab"
+              onClick={() => setCurrentEntry(index)}
+              className={`tab hover:bg-base-300 ease-in-out duration-150 ${
+                currentEntry === index && `tab-active`
+              }`}
+            >
+              {entry.charAt(0).toUpperCase() + entry.slice(1)}
+            </button>
+          ))}
+        </div> */}
         <input
           type="date"
           className="input w-full"

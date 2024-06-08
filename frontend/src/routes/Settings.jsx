@@ -96,6 +96,7 @@ function Settings({ cookies }) {
                   onClick={() => {
                     cookies.remove("access-token");
                     cookies.remove("selected-wave");
+                    cookies.remove("user-id");
                     cookies.remove("role");
                     window.location.reload();
                   }}

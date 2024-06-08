@@ -14,7 +14,9 @@ function StudentEntryAddTable({
   function handleSearchChange(value) {
     setSearchStudentValue(value);
     onSearchStudent(value, setVisibleStudents);
-    setIsOpenStudent(true);
+    if(value.trim != ""){
+      setIsOpenStudent(true);
+    }
   }
 
   return (
@@ -28,6 +30,7 @@ function StudentEntryAddTable({
         <tr className="border-0 ">
           <th className="w-0 z-20">No</th>
           <th>Nama Siswa</th>
+          <th>Kelas</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -36,6 +39,7 @@ function StudentEntryAddTable({
           <tr key={index} className="border-t-2 border-neutral ">
             <td>{index + 1}</td>
             <td>{row.name}</td>
+            <td>{row.grade}</td>
             <td>
               <div
                 className="btn btn-error btn-xs rounded-lg mr-2"
@@ -60,7 +64,6 @@ function StudentEntryAddTable({
               value={searchStudentValue}
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => {
-                setIsOpenStudent(true);
                 onSearchStudent("", setVisibleStudents);
               }}
               onBlur={() => setTimeout(() => setIsOpenStudent(false), 200)}
@@ -75,14 +78,15 @@ function StudentEntryAddTable({
                 {visibleStudents.map((student) => (
                   <div
                     key={student.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer flex flex-row justify-between"
                     onMouseDown={() => {
-                      onAddRow(student.id, student.name);
+                      onAddRow(student.id, student.name, student.class);
                       setSearchStudentValue("");
                       setIsOpenStudent(false);
                     }}
                   >
-                    {student.name}
+                    <div>{student.name}</div>
+                    <div>{student.class}</div>
                   </div>
                 ))}
               </div>

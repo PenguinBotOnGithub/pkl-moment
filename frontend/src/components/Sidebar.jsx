@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import Cookies from "universal-cookie";
 
 function Sidebar({ index = -1 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { t } = useTranslation();
+  const cookies = new Cookies(null, { path: "/" });
+  const role = cookies.get("role");
 
   const handleExpandToggle = () => {
     setIsExpanded(!isExpanded);
   };
+
+  useEffect(()=>{
+    console.log(role);
+  },[]);
 
   return (
     <div className="flex-none p-2">
@@ -23,7 +30,7 @@ function Sidebar({ index = -1 }) {
         </span>
       </label>
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4`}>
-        <li>
+        {/* <li>
           <NavLink
             to="/admin/dashboard"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
@@ -31,7 +38,7 @@ function Sidebar({ index = -1 }) {
             <span className="material-symbols-rounded">dashboard</span>
             {isExpanded && t("Dashboard")}
           </NavLink>
-        </li>
+        </li> */}
         <li>
           <NavLink
             to="/admin/entries"
@@ -41,7 +48,7 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
-        <li>
+        {role != "advisor" && <li>
           <NavLink
             to="/admin/users/0"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
@@ -49,7 +56,7 @@ function Sidebar({ index = -1 }) {
             <span className="material-symbols-rounded">manage_accounts</span>
             {isExpanded && t("All Users")}
           </NavLink>
-        </li>
+        </li>}
         <li>
           <NavLink
             to="/admin/settings"

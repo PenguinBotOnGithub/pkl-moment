@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import Search from "../Search";
-import Statistic from "../count/Statistic";
 import host from "../../assets/strings/host";
+import StudentDropdown from "../../components/dropdowns/StudentDropdown";
 
-function EntriesTable() {
+function SearchEntrySiswa() {
   const navigate = useNavigate();
   const cookies = new Cookies();
   const role = cookies.get("role");
@@ -18,7 +17,8 @@ function EntriesTable() {
   const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dataWave, setDataWave] = useState("");
+  const [selectedValue, setSelectedValue] = useState(null);
+  const value = [{ id: 1, name: "Aan Kurniawan", class: "11 PPLG-1" },{ id: 2, name: "Aaron Ikhwan Saputra", class: "11 PPLG-1" },];
 
   // const fetchWaveData = async () => {
   //   try {
@@ -120,10 +120,6 @@ function EntriesTable() {
     setCurrentEntry(index);
   }
 
-  function onAddHandle() {
-    navigate(`/admin/entries/${entryValue[currentEntry]}/add`);
-  }
-
   function downloadBlob(blob, name = "file") {
     // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
     const blobUrl = URL.createObjectURL(blob);
@@ -186,8 +182,7 @@ function EntriesTable() {
 
   return (
     <>
-      <Search addOnClick={onAddHandle} />
-      <Statistic />
+      <StudentDropdown setSelectedValue={setSelectedValue} value={value} />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center gap-2">
           <div
@@ -206,29 +201,6 @@ function EntriesTable() {
                 {entry.charAt(0).toUpperCase() + entry.slice(1)}
               </button>
             ))}
-          </div>
-          <div className="flex gap-2">
-            <button
-              className={`btn btn-warning btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-            >
-              Export{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
-            <button
-              className={`btn btn-error btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-              onClick={() =>
-                selectedRows.forEach((rowIndex) =>
-                  deleteEntry(data[rowIndex].id)
-                )
-              }
-            >
-              Delete{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
           </div>
         </div>
         {loading ? (
@@ -266,63 +238,69 @@ function EntriesTable() {
               </tr>
             </thead>
             <tbody className="box-content">
-              {data.map((row, index) => (
-                <tr key={row.id} className="border-t-2 border-neutral">
-                  <td className="p-3 pb-2">
-                    <label className="swap opacity-60">
-                      <input
-                        type="checkbox"
-                        onChange={() => handleSelectRow(index)}
-                        checked={selectedRows.includes(index)}
-                      />
-                      <span className="swap-off material-symbols-rounded">
-                        check_box_outline_blank
-                      </span>
-                      <span className="swap-on material-symbols-rounded">
-                        check_box
-                      </span>
-                    </label>
-                  </td>
-                  <td>{row.user}</td>
-                  <td>{row.company}</td>
-                  <td>{new Date(row.created_at).toLocaleDateString()}</td>
+              {data.map((row, index) => {
+                if (row.company === "Google .Inc") {
+                  return null; // Skip rendering this row
+                }
 
-                  <td>
-                    {row.verified ? (
-                      <span className="opacity-60">Terverifikasi</span>
-                    ) : (
-                      <span>Belum Terversifikasi</span>
-                    )}
-                  </td>
+                return (
+                  <tr key={row.id} className="border-t-2 border-neutral">
+                    <td className="p-3 pb-2">
+                      <label className="swap opacity-60">
+                        <input
+                          type="checkbox"
+                          onChange={() => handleSelectRow(index)}
+                          checked={selectedRows.includes(index)}
+                        />
+                        <span className="swap-off material-symbols-rounded">
+                          check_box_outline_blank
+                        </span>
+                        <span className="swap-on material-symbols-rounded">
+                          check_box
+                        </span>
+                      </label>
+                    </td>
+                    <td>{row.user}</td>
+                    <td>{row.company}</td>
+                    <td>{new Date(row.created_at).toLocaleDateString()}</td>
 
-                  <td className="flex flex-row flex-nowrap gap-2">
-                    <button
-                      className="btn btn-info btn-xs rounded-lg"
-                      onClick={() => {
-                        navigate(
-                          `/admin/entries/${entryValue[currentEntry]}/${row.id}`
-                        );
-                      }}
-                    >
-                      Detail
-                    </button>
-                    <button
-                      className="btn btn-error btn-xs rounded-lg"
-                      onClick={() => deleteEntry(row.id)}
-                    >
-                      Delete
-                    </button>
-                    {row.verified && (
+                    <td>
+                      {row.verified ? (
+                        <span className="opacity-60">Terverifikasi</span>
+                      ) : (
+                        <span>Belum Terversifikasi</span>
+                      )}
+                    </td>
+
+                    <td className="flex flex-row flex-nowrap gap-2">
                       <button
-                        className="btn btn-warning btn-xs"
-                        onClick={() => onExport(row.id)}
+                        className="btn btn-info btn-xs rounded-lg"
+                        onClick={() => {
+                          navigate(
+                            `/admin/entries/${entryValue[currentEntry]}/${row.id}`
+                          );
+                        }}
                       >
-                        Export
+                        Detail
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      <button
+                        className="btn btn-error btn-xs rounded-lg"
+                        onClick={() => deleteEntry(row.id)}
+                      >
+                        Delete
+                      </button>
+                      {row.verified && (
+                        <button
+                          className="btn btn-warning btn-xs"
+                          onClick={() => onExport(row.id)}
+                        >
+                          Export
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -357,4 +335,4 @@ function EntriesTable() {
   );
 }
 
-export default EntriesTable;
+export default SearchEntrySiswa;

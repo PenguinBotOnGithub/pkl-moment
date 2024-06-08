@@ -23,6 +23,9 @@ import Wave from "./routes/detail/Wave";
 import WaveAdd from "./routes/detail/WaveAdd";
 import User from "./routes/detail/User";
 import UserAdd from "./routes/detail/UserAdd";
+import SearchEntry from "./routes/SearchEntry";
+import SearchEntryDummy from "./routes/detail/SearchEntryDummy";
+import SearchEntrySiswa from "./routes/detail/SearchEntrySiswa";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -39,7 +42,7 @@ function App() {
       ),
     },
 
-    { path: "admin", element: <Navigate to="dashboard" /> },
+    { path: "admin", element: <Navigate to="entries" /> },
 
     {
       path: "admin",
@@ -66,6 +69,9 @@ function App() {
         <Navigate to="../login" />
       ),
       children: [
+        { path: "search", element: <SearchEntry /> },
+        { path: "searchdummy", element: <SearchEntryDummy /> },
+        { path: "search/siswa", element: <SearchEntrySiswa /> },
         { path: ":entry/:id", element: <Entry /> },
         { path: ":entry/add", element: <EntryAdd /> },
         { path: "wave/:page", element: <Wave /> },
