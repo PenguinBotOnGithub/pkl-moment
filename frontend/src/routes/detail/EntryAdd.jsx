@@ -11,8 +11,9 @@ function EntryAdd() {
   const role = cookies.get("role");
   const token = cookies.get("access-token");
   const userId = cookies.get("user-id");
-  const { id, entry } = useParams();
+  const { entry } = useParams();
   const labelStyle = "max-w-36 min-w-36 overflow-hidden";
+  
   const [rows, setRows] = useState([]);
   const [company, setCompany] = useState([]);
   const [advisers, setAdvisers] = useState([]);
@@ -23,12 +24,12 @@ function EntryAdd() {
   const [selectedAdvisers, setSelectedAdvisers] = useState();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [currentEntry, setCurrentEntry] = useState(0);
+  const [currentEndDate, setCurrentEndDate] = useState(0);
   const entryValue = ["6 Bulan", "1 Tahun"];
 
-  const fetchDataForCompanies = async () => {
+  const fetchData = async (url, setter, transform = (data) => data) => {
     try {
-      const response = await fetch(`${host}/api/company?page=0&size=1000`, {
+      const response = await fetch(url, {
         headers: {
           Authorization: token,
         },
@@ -36,92 +37,78 @@ function EntryAdd() {
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let companiesData = await response.json();
-      setCompany(companiesData.data.items);
+      const data = await response.json();
+      setter(transform(data.data.items));
     } catch (err) {
-      alert("something went wrong");
-      setCompany([]);
+      alert("Something went wrong");
+      setter([]);
     }
   };
 
-  const fetchDataForStudents = async () => {
-    try {
-      const response = await fetch(`${host}/api/student?page=0&size=1000`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let studentsData = await response.json();
-      setStudents(studentsData.data.items);
-    } catch (err) {
-      alert("something went wrong");
-      setStudents([]);
-    }
-  };
-
-  const fetchDataForAdvisers = async () => {
-    try {
-      const response = await fetch(`${host}/api/user`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let usersData = await response.json();
-      const advisersData = usersData.data.items.filter(
-        (user) => user.role === "advisor"
+  useEffect(() => {
+    fetchData(`${host}/api/company?page=0&size=1000`, setCompany);
+    fetchData(`${host}/api/student?page=0&size=1000`, setStudents);
+    if (role !== "advisor") {
+      fetchData(`${host}/api/user`, setAdvisers, (items) =>
+        items.filter((user) => user.role === "advisor")
       );
-      setAdvisers(advisersData);
-    } catch (err) {
-      alert("something went wrong");
-      setAdvisers([]);
     }
-  };
+  }, []);
 
   const addRow = (id, name, grade) => {
-    setRows([...rows, { id, name, grade }]);
+    setRows((prevRows) => [...prevRows, { id, name, grade }]);
   };
 
   const deleteRow = (index) => {
-    const newRows = [...rows];
-    newRows.splice(index, 1);
-    setRows(newRows);
+    setRows((prevRows) => prevRows.filter((_, i) => i !== index));
   };
 
   const searchStudent = (value, setVisibleStudents) => {
     const searchTerm = value.toLowerCase();
-    const filteredStudents = students.filter((student) =>
-      student.name.toLowerCase().includes(searchTerm)
-    );
+    const filteredStudents = matchSorter(value, searchTerm, { threshold: matchSorter.rankings.STARTS_WITH, keys: ['name'] });
     setVisibleStudents(filteredStudents);
   };
 
+  const addStudentsToEntry = async (entryId) => {
+    for (const row of rows) {
+      const body = {
+        student_id: row.id,
+      };
+
+      try {
+        const response = await fetch(`${host}/api/${entry}/${entryId}/student/add`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+          body: JSON.stringify(body),
+        });
+
+        const result = await response.json();
+        if (result.status !== "success") {
+          alert(`Failed to add student ${row.name}`);
+        }
+      } catch (error) {
+        alert(`Something went wrong: ${error.message}`);
+      }
+    }
+  };
+
   const handleOnSubmit = async () => {
-    console.log(selectedCompany, selectedAdvisers, startDate, endDate);
-    console.log(rows);
     const selectedWave = cookies.get("selected-wave");
 
-    if (role == "advisor") {
+    if (role === "advisor") {
       setSelectedAdvisers(userId);
     }
 
-    // Create the base object for the request body
-    let body = {
+    const body = {
       user_id: selectedAdvisers,
       company_id: selectedCompany,
       wave_id: selectedWave,
       end_date: endDate,
+      ...(entry !== "penarikan" && { start_date: startDate }),
     };
-
-    // Conditionally add start_date if entry is not "penarikan"
-    if (entry !== "penarikan") {
-      body.start_date = startDate;
-    }
 
     try {
       const response = await fetch(`${host}/api/${entry}/create`, {
@@ -135,7 +122,9 @@ function EntryAdd() {
 
       const result = await response.json();
       if (result.status === "success") {
-        navigate("/admin/entries");
+        const entryId = result.data.id;
+        await addStudentsToEntry(entryId);
+        navigate("/admin/entries/0");
       } else {
         alert("Submission failed");
       }
@@ -144,17 +133,20 @@ function EntryAdd() {
     }
   };
 
-  useEffect(() => {
-    fetchDataForCompanies();
-    fetchDataForStudents();
-    if (role != "advisor") {
-      fetchDataForAdvisers();
+  const handleEntryClick = (index) => {
+    if (startDate) {
+      const newEndDate = new Date(startDate);
+      newEndDate.setMonth(newEndDate.getMonth() + (index === 0 ? 6 : 12));
+      setEndDate(newEndDate.toISOString().split("T")[0]);
+      setCurrentEndDate(index);
+    } else {
+      setCurrentEndDate(index);
     }
-  }, []);
+  };
 
   return (
     <div className="flex-col flex gap-2 items-center">
-      {role != "advisor" && (
+      {role !== "advisor" && (
         <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
           <label className={labelStyle}>Pembimbing</label>
           <AdviserDropdown
@@ -170,7 +162,7 @@ function EntryAdd() {
           setSelectedValue={setSelectedCompany}
         />
       </div>
-      {entry != "penarikan" && (
+      {entry !== "penarikan" && (
         <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
           <label className={labelStyle}>Tanggal Berangkat</label>
           <input
@@ -183,27 +175,24 @@ function EntryAdd() {
       )}
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
         <label className={labelStyle}>Tanggal Kembali</label>
-        {/* <div role="tablist"
-            className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap">
+        <div
+          role="tablist"
+          className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap"
+        >
           {entryValue.map((entry, index) => (
             <button
               key={index}
               role="tab"
-              onClick={() => setCurrentEntry(index)}
+              onClick={() => handleEntryClick(index)}
               className={`tab hover:bg-base-300 ease-in-out duration-150 ${
-                currentEntry === index && `tab-active`
+                currentEndDate === index ? "tab-active" : ""
               }`}
             >
-              {entry.charAt(0).toUpperCase() + entry.slice(1)}
+              {entry}
             </button>
           ))}
-        </div> */}
-        <input
-          type="date"
-          className="input w-full"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
+        </div>
+        <span>{endDate}</span>
       </div>
       <StudentEntryAddTable
         rows={rows}

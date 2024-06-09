@@ -46,7 +46,7 @@ function CompanyDropdown({ value , setSelectedValue }) {
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
       />
       {isOpen && (
-        <div className="absolute bg-base-100 border-2 border-neutral rounded-lg top-12 left-0 right-0 px-4 py-3 flex flex-col gap-2">
+        <div className="absolute bg-base-100 border-2 border-neutral rounded-lg top-12 left-0 right-0 px-4 py-3 flex flex-col gap-2 z-20">
           {visibleCompanies
             .filter((item) => item.visible)
             .map((item) => (

@@ -1,17 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import getCurrentDate from "../../assets/strings/getCurrentDate";
 import StudentEntryAddTable from "../../components/tables/StudentEntryAddTable";
 import Cookies from "universal-cookie";
+import host from "../../assets/strings/host"; // Import the host URL
+import { matchSorter } from "match-sorter";
 
 function Entry() {
   let { id, entry } = useParams();
   const [rows, setRows] = useState([]);
   const [data, setData] = useState();
-  const [verifikasi, setVerifikasi] = useState(false);
+  const [dataEntryStudent, setDataEntryStudent] = useState([]);
+  const [dataAllStudent, setDataAllStudent] = useState([]);
+  const [verifikasi, setVerifikasi] = useState(true);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const cookies = new Cookies();
   const role = cookies.get("role");
   const token = cookies.get("access-token");
+  const [isStudentListChanged, setIsStudentListChanged] = useState(false);
+  const [isEntryChanged, setIsEntryChanged] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const navigate = useNavigate();
 
   const fetchDataForEntry = async () => {
     try {
@@ -25,35 +35,88 @@ function Entry() {
       }
       let entryData = await response.json();
       setData(entryData.data);
-      setIsDataEdited(entryData.data.map(() => false));
-      console.log(data);
+      setVerifikasi(entryData.data.verified);
+      console.log(entryData.data);
     } catch (err) {
       console.log("Error fetching data: " + err);
       setData([]);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDataForEntryStudents = async () => {
+    try {
+      const response = await fetch(`${host}/api/${entry}/${id}/student`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let studentsData = await response.json();
+      setDataEntryStudent(studentsData.data);
+      setRows(studentsData.data);
+      console.log(rows);
+    } catch (err) {
+      console.log("Error fetching data: " + err);
+      setDataEntryStudent([]);
+    }
+  };
+
+  const fetchAllStudents = async () => {
+    try {
+      const response = await fetch(`${host}/api/student?page=0&size=1000`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let allStudentsData = await response.json();
+      setDataAllStudent(allStudentsData.data.items);
+    } catch (err) {
+      console.log("Error fetching data: " + err);
+      setDataAllStudent([]);
     }
   };
 
   const onVerify = async () => {
     try {
-      const response = await fetch(
-        `${host}/api/${entryValue[currentEntry]}/${id}/verify`,
-        {
-          headers: {
-            Authorization: token,
-          },
-          method: "PATCH",
-        }
-      );
+      const response = await fetch(`${host}/api/${entry}/${id}/verify`, {
+        headers: {
+          Authorization: token,
+        },
+        method: "PATCH",
+      });
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
       await response.json();
-      setError(null);
-      fetchDataForEntry(entryValue[currentEntry]);
       setVerifikasi(true);
+      fetchDataForEntry();
     } catch (err) {
-      setError(err.message);
+      console.log("Error verifying data: " + err);
+    }
+  };
+
+  const onDelete = async () => {
+    try {
+      const response = await fetch(`${host}/api/${entry}/${id}`, {
+        headers: {
+          Authorization: token,
+        },
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      await response.json();
+      navigate("/admin/entries");
+    } catch (err) {
+      console.log("Error deleting data: " + err);
     }
   };
 
@@ -61,31 +124,99 @@ function Entry() {
     return str.toLowerCase().replace(/(^|\s)\S/g, (L) => L.toUpperCase());
   }
 
-  const students = [
-    { id: 1, name: "Aan Kurniawan", grade: "11 PPLG-1" },
-    { id: 2, name: "Aaron Ikhwan Saputra", grade: "11 PPLG-1" },
-  ];
+  useEffect(() => {
+    fetchDataForEntry();
+    fetchDataForEntryStudents();
+    fetchAllStudents();
+  }, []);
 
-  const addRow = (name) => {
-    setRows([...rows, { name }]);
+  const addRow = (id, name, grade) => {
+    setRows((prevRows) => [...prevRows, { id, name, grade }]);
+    setIsStudentListChanged(true);
   };
 
   const deleteRow = (index) => {
-    const newRows = [...rows];
-    newRows.splice(index, 1);
-    setRows(newRows);
+    setRows((prevRows) => prevRows.filter((_, i) => i !== index));
+    setIsStudentListChanged(true);
   };
 
   const searchStudent = (value, setVisibleStudents) => {
-    // Dummy data for demonstration, replace with actual API call or logic
     const searchTerm = value.toLowerCase();
-    const filteredStudents = students.filter((student) =>
-      student.name.toLowerCase().includes(searchTerm)
-    );
+    const filteredStudents = matchSorter(dataAllStudent, searchTerm, {
+      threshold: matchSorter.rankings.STARTS_WITH,
+      keys: ["name"],
+    });
     setVisibleStudents(filteredStudents);
   };
 
-  const [selectedRows, setSelectedRows] = useState([]);
+  const handleConfirmEdit = async (updatedEntryData) => {
+    if (isStudentListChanged) {
+      const currentStudentIds = dataEntryStudent.map((student) => student.id);
+      const newStudentIds = rows.map((student) => student.id);
+
+      const studentsToAdd = rows.filter(
+        (student) => !currentStudentIds.includes(student.id)
+      );
+      const studentsToDelete = dataEntryStudent.filter(
+        (student) => !newStudentIds.includes(student.id)
+      );
+
+      try {
+        // Update entry data
+        if (updatedEntryData) {
+          await fetch(`${host}/api/${entry}/${id}/update`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+            },
+            body: JSON.stringify(updatedEntryData),
+          });
+        }
+
+        // Add new students
+        for (const student of studentsToAdd) {
+          await fetch(`${host}/api/${entry}/${id}/student/add`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+            },
+            body: JSON.stringify({ student_id: student.id }),
+          });
+        }
+
+        // Delete removed students
+        for (const student of studentsToDelete) {
+          await fetch(
+            `${host}/api/${entry}/${id}/student/${student.id}/remove`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: token,
+              },
+            }
+          );
+        }
+
+        // Fetch updated student data
+        fetchDataForEntryStudents();
+
+        // refresh entry data
+        fetchDataForEntry();
+        setIsStudentListChanged(false);
+      } catch (error) {
+        console.log("Error confirming edit: " + error.message);
+      }
+    }
+  };
+
+  const handleCancelEdit = async () => {
+    if (isStudentListChanged) {
+      fetchDataForEntryStudents();
+      setIsStudentListChanged(false);
+    }
+  };
 
   const handleSelectRow = (rowIndex) => {
     if (selectedRows.includes(rowIndex)) {
@@ -94,10 +225,6 @@ function Entry() {
       setSelectedRows([...selectedRows, rowIndex]);
     }
   };
-
-  useEffect(() => {
-    fetchDataForEntry();
-  }, []);
 
   return (
     <>
@@ -113,26 +240,30 @@ function Entry() {
         </thead>
         <tbody className="box-content">
           <tr>
-            <td>Pak Agus</td>
+            <td>{data?.user?.username || "N/A"}</td>
             <td>{titleCase(entry)}</td>
-            <td>{getCurrentDate("/")}</td>
+            <td>{data?.created_at}</td>
             <td>
               {verifikasi ? (
                 <p className="opacity-60">Terverifikasi</p>
               ) : (
-                <p>Verifikasi</p>
+                <p>Belum Terverifikasi</p>
               )}
             </td>
             <td className="gap-2 flex flex-row">
-              {verifikasi && (
-                <button className="btn btn-warning btn-xs">Export</button>
-              )}
-              <button className="btn btn-error btn-xs">Delete</button>
+              <button
+                className="btn btn-error btn-xs"
+                onClick={() =>
+                  document.getElementById("delete_confirmation_modal").showModal()
+                }
+              >
+                Delete
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
-      Perusahaan
+      <h2>Perusahaan</h2>
       <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
         <thead className="bg-neutral">
           <tr className="border-0">
@@ -143,24 +274,45 @@ function Entry() {
         </thead>
         <tbody className="box-content">
           <tr>
-            <td>Google .Inc</td>
-            <td>kudus</td>
+            <td>{data?.company?.name || "N/A"}</td>
+            <td>{data?.company?.address || "N/A"}</td>
             <td className="gap-2 flex flex-row">
               <button className="btn btn-warning btn-xs">Ganti</button>
             </td>
           </tr>
         </tbody>
       </table>
-      Siswa
+      <h2>Siswa</h2>
       <StudentEntryAddTable
-        rows={students}
+        rows={rows}
         onAddRow={addRow}
         onDeleteRow={deleteRow}
         onSearchStudent={searchStudent}
+        student={dataAllStudent}
       />
+
+      <div className="flex flex-row gap-2">
+        <button
+          className={`btn btn-${
+            isStudentListChanged ? "success" : "disabled"
+          } flex-1 rounded-lg btn-sm`}
+          onClick={handleConfirmEdit}
+        >
+          <span>Confirm Edit</span>
+        </button>
+        <button
+          className={`btn btn-${
+            isStudentListChanged ? "error" : "disabled"
+          } flex-1 rounded-lg btn-sm`}
+          onClick={handleCancelEdit}
+        >
+          <span>Cancel Edit</span>
+        </button>
+      </div>
+
       {role != "advisor" && (
         <>
-          Tanda Tangan
+          <h2>Tanda Tangan</h2>
           <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
             <thead className="bg-neutral">
               <tr className="border-0">
@@ -212,28 +364,45 @@ function Entry() {
           </table>
         </>
       )}
-      {role != "adviser" && !verifikasi && (
+      {role !== "advisor" && !verifikasi && (
         <button
           className="btn btn-success rounded-lg btn-md"
           onClick={() =>
-            document.getElementById("logout_confirmation_modal").showModal()
+            document.getElementById("verify_confirmation_modal").showModal()
           }
         >
           <span>Verifikasi</span>
         </button>
       )}
-      <dialog id="logout_confirmation_modal" className="modal">
+      <dialog id="verify_confirmation_modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg text-error">Warning!</h3>
-          <p className="pt-4">Are you sure you want to <span className="text-success">verify</span>?</p>
-          <p>This action is irrevesable</p>
+          <p className="pt-4">
+            Are you sure you want to
+            <span className="text-success"> verify?</span>
+          </p>
+          This action is <span className="text-error">irreversible</span>
           <div className="modal-action">
             <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
-              <button
-                className="btn text-error"
-                onClick={() => setVerifikasi(true)}
-              >
+              <button className="btn btn-success" onClick={onVerify}>
+                Yes
+              </button>
+              <button className="btn ml-2">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="delete_confirmation_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg text-error">Warning!</h3>
+          <p className="pt-4">
+            Are you sure you want to
+            <span className="text-error"> delete?</span>
+          </p>
+          This action is <span className="text-error">irreversible</span>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-error" onClick={onDelete}>
                 Yes
               </button>
               <button className="btn ml-2">Cancel</button>

@@ -42,7 +42,7 @@ function App() {
       ),
     },
 
-    { path: "admin", element: <Navigate to="entries" /> },
+    { path: "admin", element: <Navigate to="entries/0" /> },
 
     {
       path: "admin",
@@ -53,7 +53,7 @@ function App() {
       ),
       children: [
         { path: "dashboard", element: <Dashboard /> },
-        { path: "entries", element: <EntriesAndDocuments /> },
+        { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
         { path: "user", element: <User /> },
         { path: "user/add", element: <UserAdd /> },

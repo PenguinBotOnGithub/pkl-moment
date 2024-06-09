@@ -41,7 +41,7 @@ function Sidebar({ index = -1 }) {
         </li> */}
         <li>
           <NavLink
-            to="/admin/entries"
+            to="/admin/entries/0"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
