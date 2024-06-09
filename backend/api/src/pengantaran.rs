@@ -418,7 +418,7 @@ async fn add_pengantaran_student(
                     claims.id,
                 )
                 .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+                .map_err(handle_fk_data_not_exists)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
@@ -438,7 +438,7 @@ async fn add_pengantaran_student(
                     claims.id,
                 )
                 .await
-                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+                .map_err(handle_fk_data_not_exists)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
