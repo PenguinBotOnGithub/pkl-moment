@@ -22,6 +22,8 @@ pub enum InternalError {
     ChronoError(String),
     #[error("filesystem error")]
     FilesystemError(String),
+    #[error("pdf generation error")]
+    PdfError(String),
 }
 
 impl Reject for InternalError {}
@@ -119,6 +121,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             }
             InternalError::FilesystemError(e) => {
                 error!("filesystem error: {}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
+            }
+            InternalError::PdfError(e) => {
+                error!("pdf generation error: {}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
             }
         }
