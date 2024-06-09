@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    @font-face {
+        font-family: Arial;
+        font-style: normal;
+        src: url("../fonts/arial/ARIAL.ttf");
+    }
+
+    @font-face {
+        font-family: Arial;
+        font-style: normal;
+        src: url("../fonts/arial/ARIALBD.ttf");
+    }
+
+    @font-face {
+        font-family: Arial;
+        font-style: italic;
+        src: url("../fonts/arial/ARIALI.ttf");
+    }
+
+    @font-face {
+        font-family: Arial;
+        font-style: italic;
+        src: url("../fonts/arial/ARIALBI.ttf");
+    }
+
+    table {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+
+    table th {
+        border: 1px solid black;
+    }
+
+    table td {
+        border: 1px solid black;
+        text-align: center;
+    }
+</style>
+<body style="margin: 0; padding: 0; display: flex; flex-direction: column; font-family: Cantarell,serif; gap: 0; font-family: Arial; line-height: 1.5; justify-content: center">
+
+<img src="../static/pkl-header.jpeg" alt="pkl-header">
+
+<div id="letter_info" style="font-size: 14.666666666666666px;">
+    <div style="display: flex; flex-direction: row; justify-content: space-between">
+        <p>Nomor&nbsp;&nbsp;&nbsp;: %%nomor_lampiran%%
+            /HUBIN/SMK.RUS/PKL/%%month%%/
+            %%year%%
+        </p>
+        <p>Kudus,
+            %%hijriah%%</p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between"><p>Lamp.&nbsp;&nbsp;&nbsp;&nbsp;: 1
+        bendel</p>
+        <p>%%georgian%%</p></div>
+    <p>Hal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="font-style: italic">Surat
+        Permohonan</strong></p>
+</div>
+
+<p><br></p>
+
+<div id="letter_receiver" style="font-size: 16px;">
+    <p>Kepada Yth.
+        <br>
+        Pimpinan <strong>%%company%%</strong>
+        <br>
+        <i style="font-size: 14px">%%company_address%%,</i>
+        <br>
+        di Tempat.
+    </p>
+</div>
+
+<p><br></p>
+
+<p style="font-size: 16px;"><strong>Assalamu&#39;alaikum Warohmatullahi Wabarokatuh.</strong></p>
+
+<p><br></p>
+
+<p id="letter_body" style="font-size: 16px;">Teriring Puji Syukur Kehadirat Allah SWT, Sholawat dan salam semoga selalu
+    dilimpahkan kepada Junjungan kita Nabi besar Muhammad SAW, keluarga para sahabat dan pengikutnya serta orang-orang
+    yang mencintainya, hingga Yaumil Qiyamah.
+    <br><br>
+    Diberitahukan dengan hormat,
+    <br>
+    Sesuai dengan program kerja Humas SMK Raden Umar Said Kudus Tahun Pelajaran
+    %%school_year%%, tentang pelaksanaan Praktik Kerja Lapangan (PKL) yang akan
+    dilaksanakan mulai tanggal <strong>%%start_date%% - %%end_date%%</strong>, maka dengan ini
+    kami bermaksud mohon izin dan kerjasama Bapak/Ibu guna menempatkan siswa kami
+    untuk melakukan program Praktik Kerja Lapangan (PKL) di perusahaan Bapak/Ibu.
+    Demikian permohonan kami, atas kesediaan dan kerjasama Bapak/Ibu diucapkan
+    terima kasih
+</p>
+
+<p><br></p>
+
+<p><strong>Wassalamu&#39;alaikum Warahmatullahi Wabarakatuh.</strong></p>
+
+<p><br></p>
+
+<div id="letter_footer_1" style="font-size: 14.666666666666666px;">
+    <p>Mengetahui</p>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>
+        %%signature_title_1%%</p>
+        <p>
+            %%signature_title_2%%</p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>SMK Raden Umar Said,</p>
+        <p>Bidang Humas & Industri,</p></div>
+    <p><br></p>
+    <p><br></p>
+    <p><br></p>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;"><strong>
+        %%signature_name_1%%</strong><strong>
+        %%signature_name_2%%</strong></div>
+</div>
+
+<p><br></p>
+<p><br></p>
+<p><br></p>
+<p><br></p>
+
+<p style="font-size: 13.333333333333332px">Lampiran Surat Permohonan PKL</p>
+<p style="font-size: 13.333333333333332px">Nomor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
+    %%nomor_lampiran%%
+    /HUBIN/SMK.RUS/PKL/
+    %%month%%/
+    %%year%%</p>
+
+<p><br></p>
+
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+    <p style="font-size: 16px"><strong>Daftar Nama Siswa PKL</strong></p>
+    <p style="font-size: 16px"><strong>SMK Raden Umar Said</strong></p>
+    <p style="font-size: 16px"><strong>Tahun Pelalajaran %%school_year%%</strong></p>
+    <p style="font-size: 16px"><strong>Di %%company%%</strong></p>
+</div>
+
+<p><br></p>
+<p><br></p>
+<p><br></p>
+
+<inject-table items="student_table">
+    <inject-column prop="index" label="No"/>
+    <inject-column prop="student_name" label="Nama"/>
+    <inject-column prop="student_class" label="Kelas"/>
+</inject-table>
+
+
+<p><br></p>
+<p><br></p>
+<p><br></p>
+
+<div id="letter_footer_2" style="font-size: 14.666666666666666px;">
+    <p>Mengetahui</p>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>
+        %%signature_title_1%%</p>
+        <p>
+            %%signature_title_2%%</p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>SMK Raden Umar Said,</p>
+        <p>Bidang Humas & Industri,</p></div>
+    <p><br></p>
+    <p><br></p>
+    <p><br></p>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;"><strong>
+        %%signature_name_1%%</strong><strong>
+        %%signature_name_2%%</strong></div>
+</div>
+
+</body>
+</html>
