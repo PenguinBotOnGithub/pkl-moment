@@ -256,23 +256,53 @@ impl std::io::Write for WrappedVecU8 {
     }
 }
 
-#[derive(PdfTemplate)]
-struct PenarikanPdf {
-    nomor_lampiran: u16,
-    month: String,
-    year: String,
-    hijriah: String,
-    georgian: String,
-    company: String,
-    company_address: String,
-    school_year: String,
-    end_date: String,
-    signature_title_1: String,
-    signature_title_2: String,
-    signature_name_1: String,
-    signature_name_2: String,
-    #[PdfTableData]
-    student_table: Vec<StudentTableData>,
+mod permohonan {
+    use crate::pdf::StudentTableData;
+    use simple_pdf_generator_derive::PdfTemplate;
+
+    #[derive(PdfTemplate)]
+    pub struct PermohonanPdf {
+        pub nomor_lampiran: u16,
+        pub month: String,
+        pub year: String,
+        pub hijriah: String,
+        pub georgian: String,
+        pub company: String,
+        pub company_address: String,
+        pub school_year: String,
+        pub start_date: String,
+        pub end_date: String,
+        pub signature_title_1: String,
+        pub signature_title_2: String,
+        pub signature_name_1: String,
+        pub signature_name_2: String,
+        #[PdfTableData]
+        pub student_table: Vec<StudentTableData>,
+    }
+}
+
+mod penarikan {
+    use crate::pdf::StudentTableData;
+    use simple_pdf_generator_derive::PdfTemplate;
+
+    #[derive(PdfTemplate)]
+    pub struct PenarikanPdf {
+        pub nomor_lampiran: u16,
+        pub month: String,
+        pub year: String,
+        pub hijriah: String,
+        pub georgian: String,
+        pub company: String,
+        pub company_address: String,
+        pub school_year: String,
+        pub end_date: String,
+        pub signature_title_1: String,
+        pub signature_title_2: String,
+        pub signature_name_1: String,
+        pub signature_name_2: String,
+        #[PdfTableData]
+        pub student_table: Vec<StudentTableData>,
+    }
 }
 
 #[derive(Serialize)]
@@ -295,7 +325,7 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
         )))
     })?;
 
-    let letter = PenarikanPdf {
+    let letter = penarikan::PenarikanPdf {
         nomor_lampiran: 1,
         month: detail.created_at.month().to_string(),
         year: detail.created_at.year().to_string(),
