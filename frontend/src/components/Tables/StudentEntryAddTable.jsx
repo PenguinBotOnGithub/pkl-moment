@@ -39,7 +39,7 @@ function StudentEntryAddTable({
           <tr key={index} className="border-t-2 border-neutral ">
             <td>{index + 1}</td>
             <td>{row.name}</td>
-            <td>{row.grade}</td>
+            <td>{row.class}{row.grade}</td>
             <td>
               <div
                 className="btn btn-error btn-xs rounded-lg mr-2"

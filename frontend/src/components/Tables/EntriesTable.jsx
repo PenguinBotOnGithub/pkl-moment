@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import Search from "../Search";
 import Statistic from "../count/Statistic";
@@ -10,15 +10,18 @@ function EntriesTable() {
   const cookies = new Cookies();
   const role = cookies.get("role");
   const token = cookies.get("access-token");
+  const max_item = cookies.get("max-item");
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentEntry, setCurrentEntry] = useState(0);
   const entryValue = ["permohonan", "pengantaran", "penarikan"];
+  const [pageData, setPageData] = useState();
   const [data, setData] = useState([]);
   const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dataWave, setDataWave] = useState("");
+  const { page } = useParams();
 
   // const fetchWaveData = async () => {
   //   try {
@@ -54,7 +57,7 @@ function EntriesTable() {
   const fetchDataForEntry = async (entryType) => {
     setLoading(true);
     try {
-      const response = await fetch(`${host}/api/${entryType}?page=0`, {
+      const response = await fetch(`${host}/api/${entryType}?page=${page}&size=${max_item}`, {
         headers: {
           Authorization: token,
         },
@@ -65,6 +68,7 @@ function EntriesTable() {
       let entryData = await response.json();
       setData(entryData.data.items);
       setIsDataEdited(entryData.data.items.map(() => false));
+      setPageData(entryData.data);
       setError(null);
     } catch (err) {
       console.log("Error fetching data: " + err);
@@ -78,7 +82,7 @@ function EntriesTable() {
   useEffect(() => {
     console.log(data);
     fetchDataForEntry(entryValue[currentEntry]);
-  }, [currentEntry]);
+  }, [currentEntry, page]);
 
   const deleteEntry = async (id) => {
     try {
@@ -183,6 +187,10 @@ function EntriesTable() {
       setError(err.message);
     }
   };
+
+  function handlePageChange(index){
+    navigate(`/admin/entries/${index}`);
+  }
 
   return (
     <>
@@ -326,32 +334,41 @@ function EntriesTable() {
             </tbody>
           </table>
         )}
+        {pageData && (
         <div className="flex justify-center items-center gap-2 mt-4">
-          <button className="flex-none btn bg-base-100">
+          <button
+            className="flex-none btn bg-base-100"
+            onClick={() => handlePageChange(pageData.page - 1)}
+            disabled={pageData.page === 0}
+          >
             <span className="material-symbols-rounded icon-size-20">
               arrow_back
             </span>
           </button>
-          <div className="join flex gap-2">
-            <button className="join-item btn">1</button>
-            <button className="join-item btn">2</button>
-            <button className="join-item btn opacity-50">...</button>
-            <button className="join-item btn">99</button>
-            <button className="join-item btn">100</button>
+          <div className="join flex">
+            {[...Array(pageData.num_pages)].map((_, index) => (
+              <button
+                key={index}
+                className={`join-item btn ${
+                  pageData.page === index ? "bg-primary text-base-300" : ""
+                }`}
+                onClick={() => handlePageChange(index)}
+              >
+                {index + 1}
+              </button>
+            ))}
           </div>
-          <button className="flex-none btn bg-base-100">
+          <button
+            className="flex-none btn bg-base-100"
+            onClick={() => handlePageChange(pageData.page + 1)}
+            disabled={pageData.page === (pageData.num_pages -1)}
+          >
             <span className="material-symbols-rounded icon-size-20">
               arrow_forward
             </span>
           </button>
         </div>
-        <button
-          onClick={() => {
-            console.log(data);
-          }}
-        >
-          debug
-        </button>
+      )}
       </div>
     </>
   );

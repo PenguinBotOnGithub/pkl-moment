@@ -36,9 +36,11 @@ function Login({ cookies }) {
       .then((result) => {
         if (result.status === "success") {
           cookies.set("access-token", result.data.token);
+          cookies.set("max-item", 10);
           cookies.set("selected-wave", 2);
           cookies.set("role", result.data.role);
           cookies.set("user-id", result.data.id);
+          cookies.set("user-name", result.data.username);
           window.location.reload();
         }
       })
