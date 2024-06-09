@@ -32,7 +32,7 @@ function Sidebar({ index = -1 }) {
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
         <li>
           <NavLink
-            to="/admin/entries"
+            to="/admin/entries/0"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
