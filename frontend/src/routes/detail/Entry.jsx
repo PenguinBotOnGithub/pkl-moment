@@ -23,6 +23,66 @@ function Entry() {
   const [selectedRows, setSelectedRows] = useState([]);
   const navigate = useNavigate();
 
+  function downloadBlob(blob, name = "file") {
+    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Create a link element
+    const link = document.createElement("a");
+
+    // Set link's href to point to the Blob URL
+    link.href = blobUrl;
+    link.download = name;
+
+    // Append link to the body
+    document.body.appendChild(link);
+
+    // Dispatch click event on the link
+    // This is necessary as link.click() does not work on the latest firefox
+    link.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+    );
+
+    // Remove link from body
+    document.body.removeChild(link);
+  }
+
+  const onExport = async (index) => {
+    try {
+      const response = await fetch(
+        `${host}/api/${entry}/${index}/pdf`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+          method: "POST",
+          body: JSON.stringify({
+            signature_1_id: 1,
+            signature_2_id: 2,
+          }),
+        }
+      );
+      let bin = [];
+      for await (const chunk of response.body) {
+        console.log("dfdfd");
+        console.log(chunk);
+        bin.push(chunk);
+      }
+      let blob = new Blob(bin, { type: "application/pdf" });
+      console.log(await blob.arrayBuffer());
+      downloadBlob(blob, "pdfff.pdf");
+      setError(null);
+      fetchDataForEntry(entryValue[currentEntry]);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const fetchDataForEntry = async () => {
     try {
       const response = await fetch(`${host}/api/${entry}/${id}`, {
@@ -149,7 +209,7 @@ function Entry() {
     setVisibleStudents(filteredStudents);
   };
 
-  const handleConfirmEdit = async (updatedEntryData) => {
+  const handleConfirmEdit = async () => {
     if (isStudentListChanged) {
       const currentStudentIds = dataEntryStudent.map((student) => student.id);
       const newStudentIds = rows.map((student) => student.id);
@@ -163,16 +223,16 @@ function Entry() {
 
       try {
         // Update entry data
-        if (updatedEntryData) {
-          await fetch(`${host}/api/${entry}/${id}/update`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token,
-            },
-            body: JSON.stringify(updatedEntryData),
-          });
-        }
+        // if (updatedEntryData) {
+        //   await fetch(`${host}/api/${entry}/${id}/update`, {
+        //     method: "PATCH",
+        //     headers: {
+        //       "Content-Type": "application/json",
+        //       Authorization: token,
+        //     },
+        //     body: JSON.stringify(updatedEntryData),
+        //   });
+        // }
 
         // Add new students
         for (const student of studentsToAdd) {
@@ -259,6 +319,12 @@ function Entry() {
               >
                 Delete
               </button>
+              {verifikasi && <button
+                className="btn btn-warning btn-xs"
+                onClick={() => onExport(id)}
+              >
+                Export
+              </button>}
             </td>
           </tr>
         </tbody>

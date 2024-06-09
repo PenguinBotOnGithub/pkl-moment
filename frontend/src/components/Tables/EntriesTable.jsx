@@ -215,7 +215,7 @@ function EntriesTable() {
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <button
               className={`btn btn-warning btn-sm text-black ${
                 selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
@@ -237,7 +237,7 @@ function EntriesTable() {
             >
               Delete{<span className="hidden lg:block"> yang terpilih</span>}
             </button>
-          </div>
+          </div> */}
         </div>
         {loading ? (
           <div>Loading...</div>
@@ -246,7 +246,7 @@ function EntriesTable() {
             <thead className="bg-neutral">
               <tr className="border-0">
                 <th className="pl-3 pb-2 pr-0 w-0">
-                  <label className="swap">
+                  {/* <label className="swap">
                     <input
                       type="checkbox"
                       onChange={(e) => {
@@ -264,7 +264,8 @@ function EntriesTable() {
                     <span className="swap-on material-symbols-rounded">
                       check_box
                     </span>
-                  </label>
+                  </label> */}
+                  No
                 </th>
                 <th>Pembimbing</th>
                 <th>Perusahaan</th>
@@ -277,7 +278,7 @@ function EntriesTable() {
               {data.map((row, index) => (
                 <tr key={row.id} className="border-t-2 border-neutral">
                   <td className="p-3 pb-2">
-                    <label className="swap opacity-60">
+                    {/* <label className="swap opacity-60">
                       <input
                         type="checkbox"
                         onChange={() => handleSelectRow(index)}
@@ -289,7 +290,8 @@ function EntriesTable() {
                       <span className="swap-on material-symbols-rounded">
                         check_box
                       </span>
-                    </label>
+                    </label> */}
+                    {index+1}
                   </td>
                   <td>{row.user}</td>
                   <td>{row.company}</td>
@@ -314,12 +316,12 @@ function EntriesTable() {
                     >
                       Detail
                     </button>
-                    <button
+                    {/* <button
                       className="btn btn-error btn-xs rounded-lg"
                       onClick={() => deleteEntry(row.id)}
                     >
                       Delete
-                    </button>
+                    </button> */}
                     {row.verified && (
                       <button
                         className="btn btn-warning btn-xs"
