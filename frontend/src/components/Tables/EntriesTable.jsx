@@ -195,7 +195,7 @@ function EntriesTable() {
   return (
     <>
       <Search addOnClick={onAddHandle} />
-      <Statistic />
+      <Statistic entryCount={pageData && pageData.total_items} />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center gap-2">
           <div

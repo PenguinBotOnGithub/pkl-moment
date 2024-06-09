@@ -1,14 +1,70 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
+import host from "../../assets/strings/host";
 
-function Statistic({ wave }) {
+function Statistic({ entryCount }) {
   const navigate = useNavigate();
+  const cookies = new Cookies(null, { path: "/" });
+  const token = cookies.get("access-token");
+  const [companyData, setCompanyData] = useState([]);
+  const [studentData, setStudentData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDataForStudents = async () => {
+    try {
+      const response = await fetch(`${host}/api/student?page=0`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let studentsData = await response.json();
+      setStudentData(studentsData.data);
+      console.log(studentData.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setStudentData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDataForCompanies = async () => {
+    try {
+      const response = await fetch(`${host}/api/company?page=0`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      let companiesData = await response.json();
+      setCompanyData(companiesData.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setCompanyData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(()=>{
+    fetchDataForCompanies();
+    fetchDataForStudents();
+  },[]);
 
   return (
     <div className="flex justify-between gap-2">
       <div className="overflow-hidden relative bg-base-100 p-4 rounded-lg flex flex-col items-start flex-1">
         <span className="z-10">Total Entri</span>
-        <span className="z-10 text-4xl font-bold">5</span>
+        <span className="z-10 text-4xl font-bold">{entryCount}</span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-neutral">
           description
         </span>
@@ -18,7 +74,7 @@ function Statistic({ wave }) {
         onClick={() => navigate("/admin/entries/company")}
       >
         <span className="z-10">Total Perusahaan</span>
-        <span className="z-10 text-4xl font-bold">2</span>
+        <span className="z-10 text-4xl font-bold">{companyData.total_items}</span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-neutral">
           apartment
         </span>
@@ -28,7 +84,7 @@ function Statistic({ wave }) {
         onClick={() => navigate("/admin/entries/student")}
       >
         <span className="z-10">Total Siswa</span>
-        <span className="z-10 text-4xl font-bold">437</span>
+        <span className="z-10 text-4xl font-bold">{studentData.total_items}</span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-neutral">
           person
         </span>
