@@ -16,7 +16,7 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
-use crate::pdf::example_pdf;
+use crate::pdf::{example_pdf, gen_permohonan_chromium};
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
@@ -120,13 +120,12 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(unverify_permohonan);
 
-    let gen_permohonan_pdf_route = permohonan
+    let pdf_permohonan_route = permohonan
         .and(warp::path::param::<i32>())
         .and(warp::path("pdf"))
         .and(warp::path::end())
-        .and(warp::post())
+        .and(warp::get())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
-        .and(with_json())
         .and(with_db(db.clone()))
         .and_then(gen_permohonan_pdf);
 
@@ -140,7 +139,7 @@ pub fn permohonans_routes(
         .or(remove_permohonan_student_route)
         .or(verify_permohonan_route)
         .or(unverify_permohonan_route)
-        .or(gen_permohonan_pdf_route)
+        .or(pdf_permohonan_route)
 }
 
 async fn get_permohonans(
@@ -558,7 +557,6 @@ async fn unverify_permohonan(
 async fn gen_permohonan_pdf(
     id: i32,
     claims: JwtClaims,
-    payload: GenPdfRequest,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
@@ -638,7 +636,7 @@ async fn gen_permohonan_pdf(
         )));
     };
 
-    let buffer = example_pdf().await?;
+    let buffer = gen_permohonan_chromium(&detail).await?;
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",

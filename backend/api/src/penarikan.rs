@@ -5,6 +5,8 @@ use models::penarikan::{CreatePenarikan, Penarikan, UpdatePenarikan};
 use models::penarikan_student::{CreatePenarikanStudent, PenarikanStudent};
 use models::types::UserRole;
 use parking_lot::Mutex;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -13,6 +15,7 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
+use crate::pdf::gen_penarikan_chromium;
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse,
@@ -117,6 +120,15 @@ pub fn penarikans_routes(
         .and(with_db(db.clone()))
         .and_then(unverify_penarikan);
 
+    let pdf_penarikan_route = penarikan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("pdf"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(gen_penarikan_pdf);
+
     get_penarikans_route
         .or(create_penarikan_route)
         .or(read_penarikan_route)
@@ -127,6 +139,7 @@ pub fn penarikans_routes(
         .or(remove_penarikan_student_route)
         .or(verify_penarikan_route)
         .or(unverify_penarikan_route)
+        .or(pdf_penarikan_route)
 }
 
 async fn get_penarikans(
@@ -539,4 +552,55 @@ async fn unverify_penarikan(
             "penarikan not found".to_owned(),
         )))
     }
+}
+
+async fn gen_penarikan_pdf(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let Some(n) = Penarikan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )));
+    };
+
+    if let UserRole::Advisor = &claims.role {
+        if n != claims.id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to view others data".to_owned(),
+            )));
+        }
+    }
+
+    let detail = Penarikan::read_with_joins(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(detail) = detail else {
+        return Err(reject::custom(ClientError::NotFound(
+            "penarikan not found".to_owned(),
+        )));
+    };
+
+    let buffer = gen_penarikan_chromium(&detail).await?;
+
+    let file = fs::File::create(format!(
+        "assets/pdf/{}.pdf",
+        chrono::Local::now().to_string()
+    ))
+    .await
+    .ok();
+    if let Some(mut v) = file {
+        v.write_all(&buffer).await.ok();
+    }
+
+    Ok(reply::with_header(
+        buffer,
+        "Content-Type",
+        "application/pdf",
+    ))
 }
