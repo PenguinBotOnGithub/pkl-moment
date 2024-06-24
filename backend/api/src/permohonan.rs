@@ -16,7 +16,7 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
-use crate::pdf::{example_pdf, gen_permohonan_chromium};
+use crate::pdf::gen_permohonan_chromium;
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
