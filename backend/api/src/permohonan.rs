@@ -586,6 +586,12 @@ async fn gen_permohonan_pdf(
         )));
     };
 
+    if !&detail.verified {
+        return Err(reject::custom(ClientError::Authorization(
+            "permohonan not verified".to_string(),
+        )));
+    }
+
     let buffer = gen_permohonan_chromium(&detail).await?;
 
     let file = fs::File::create(format!(
