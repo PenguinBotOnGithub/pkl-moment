@@ -82,17 +82,37 @@ struct StudentTableData {
 }
 
 pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>, Rejection> {
-    let hijri = HijriDate::from_gr(
-        detail.created_at.year() as usize,
-        detail.created_at.month() as usize,
-        detail.created_at.day() as usize,
-    )
-    .map_err(|e| {
-        reject::custom(InternalError::NotImplemented(format!(
-            "error generating hijri date: {}",
-            e.to_string()
-        )))
-    })?;
+    let hijri = {
+        let date = HijriDate::from_gr(
+            detail.created_at.year() as usize,
+            detail.created_at.month() as usize,
+            detail.created_at.day() as usize,
+        )
+        .map_err(|e| {
+            reject::custom(InternalError::NotImplemented(format!(
+                "error generating hijri date: {}",
+                e.to_string()
+            )))
+        })?;
+        let h_date = date.day();
+        let h_year = date.year();
+        let h_month = match date.month() {
+            1 => "Muharam",
+            2 => "Safar",
+            3 => "Rabiul Awal",
+            4 => "Rabiul Akhir",
+            5 => "Jumadil Awal",
+            6 => "Jumadil Akhir",
+            7 => "Rajab",
+            8 => "Sya'ban",
+            9 => "Ramadan",
+            10 => "Syawal",
+            11 => "Dzulkaidah",
+            _ => "Dzulhijjah",
+        };
+
+        format!("{h_date} {h_month} {h_year} H")
+    };
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
@@ -100,7 +120,7 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     // TODO: Convert hijri date in arabic letters to latin
-    context.insert("hijriah", &hijri.format("%d %M %Y"));
+    context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
         &detail.created_at.format("%e %B %Y").to_string(),
@@ -160,17 +180,37 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
 }
 
 pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8>, Rejection> {
-    let hijri = HijriDate::from_gr(
-        detail.created_at.year() as usize,
-        detail.created_at.month() as usize,
-        detail.created_at.day() as usize,
-    )
-    .map_err(|e| {
-        reject::custom(InternalError::NotImplemented(format!(
-            "error generating hijri date: {}",
-            e.to_string()
-        )))
-    })?;
+    let hijri = {
+        let date = HijriDate::from_gr(
+            detail.created_at.year() as usize,
+            detail.created_at.month() as usize,
+            detail.created_at.day() as usize,
+        )
+        .map_err(|e| {
+            reject::custom(InternalError::NotImplemented(format!(
+                "error generating hijri date: {}",
+                e.to_string()
+            )))
+        })?;
+        let h_date = date.day();
+        let h_year = date.year();
+        let h_month = match date.month() {
+            1 => "Muharam",
+            2 => "Safar",
+            3 => "Rabiul Awal",
+            4 => "Rabiul Akhir",
+            5 => "Jumadil Awal",
+            6 => "Jumadil Akhir",
+            7 => "Rajab",
+            8 => "Sya'ban",
+            9 => "Ramadan",
+            10 => "Syawal",
+            11 => "Dzulkaidah",
+            _ => "Dzulhijjah",
+        };
+
+        format!("{h_date} {h_month} {h_year} H")
+    };
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
@@ -178,7 +218,7 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     // TODO: Convert hijri date in arabic letters to latin
-    context.insert("hijriah", &hijri.format("%d %M %Y"));
+    context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
         &detail.created_at.format("%e %B %Y").to_string(),
@@ -242,17 +282,37 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
 }
 
 pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<u8>, Rejection> {
-    let hijri = HijriDate::from_gr(
-        detail.created_at.year() as usize,
-        detail.created_at.month() as usize,
-        detail.created_at.day() as usize,
-    )
-    .map_err(|e| {
-        reject::custom(InternalError::NotImplemented(format!(
-            "error generating hijri date: {}",
-            e.to_string()
-        )))
-    })?;
+    let hijri = {
+        let date = HijriDate::from_gr(
+            detail.created_at.year() as usize,
+            detail.created_at.month() as usize,
+            detail.created_at.day() as usize,
+        )
+        .map_err(|e| {
+            reject::custom(InternalError::NotImplemented(format!(
+                "error generating hijri date: {}",
+                e.to_string()
+            )))
+        })?;
+        let h_date = date.day();
+        let h_year = date.year();
+        let h_month = match date.month() {
+            1 => "Muharam",
+            2 => "Safar",
+            3 => "Rabiul Awal",
+            4 => "Rabiul Akhir",
+            5 => "Jumadil Awal",
+            6 => "Jumadil Akhir",
+            7 => "Rajab",
+            8 => "Sya'ban",
+            9 => "Ramadan",
+            10 => "Syawal",
+            11 => "Dzulkaidah",
+            _ => "Dzulhijjah",
+        };
+
+        format!("{h_date} {h_month} {h_year} H")
+    };
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
@@ -260,7 +320,7 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     // TODO: Convert hijri date in arabic letters to latin
-    context.insert("hijriah", &hijri.format("%d %M %Y"));
+    context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
         &detail.created_at.format("%e %B %Y").to_string(),
