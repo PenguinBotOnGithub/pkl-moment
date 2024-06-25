@@ -24,6 +24,8 @@ pub enum InternalError {
     FilesystemError(String),
     #[error("pdf generation error")]
     PdfError(String),
+    #[error("custom error")]
+    CustomError(String),
 }
 
 impl Reject for InternalError {}
@@ -125,6 +127,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
             }
             InternalError::PdfError(e) => {
                 error!("pdf generation error: {}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
+            }
+            InternalError::CustomError(e) => {
+                error!("custom error: {}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_owned())
             }
         }
