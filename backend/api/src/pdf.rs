@@ -60,27 +60,10 @@ mod permohonan {
 
 mod pengantaran {
     use crate::pdf::StudentTableData;
-    use simple_pdf_generator_derive::PdfTemplate;
+    use simple_pdf_generator_derive::{PdfTemplate, PdfTemplateForHtml};
 
-    #[derive(PdfTemplate)]
-    pub struct PengantaranPdf {
-        pub nomor_lampiran: u16,
-        pub month: String,
-        pub year: String,
-        pub hijriah: String,
-        pub georgian: String,
-        pub company: String,
-        pub company_address: String,
-        pub school_year: String,
-        pub start_date: String,
-        pub end_date: String,
-        pub signature_title_1: String,
-        pub signature_title_2: String,
-        pub signature_name_1: String,
-        pub signature_name_2: String,
-        #[PdfTableData]
-        pub student_table: Vec<StudentTableData>,
-    }
+    #[derive(PdfTemplateForHtml)]
+    pub struct PengantaranPdf {}
 }
 
 mod penarikan {
@@ -271,36 +254,55 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
         )))
     })?;
 
-    let letter = pengantaran::PengantaranPdf {
-        nomor_lampiran: 1,
-        month: detail.created_at.month().to_string(),
-        year: detail.created_at.year().to_string(),
-        hijriah: hijri.format("%d %M %Y"),
-        georgian: detail.created_at.format("%e %B %Y").to_string(),
-        company: detail.company.name.clone(),
-        company_address: detail.company.address.clone(),
-        school_year: "2023/2024".to_string(),
-        start_date: detail.start_date.format("%e %B %Y").to_string(),
-        end_date: detail.end_date.format("%e %B %Y").to_string(),
-        signature_title_1: "Kepala Sekolah".to_string(),
-        signature_title_2: "Wakil Sekolah".to_string(),
-        signature_name_1: "AGAM AMINTAHA, S.Kom".to_string(),
-        signature_name_2: "H. ABDUL FATIQ, M.Kom".to_string(),
-        student_table: detail
-            .students
-            .iter()
-            .enumerate()
-            .map(|v| StudentTableData {
-                index: (v.0 + 1) as u8,
-                student_name: v.1.name.clone(),
-                student_class: v.1.class.clone(),
-            })
-            .collect(),
-    };
+    let mut context = tera::Context::new();
+    // TODO: Use real attachment number
+    context.insert("nomor_lampiran", &1);
+    context.insert("month", &detail.created_at.month().to_string());
+    context.insert("year", &detail.created_at.year().to_string());
+    // TODO: Convert hijri date in arabic letters to latin
+    context.insert("hijriah", &hijri.format("%d %M %Y"));
+    context.insert(
+        "georgian",
+        &detail.created_at.format("%e %B %Y").to_string(),
+    );
+    context.insert("company", &detail.company.name);
+    context.insert("company_address", &detail.company.address);
+    // TODO: Use real school year
+    context.insert("school_year", &"2024/2025".to_string());
+    context.insert(
+        "start_date",
+        &detail.start_date.format("%e %B %Y").to_string(),
+    );
+    context.insert("end_date", &detail.end_date.format("%e %B %Y").to_string());
+    context.insert("signature_title_1", &"Kepala Sekolah".to_string());
+    context.insert("signature_title_2", &"Wakil Sekolah".to_string());
+    context.insert("signature_name_1", &"AGAM AMINTAHA, S.Kom".to_string());
+    context.insert("signature_name_2", &"H. ABDUL FATIQ, M.Kom".to_string());
+    context.insert("students", &detail.students);
+
+    let html = tera().render("pengantaran.html", &context).map_err(|e| {
+        let kind = &e.kind;
+        let source = &e.source();
+        debug!("{kind:#?}");
+        debug!("{source:#?}");
+        reject::custom(InternalError::PdfError(format!("{e}")))
+    })?;
+
+    let file = tokio::fs::File::create(format!(
+        "assets/pdf/{}.html",
+        chrono::Local::now().to_string()
+    ))
+    .await
+    .ok();
+    if let Some(mut v) = file {
+        v.write_all(&html.as_bytes()).await.ok();
+    }
+
+    let letter = pengantaran::PengantaranPdf {};
 
     let pdf_buf = letter
-        .generate_pdf(
-            "assets/templates/pengantaran.html".into(),
+        .generate_pdf_from_html(
+            html,
             &[],
             &PrintOptions {
                 print_background: false,
