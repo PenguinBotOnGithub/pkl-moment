@@ -1,5 +1,6 @@
 use crate::error::InternalError;
-use chrono::Datelike;
+use chrono::format::StrftimeItems;
+use chrono::{Datelike, Locale};
 use hijri_date::HijriDate;
 use models::penarikan::PenarikanJoined;
 use models::pengantaran::PengantaranJoined;
@@ -123,13 +124,22 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
-        &detail.created_at.format("%e %B %Y").to_string(),
+        &detail
+            .created_at
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
     // TODO: Use real school year
     context.insert("school_year", &"2024/2025".to_string());
-    context.insert("end_date", &detail.end_date.format("%e %B %Y").to_string());
+    context.insert(
+        "end_date",
+        &detail
+            .end_date
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
+    );
     context.insert("signature_title_1", &"Kepala Sekolah".to_string());
     context.insert("signature_title_2", &"Wakil Sekolah".to_string());
     context.insert("signature_name_1", &"AGAM AMINTAHA, S.Kom".to_string());
@@ -221,7 +231,10 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
-        &detail.created_at.format("%e %B %Y").to_string(),
+        &detail
+            .created_at
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
@@ -229,9 +242,18 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     context.insert("school_year", &"2024/2025".to_string());
     context.insert(
         "start_date",
-        &detail.start_date.format("%e %B %Y").to_string(),
+        &detail
+            .start_date
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
     );
-    context.insert("end_date", &detail.end_date.format("%e %B %Y").to_string());
+    context.insert(
+        "end_date",
+        &detail
+            .end_date
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
+    );
     context.insert("signature_title_1", &"Kepala Sekolah".to_string());
     context.insert("signature_title_2", &"Wakil Sekolah".to_string());
     context.insert("signature_name_1", &"AGAM AMINTAHA, S.Kom".to_string());
@@ -323,7 +345,10 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
-        &detail.created_at.format("%e %B %Y").to_string(),
+        &detail
+            .created_at
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
@@ -331,9 +356,18 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
     context.insert("school_year", &"2024/2025".to_string());
     context.insert(
         "start_date",
-        &detail.start_date.format("%e %B %Y").to_string(),
+        &detail
+            .start_date
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
     );
-    context.insert("end_date", &detail.end_date.format("%e %B %Y").to_string());
+    context.insert(
+        "end_date",
+        &detail
+            .end_date
+            .format_localized("%e %B %Y", Locale::id_ID)
+            .to_string(),
+    );
     context.insert("signature_title_1", &"Kepala Sekolah".to_string());
     context.insert("signature_title_2", &"Wakil Sekolah".to_string());
     context.insert("signature_name_1", &"AGAM AMINTAHA, S.Kom".to_string());
