@@ -131,8 +131,14 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
-    // TODO: Use real school year
-    context.insert("school_year", &"2024/2025".to_string());
+    context.insert(
+        "school_year",
+        &format!(
+            "{}/{}",
+            detail.wave.start_date.year(),
+            detail.wave.end_date.year()
+        ),
+    );
     context.insert(
         "end_date",
         &detail
@@ -238,8 +244,14 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
-    // TODO: Use real school year
-    context.insert("school_year", &"2024/2025".to_string());
+    context.insert(
+        "school_year",
+        &format!(
+            "{}/{}",
+            detail.wave.start_date.year(),
+            detail.wave.end_date.year()
+        ),
+    );
     context.insert(
         "start_date",
         &detail
@@ -352,8 +364,14 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
     );
     context.insert("company", &detail.company.name);
     context.insert("company_address", &detail.company.address);
-    // TODO: Use real school year
-    context.insert("school_year", &"2024/2025".to_string());
+    context.insert(
+        "school_year",
+        &format!(
+            "{}/{}",
+            detail.wave.start_date.year(),
+            detail.wave.end_date.year()
+        ),
+    );
     context.insert(
         "start_date",
         &detail
