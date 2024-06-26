@@ -120,7 +120,6 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
     context.insert("nomor_lampiran", &1);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
-    // TODO: Convert hijri date in arabic letters to latin
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
@@ -233,7 +232,6 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     context.insert("nomor_lampiran", &1);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
-    // TODO: Convert hijri date in arabic letters to latin
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
@@ -353,7 +351,6 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
     context.insert("nomor_lampiran", &1);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
-    // TODO: Convert hijri date in arabic letters to latin
     context.insert("hijriah", &hijri);
     context.insert(
         "georgian",
