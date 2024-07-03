@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 import Cookies from "universal-cookie";
 import { useParams } from "react-router-dom";
 
@@ -96,17 +96,18 @@ function UsersTable() {
           </span>
         </button>
         <div className="join flex">
-          { pageData && [...Array(pageData.num_pages)].map((_, index) => (
-            <button
-              key={index}
-              className={`join-item btn ${
-                pageData.page === index ? "btn-neutral" : ""
-              }`}
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </button>
-          ))}
+          {pageData &&
+            [...Array(pageData.num_pages)].map((_, index) => (
+              <button
+                key={index}
+                className={`join-item btn ${
+                  pageData.page === index ? "btn-neutral" : ""
+                }`}
+                onClick={() => handlePageChange(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
         </div>
         <button className="flex-none btn bg-base-100">
           <span className="material-symbols-rounded icon-size-20">

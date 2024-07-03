@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import getCurrentDate from "../../assets/strings/getCurrentDate";
-import StudentEntryAddTable from "../../components/tables/StudentEntryAddTable";
+import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host"; // Import the host URL
 import { matchSorter } from "match-sorter";
@@ -53,20 +53,17 @@ function Entry() {
 
   const onExport = async (index) => {
     try {
-      const response = await fetch(
-        `${host}/api/${entry}/${index}/pdf`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-          method: "POST",
-          body: JSON.stringify({
-            signature_1_id: 1,
-            signature_2_id: 2,
-          }),
-        }
-      );
+      const response = await fetch(`${host}/api/${entry}/${index}/pdf`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        method: "POST",
+        body: JSON.stringify({
+          signature_1_id: 1,
+          signature_2_id: 2,
+        }),
+      });
       let bin = [];
       for await (const chunk of response.body) {
         console.log("dfdfd");
@@ -314,17 +311,21 @@ function Entry() {
               <button
                 className="btn btn-error btn-xs"
                 onClick={() =>
-                  document.getElementById("delete_confirmation_modal").showModal()
+                  document
+                    .getElementById("delete_confirmation_modal")
+                    .showModal()
                 }
               >
                 Delete
               </button>
-              {verifikasi && <button
-                className="btn btn-warning btn-xs"
-                onClick={() => onExport(id)}
-              >
-                Export
-              </button>}
+              {verifikasi && (
+                <button
+                  className="btn btn-warning btn-xs"
+                  onClick={() => onExport(id)}
+                >
+                  Export
+                </button>
+              )}
             </td>
           </tr>
         </tbody>

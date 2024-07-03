@@ -1,44 +1,54 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 
-function CompanyAddTable() {
-  const [rows, setRows] = useState([{ name: "", address: "" }]);
+function UserAddTable() {
+  const [rows, setRows] = useState([{ username: "", password: "", role: "" }]);
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const navigate = useNavigate();
 
   const handleSubmit = async (formData) => {
     console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/company/create`, {
+    await fetch(`${host}/api/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
       body: JSON.stringify({
-        name: formData.name,
-        address: formData.address,
+        username: formData.username,
+        password: formData.password,
+        role: formData.role,
       }),
     })
       .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
-          navigate("/admin/entries/company");
+          navigate("/admin/users/0");
         }
       })
       .catch(() => {
-        alert("Please check your companies information.");
+        alert("Something went wrong");
       });
   };
 
   function execBulkPost() {
     rows.forEach((row) => {
-      if (row.name.trim() == "" || row.address.trim() == "") {
+      if (
+        row.username.trim() == "" ||
+        row.password.trim() == "" ||
+        row.role.trim() == ""
+      ) {
         alert("Please fill every data before submitting");
       } else {
-        handleSubmit(row);
+        const value = ["advisor"];
+        if (value.includes(row.role.trim())) {
+          handleSubmit(row);
+        } else {
+          alert("please input role between admin or advisor");
+        }
       }
     });
   }
@@ -51,7 +61,7 @@ function CompanyAddTable() {
   };
 
   const addRow = () => {
-    setRows([...rows, { name: "", address: "" }]);
+    setRows([...rows, { username: "", password: "", role: "" }]);
   };
 
   const deleteRow = (index) => {
@@ -66,8 +76,9 @@ function CompanyAddTable() {
         <thead className="bg-neutral">
           <tr className="border-0">
             <th className="w-0">No</th>
-            <th>Nama Perusahaan</th>
-            <th>Alamat</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Role</th>
             <th>Aksi</th>
           </tr>
         </thead>
@@ -78,29 +89,43 @@ function CompanyAddTable() {
               <td>
                 <input
                   type="text"
-                  name="name"
-                  value={row.name}
+                  name="username"
+                  value={row.username}
                   onChange={(event) => handleInputChange(index, event)}
+                  className="w-full"
                   style={{
                     backgroundColor: "transparent",
                     border: "none",
                     outline: "none",
                   }}
-                  required
                 />
               </td>
               <td>
                 <input
                   type="text"
-                  name="address"
-                  value={row.address}
+                  name="password"
+                  value={row.password}
                   onChange={(event) => handleInputChange(index, event)}
+                  className="w-full"
                   style={{
                     backgroundColor: "transparent",
                     border: "none",
                     outline: "none",
                   }}
-                  required
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  name="role"
+                  value={row.role}
+                  onChange={(event) => handleInputChange(index, event)}
+                  className="w-full"
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                 />
               </td>
               <td>
@@ -117,15 +142,15 @@ function CompanyAddTable() {
       </table>
 
       <div className="flex justify-end mt-2 gap-2">
-        <button className="btn btn-neutral btn-sm" onClick={addRow}>
+        <div className="btn btn-neutral btn-sm" onClick={addRow}>
           Tambah Baris
-        </button>
-        <button className="btn btn-success btn-sm" onClick={execBulkPost}>
+        </div>
+        <div className="btn btn-success btn-sm" onClick={execBulkPost}>
           Kirim
-        </button>
+        </div>
       </div>
     </div>
   );
 }
 
-export default CompanyAddTable;
+export default UserAddTable;

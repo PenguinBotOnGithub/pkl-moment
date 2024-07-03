@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import StudentEntryAddTable from "../../components/tables/StudentEntryAddTable";
+import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
 import CompanyDropdown from "../../components/dropdowns/CompanyDropdown";
 import AdviserDropdown from "../../components/dropdowns/AdviserDropdown";
 import host from "../../assets/strings/host";
@@ -13,7 +13,7 @@ function EntryAdd() {
   const userId = cookies.get("user-id");
   const { entry } = useParams();
   const labelStyle = "max-w-36 min-w-36 overflow-hidden";
-  
+
   const [rows, setRows] = useState([]);
   const [company, setCompany] = useState([]);
   const [advisers, setAdvisers] = useState([]);
@@ -65,7 +65,10 @@ function EntryAdd() {
 
   const searchStudent = (value, setVisibleStudents) => {
     const searchTerm = value.toLowerCase();
-    const filteredStudents = matchSorter(value, searchTerm, { threshold: matchSorter.rankings.STARTS_WITH, keys: ['name'] });
+    const filteredStudents = matchSorter(value, searchTerm, {
+      threshold: matchSorter.rankings.STARTS_WITH,
+      keys: ["name"],
+    });
     setVisibleStudents(filteredStudents);
   };
 
@@ -76,14 +79,17 @@ function EntryAdd() {
       };
 
       try {
-        const response = await fetch(`${host}/api/${entry}/${entryId}/student/add`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-          body: JSON.stringify(body),
-        });
+        const response = await fetch(
+          `${host}/api/${entry}/${entryId}/student/add`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+            },
+            body: JSON.stringify(body),
+          }
+        );
 
         const result = await response.json();
         if (result.status !== "success") {

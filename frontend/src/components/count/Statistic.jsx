@@ -91,7 +91,7 @@ function Statistic({ entryCount }) {
       </button>
       <button className="bg-base-100 p-4 rounded-lg flex flex-col justify-center items-center flex-0">
         Tahun ajaran
-        <span className="z-10 text-2xl font-bold">2024/2025</span>
+        <span className="z-10 text-2xl font-bold">2023/2024</span>
       </button>
     </div>
   );

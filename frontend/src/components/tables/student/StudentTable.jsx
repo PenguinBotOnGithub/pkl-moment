@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 
 function StudentTable() {
   const cookies = new Cookies(null, { path: "/" });
@@ -121,8 +121,14 @@ function StudentTable() {
                   type="text"
                   value={row.name}
                   className="w-full"
-                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
-                  onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                  onChange={(e) =>
+                    handleInputChange(index, "name", e.target.value)
+                  }
                 />
               </td>
               <td>
@@ -130,8 +136,14 @@ function StudentTable() {
                   type="text"
                   value={row.class}
                   className="w-full"
-                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
-                  onChange={(e) => handleInputChange(index, "class", e.target.value)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                  onChange={(e) =>
+                    handleInputChange(index, "class", e.target.value)
+                  }
                 />
               </td>
               <td>
@@ -139,8 +151,14 @@ function StudentTable() {
                   type="text"
                   value={row.nis}
                   className="w-full"
-                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
-                  onChange={(e) => handleInputChange(index, "nis", e.target.value)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                  onChange={(e) =>
+                    handleInputChange(index, "nis", e.target.value)
+                  }
                 />
               </td>
               <td>

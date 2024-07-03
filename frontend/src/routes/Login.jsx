@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // To navigate after login
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
 import getCurrentDate from "../assets/strings/getCurrentDate";
-import host from "../assets/strings/host";
+import { login } from '../services/index'; // Import the login function from the api.js file
 
 function Login({ cookies }) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,43 +20,33 @@ function Login({ cookies }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Add your login logic here, such as sending a request to your server
-    fetch(`${ host }/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: formData.username,
-        password: formData.password,
-      }),
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "success") {
-          cookies.set("access-token", result.data.token);
-          cookies.set("max-item", 10);
-          cookies.set("selected-wave", 2);
-          cookies.set("role", result.data.role);
-          cookies.set("user-id", result.data.id);
-          cookies.set("user-name", result.data.username);
-          window.location.reload();
-        }
-      })
-      .catch(() => {
-        alert("Please check your login information.");
-      });
+    try {
+      const result = await login(formData);
+      if (result.status === "success") {
+        cookies.set("access-token", result.data.token);
+        cookies.set("max-item", 10);
+        cookies.set("selected-wave", 2);
+        cookies.set("role", result.data.role);
+        cookies.set("user-id", result.data.id);
+        cookies.set("user-name", result.data.username);
+        navigate('/admin/entries/0'); // Navigate to the desired route after login
+        location.reload();
+      }
+    } catch (error) {
+      alert("Please check your login information.");
+      console.error("Login failed:", error);
+    }
 
     console.log("Form data submitted:", formData);
-    // You can use Axios or the Fetch API to send the data to your server for authentication
   };
+
   return (
     <div className="flex flex-col size-full">
       <Navbar title="Login" />
-      <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-200 p-4">
+      <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-200 p-4 pb-14">
         <div className="flex items-center mb-6">
           <PKLMomentIcon size={64} />
           <span className="text-4xl text-primary">PKL</span>
