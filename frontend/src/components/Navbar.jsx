@@ -18,7 +18,7 @@ function Navbar({ breadcrumbs = [], cookies }) {
   );
 
   return (
-    <div className="navbar flex-none">
+    <div className={`navbar flex-none ${title=="Login"&&`bg-base-200`}`}>
       <div className="flex-1">
         <div className="breadcrumbs text-md">
           <ul>
