@@ -5,27 +5,26 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import "./i18n";
-import AllUsers from "./routes/AllUsers";
+import AllUsers from "./routes/users/AllUsers";
 import Settings from "./routes/Settings";
-import Dashboard from "./routes/Dashboard";
-import EntriesAndDocuments from "./routes/EntriesAndDocuments";
+import EntriesAndDocuments from "./routes/entries/EntriesAndDocuments";
 import Root from "./components/Root";
 import NotFound from "./routes/NotFound";
 import Login from "./routes/Login";
 import Cookies from "universal-cookie";
-import Company from "./routes/detail/Company";
-import Student from "./routes/detail/Student";
-import CompanyAdd from "./routes/detail/CompanyAdd";
-import StudentAdd from "./routes/detail/StudentAdd";
-import Entry from "./routes/detail/Entry";
-import EntryAdd from "./routes/detail/EntryAdd";
-import Wave from "./routes/detail/Wave";
-import WaveAdd from "./routes/detail/WaveAdd";
-import User from "./routes/detail/User";
-import UserAdd from "./routes/detail/UserAdd";
+import Company from "./routes/entries/company/Company";
+import Student from "./routes/entries/student/Student";
+import CompanyAdd from "./routes/entries/company/CompanyAdd";
+import StudentAdd from "./routes/entries/student/StudentAdd";
+import Entry from "./routes/entries/Entry";
+import EntryAdd from "./routes/entries/EntryAdd";
+import Wave from "./routes/entries/wave/Wave";
+import WaveAdd from "./routes/entries/wave/WaveAdd";
+import User from "./routes/users/User";
+import UserAdd from "./routes/users/UserAdd";
 import SearchEntry from "./routes/SearchEntry";
-import SearchEntryDummy from "./routes/detail/SearchEntryDummy";
-import SearchEntrySiswa from "./routes/detail/SearchEntrySiswa";
+import SearchEntryDummy from "./routes/search/SearchEntryDummy";
+import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -52,7 +51,6 @@ function App() {
         <Navigate to="../login" />
       ),
       children: [
-        { path: "dashboard", element: <Dashboard /> },
         { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
         { path: "user", element: <User /> },

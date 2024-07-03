@@ -29,7 +29,7 @@ function Sidebar({ index = -1 }) {
           menu
         </span>
       </label>
-      <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4`}>
+      <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
         {/* <li>
           <NavLink
             to="/admin/dashboard"

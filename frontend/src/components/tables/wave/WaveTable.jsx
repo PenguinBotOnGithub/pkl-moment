@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 import Cookies from "universal-cookie";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -23,12 +23,24 @@ function WaveTable() {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
       const waveData = await response.json();
-      setData(waveData.data.items.map((wave, index) => ({
-        ...wave,
-        waveyear: `${new Date(wave.start_date).getFullYear()}/${new Date(wave.end_date).getFullYear()}`,
-        start_date: new Date(wave.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-        end_date: new Date(wave.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-      })));
+      setData(
+        waveData.data.items.map((wave, index) => ({
+          ...wave,
+          waveyear: `${new Date(wave.start_date).getFullYear()}/${new Date(
+            wave.end_date
+          ).getFullYear()}`,
+          start_date: new Date(wave.start_date).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+          end_date: new Date(wave.end_date).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        }))
+      );
       setPageData(waveData.data);
     } catch (err) {
       alert("Something went wrong: " + err);
@@ -105,7 +117,12 @@ function WaveTable() {
                 <button className="btn btn-info btn-xs rounded-lg mr-2">
                   Edit
                 </button>
-                <button className="btn btn-error btn-xs rounded-lg" onClick={()=>{onDelete(row.id)}}>
+                <button
+                  className="btn btn-error btn-xs rounded-lg"
+                  onClick={() => {
+                    onDelete(row.id);
+                  }}
+                >
                   Delete
                 </button>
               </td>

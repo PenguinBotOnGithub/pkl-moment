@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 
 function StudentAddTable() {
-  const [rows, setRows] = useState([{ name: "", class: "", nis:"" }]);
+  const [rows, setRows] = useState([{ name: "", class: "", nis: "" }]);
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const navigate = useNavigate();
@@ -36,7 +36,11 @@ function StudentAddTable() {
 
   function execBulkPost() {
     rows.forEach((row) => {
-      if (row.name.trim() == "" || row.class.trim() == "" || row.nis.trim() == "") {
+      if (
+        row.name.trim() == "" ||
+        row.class.trim() == "" ||
+        row.nis.trim() == ""
+      ) {
         alert("Please fill every data before submitting");
       } else {
         handleSubmit(row);
@@ -52,7 +56,7 @@ function StudentAddTable() {
   };
 
   const addRow = () => {
-    setRows([...rows, { name: "", class: "", nis:"" }]);
+    setRows([...rows, { name: "", class: "", nis: "" }]);
   };
 
   const deleteRow = (index) => {
@@ -83,7 +87,11 @@ function StudentAddTable() {
                   name="name"
                   value={row.name}
                   onChange={(event) => handleInputChange(index, event)}
-                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                 />
               </td>
               <td>
@@ -92,7 +100,11 @@ function StudentAddTable() {
                   name="class"
                   value={row.class}
                   onChange={(event) => handleInputChange(index, event)}
-                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                 />
               </td>
               <td>
@@ -101,11 +113,18 @@ function StudentAddTable() {
                   name="nis"
                   value={row.nis}
                   onChange={(event) => handleInputChange(index, event)}
-                  style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
                 />
               </td>
               <td>
-                <button className="btn btn-error btn-xs rounded-lg mr-2" onClick={() => deleteRow(index)}>
+                <button
+                  className="btn btn-error btn-xs rounded-lg mr-2"
+                  onClick={() => deleteRow(index)}
+                >
                   Delete
                 </button>
               </td>
@@ -115,8 +134,12 @@ function StudentAddTable() {
       </table>
 
       <div className="flex justify-end mt-2 gap-2">
-        <div className="btn btn-neutral btn-sm" onClick={addRow}>Tambah Baris</div>
-        <div className="btn btn-success btn-sm" onClick={execBulkPost}>Kirim</div>
+        <div className="btn btn-neutral btn-sm" onClick={addRow}>
+          Tambah Baris
+        </div>
+        <div className="btn btn-success btn-sm" onClick={execBulkPost}>
+          Kirim
+        </div>
       </div>
     </div>
   );

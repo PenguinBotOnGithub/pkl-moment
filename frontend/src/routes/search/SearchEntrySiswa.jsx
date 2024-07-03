@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import Search from "../Search";
-import Statistic from "../count/Statistic";
 import host from "../../assets/strings/host";
+import StudentDropdown from "../../components/dropdowns/StudentDropdown";
 
-function EntriesTable() {
+function SearchEntrySiswa() {
   const navigate = useNavigate();
   const cookies = new Cookies();
   const role = cookies.get("role");
   const token = cookies.get("access-token");
-  const max_item = cookies.get("max-item");
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentEntry, setCurrentEntry] = useState(0);
   const entryValue = ["permohonan", "pengantaran", "penarikan"];
-  const [pageData, setPageData] = useState();
   const [data, setData] = useState([]);
   const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dataWave, setDataWave] = useState("");
-  const { page } = useParams();
+  const [selectedValue, setSelectedValue] = useState(null);
+  const value = [
+    { id: 1, name: "Aan Kurniawan", class: "11 PPLG-1" },
+    { id: 2, name: "Aaron Ikhwan Saputra", class: "11 PPLG-1" },
+  ];
 
   // const fetchWaveData = async () => {
   //   try {
@@ -57,7 +57,7 @@ function EntriesTable() {
   const fetchDataForEntry = async (entryType) => {
     setLoading(true);
     try {
-      const response = await fetch(`${host}/api/${entryType}?page=${page}&size=${max_item}`, {
+      const response = await fetch(`${host}/api/${entryType}?page=0`, {
         headers: {
           Authorization: token,
         },
@@ -68,7 +68,6 @@ function EntriesTable() {
       let entryData = await response.json();
       setData(entryData.data.items);
       setIsDataEdited(entryData.data.items.map(() => false));
-      setPageData(entryData.data);
       setError(null);
     } catch (err) {
       console.log("Error fetching data: " + err);
@@ -82,7 +81,7 @@ function EntriesTable() {
   useEffect(() => {
     console.log(data);
     fetchDataForEntry(entryValue[currentEntry]);
-  }, [currentEntry, page]);
+  }, [currentEntry]);
 
   const deleteEntry = async (id) => {
     try {
@@ -122,10 +121,6 @@ function EntriesTable() {
 
   function handleSelectTab(index) {
     setCurrentEntry(index);
-  }
-
-  function onAddHandle() {
-    navigate(`/admin/entries/${entryValue[currentEntry]}/add`);
   }
 
   function downloadBlob(blob, name = "file") {
@@ -188,14 +183,9 @@ function EntriesTable() {
     }
   };
 
-  function handlePageChange(index){
-    navigate(`/admin/entries/${index}`);
-  }
-
   return (
     <>
-      <Search addOnClick={onAddHandle} />
-      <Statistic entryCount={pageData && pageData.total_items} />
+      <StudentDropdown setSelectedValue={setSelectedValue} value={value} />
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center gap-2">
           <div
@@ -215,29 +205,6 @@ function EntriesTable() {
               </button>
             ))}
           </div>
-          {/* <div className="flex gap-2">
-            <button
-              className={`btn btn-warning btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-            >
-              Export{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
-            <button
-              className={`btn btn-error btn-sm text-black ${
-                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={selectedRows.length === 0}
-              onClick={() =>
-                selectedRows.forEach((rowIndex) =>
-                  deleteEntry(data[rowIndex].id)
-                )
-              }
-            >
-              Delete{<span className="hidden lg:block"> yang terpilih</span>}
-            </button>
-          </div> */}
         </div>
         {loading ? (
           <div>Loading...</div>
@@ -246,7 +213,7 @@ function EntriesTable() {
             <thead className="bg-neutral">
               <tr className="border-0">
                 <th className="pl-3 pb-2 pr-0 w-0">
-                  {/* <label className="swap">
+                  <label className="swap">
                     <input
                       type="checkbox"
                       onChange={(e) => {
@@ -264,8 +231,7 @@ function EntriesTable() {
                     <span className="swap-on material-symbols-rounded">
                       check_box
                     </span>
-                  </label> */}
-                  No
+                  </label>
                 </th>
                 <th>Pembimbing</th>
                 <th>Perusahaan</th>
@@ -275,105 +241,101 @@ function EntriesTable() {
               </tr>
             </thead>
             <tbody className="box-content">
-              {data.map((row, index) => (
-                <tr key={row.id} className="border-t-2 border-neutral">
-                  <td className="p-3 pb-2">
-                    {/* <label className="swap opacity-60">
-                      <input
-                        type="checkbox"
-                        onChange={() => handleSelectRow(index)}
-                        checked={selectedRows.includes(index)}
-                      />
-                      <span className="swap-off material-symbols-rounded">
-                        check_box_outline_blank
-                      </span>
-                      <span className="swap-on material-symbols-rounded">
-                        check_box
-                      </span>
-                    </label> */}
-                    {index+1}
-                  </td>
-                  <td>{row.user}</td>
-                  <td>{row.company}</td>
-                  <td>{new Date(row.created_at).toLocaleDateString()}</td>
+              {data.map((row, index) => {
+                if (row.company === "Google .Inc") {
+                  return null; // Skip rendering this row
+                }
 
-                  <td>
-                    {row.verified ? (
-                      <span className="opacity-60">Terverifikasi</span>
-                    ) : (
-                      <span>Belum Terversifikasi</span>
-                    )}
-                  </td>
+                return (
+                  <tr key={row.id} className="border-t-2 border-neutral">
+                    <td className="p-3 pb-2">
+                      <label className="swap opacity-60">
+                        <input
+                          type="checkbox"
+                          onChange={() => handleSelectRow(index)}
+                          checked={selectedRows.includes(index)}
+                        />
+                        <span className="swap-off material-symbols-rounded">
+                          check_box_outline_blank
+                        </span>
+                        <span className="swap-on material-symbols-rounded">
+                          check_box
+                        </span>
+                      </label>
+                    </td>
+                    <td>{row.user}</td>
+                    <td>{row.company}</td>
+                    <td>{new Date(row.created_at).toLocaleDateString()}</td>
 
-                  <td className="flex flex-row flex-nowrap gap-2">
-                    <button
-                      className="btn btn-info btn-xs rounded-lg"
-                      onClick={() => {
-                        navigate(
-                          `/admin/entries/${entryValue[currentEntry]}/${row.id}`
-                        );
-                      }}
-                    >
-                      Detail
-                    </button>
-                    {/* <button
-                      className="btn btn-error btn-xs rounded-lg"
-                      onClick={() => deleteEntry(row.id)}
-                    >
-                      Delete
-                    </button> */}
-                    {row.verified && (
+                    <td>
+                      {row.verified ? (
+                        <span className="opacity-60">Terverifikasi</span>
+                      ) : (
+                        <span>Belum Terversifikasi</span>
+                      )}
+                    </td>
+
+                    <td className="flex flex-row flex-nowrap gap-2">
                       <button
-                        className="btn btn-warning btn-xs"
-                        onClick={() => onExport(row.id)}
+                        className="btn btn-info btn-xs rounded-lg"
+                        onClick={() => {
+                          navigate(
+                            `/admin/entries/${entryValue[currentEntry]}/${row.id}`
+                          );
+                        }}
                       >
-                        Export
+                        Detail
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      <button
+                        className="btn btn-error btn-xs rounded-lg"
+                        onClick={() => deleteEntry(row.id)}
+                      >
+                        Delete
+                      </button>
+                      {row.verified && (
+                        <button
+                          className="btn btn-warning btn-xs"
+                          onClick={() => onExport(row.id)}
+                        >
+                          Export
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
-        {pageData && (
         <div className="flex justify-center items-center gap-2 mt-4">
-          <button
-            className="flex-none btn bg-base-100"
-            onClick={() => handlePageChange(pageData.page - 1)}
-            disabled={pageData.page === 0}
-          >
+          <button className="flex-none btn bg-base-100">
             <span className="material-symbols-rounded icon-size-20">
               arrow_back
             </span>
           </button>
-          <div className="join flex">
-            {[...Array(pageData.num_pages)].map((_, index) => (
-              <button
-                key={index}
-                className={`join-item btn ${
-                  pageData.page === index ? "bg-primary text-base-300" : ""
-                }`}
-                onClick={() => handlePageChange(index)}
-              >
-                {index + 1}
-              </button>
-            ))}
+          <div className="join flex gap-2">
+            <button className="join-item btn">1</button>
+            <button className="join-item btn">2</button>
+            <button className="join-item btn opacity-50">...</button>
+            <button className="join-item btn">99</button>
+            <button className="join-item btn">100</button>
           </div>
-          <button
-            className="flex-none btn bg-base-100"
-            onClick={() => handlePageChange(pageData.page + 1)}
-            disabled={pageData.page === (pageData.num_pages -1)}
-          >
+          <button className="flex-none btn bg-base-100">
             <span className="material-symbols-rounded icon-size-20">
               arrow_forward
             </span>
           </button>
         </div>
-      )}
+        <button
+          onClick={() => {
+            console.log(data);
+          }}
+        >
+          debug
+        </button>
       </div>
     </>
   );
 }
 
-export default EntriesTable;
+export default SearchEntrySiswa;

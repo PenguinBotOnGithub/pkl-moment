@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import host from "../../../assets/strings/host";
 
 function CompanyTable() {
   const cookies = new Cookies(null, { path: "/" });
@@ -119,8 +119,14 @@ function CompanyTable() {
                   type="text"
                   value={row.name}
                   className="w-full"
-                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
-                  onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                  onChange={(e) =>
+                    handleInputChange(index, "name", e.target.value)
+                  }
                 />
               </td>
               <td>
@@ -128,8 +134,14 @@ function CompanyTable() {
                   type="text"
                   value={row.address}
                   className="w-full"
-                  style={{ backgroundColor: "transparent", border: "none", outline: "none" }}
-                  onChange={(e) => handleInputChange(index, "address", e.target.value)}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    outline: "none",
+                  }}
+                  onChange={(e) =>
+                    handleInputChange(index, "address", e.target.value)
+                  }
                 />
               </td>
               <td>
@@ -137,7 +149,7 @@ function CompanyTable() {
                   <>
                     <button
                       className="btn btn-success btn-xs rounded-lg mr-2"
-                      onClick={() => saveChanges(index,row.id)}
+                      onClick={() => saveChanges(index, row.id)}
                     >
                       Save
                     </button>
