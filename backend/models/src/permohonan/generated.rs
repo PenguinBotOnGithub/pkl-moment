@@ -548,7 +548,6 @@ impl Permohonan {
             .select(id)
             .load::<i32>(db)
             .await?;
-        tracing::debug!("{:#?}", letters);
 
         Ok((letters.iter().position(|n| *n == letter_id).unwrap_or(0) as u32) + 1)
     }
