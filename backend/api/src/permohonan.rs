@@ -592,7 +592,13 @@ async fn gen_permohonan_pdf(
         )));
     }
 
-    let buffer = gen_permohonan_chromium(&detail).await?;
+    let buffer = gen_permohonan_chromium(
+        &detail,
+        Permohonan::get_letter_order(&mut db, detail.id, detail.wave.id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    )
+    .await?;
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",

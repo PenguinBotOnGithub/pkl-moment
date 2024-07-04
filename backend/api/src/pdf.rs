@@ -82,7 +82,10 @@ struct StudentTableData {
     student_class: String,
 }
 
-pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>, Rejection> {
+pub async fn gen_penarikan_chromium(
+    detail: &PenarikanJoined,
+    letter_number: u32,
+) -> Result<Vec<u8>, Rejection> {
     let hijri = {
         let date = HijriDate::from_gr(
             detail.created_at.year() as usize,
@@ -117,7 +120,7 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
-    context.insert("nomor_lampiran", &1);
+    context.insert("nomor_lampiran", &letter_number);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     context.insert("hijriah", &hijri);
@@ -194,7 +197,10 @@ pub async fn gen_penarikan_chromium(detail: &PenarikanJoined) -> Result<Vec<u8>,
     Ok(pdf_buf)
 }
 
-pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8>, Rejection> {
+pub async fn gen_permohonan_chromium(
+    detail: &PermohonanJoined,
+    letter_number: u32,
+) -> Result<Vec<u8>, Rejection> {
     let hijri = {
         let date = HijriDate::from_gr(
             detail.created_at.year() as usize,
@@ -229,7 +235,7 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
-    context.insert("nomor_lampiran", &1);
+    context.insert("nomor_lampiran", &letter_number);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     context.insert("hijriah", &hijri);
@@ -313,7 +319,10 @@ pub async fn gen_permohonan_chromium(detail: &PermohonanJoined) -> Result<Vec<u8
     Ok(pdf_buf)
 }
 
-pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<u8>, Rejection> {
+pub async fn gen_pengantaran_chromium(
+    detail: &PengantaranJoined,
+    letter_number: u32,
+) -> Result<Vec<u8>, Rejection> {
     let hijri = {
         let date = HijriDate::from_gr(
             detail.created_at.year() as usize,
@@ -348,7 +357,7 @@ pub async fn gen_pengantaran_chromium(detail: &PengantaranJoined) -> Result<Vec<
 
     let mut context = tera::Context::new();
     // TODO: Use real attachment number
-    context.insert("nomor_lampiran", &1);
+    context.insert("nomor_lampiran", &letter_number);
     context.insert("month", &detail.created_at.month().to_string());
     context.insert("year", &detail.created_at.year().to_string());
     context.insert("hijriah", &hijri);

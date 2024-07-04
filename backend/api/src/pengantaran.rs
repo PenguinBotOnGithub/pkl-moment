@@ -594,7 +594,13 @@ async fn gen_pengantaran_pdf(
         )));
     }
 
-    let buffer = gen_pengantaran_chromium(&detail).await?;
+    let buffer = gen_pengantaran_chromium(
+        &detail,
+        Pengantaran::get_letter_order(&mut db, detail.id, detail.wave.id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    )
+    .await?;
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",
