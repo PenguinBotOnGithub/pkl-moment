@@ -16,5 +16,11 @@ models = { path = "../models" }
 jsonwebtoken = "9.3.0"
 parking_lot = { version = "0.12.2", features = ["send_guard"] }
 thiserror = "1.0.60"
-chrono = "0.4.38"
+chrono = { version = "0.4.38", features = ["unstable-locales"] }
 serde_json = "1.0.117"
+genpdf = "0.2.0"
+lopdf = "0.32.0"
+simple_pdf_generator = { path = "../simple_pdf_generator/simple_pdf_generator" }
+simple_pdf_generator_derive = { path = "../simple_pdf_generator/simple_pdf_generator_derive" }
+hijri_date = "0.5.1"
+tera = "1.20.0"

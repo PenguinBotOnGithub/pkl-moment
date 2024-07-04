@@ -533,4 +533,22 @@ impl Permohonan {
 
         res
     }
+
+    pub async fn get_letter_order(
+        db: &mut Connection,
+        letter_id: i32,
+        letter_wave_id: i32,
+    ) -> QueryResult<u32> {
+        use crate::schema::permohonan::dsl::*;
+
+        let letters = permohonan
+            .filter(verified.eq(true))
+            .filter(wave_id.eq(letter_wave_id))
+            .order(verified_date.asc())
+            .select(id)
+            .load::<i32>(db)
+            .await?;
+
+        Ok((letters.iter().position(|n| *n == letter_id).unwrap_or(0) as u32) + 1)
+    }
 }

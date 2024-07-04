@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
 import getCurrentDate from "../assets/strings/getCurrentDate";
+import host from "../assets/strings/host";
 
 function Login({ cookies }) {
   const [formData, setFormData] = useState({
@@ -21,8 +22,31 @@ function Login({ cookies }) {
     e.preventDefault();
 
     // Add your login logic here, such as sending a request to your server
-    cookies.set("access-token", getCurrentDate());
-    window.location.reload();
+    fetch(`${ host }/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === "success") {
+          cookies.set("access-token", result.data.token);
+          cookies.set("max-item", 10);
+          cookies.set("selected-wave", 2);
+          cookies.set("role", result.data.role);
+          cookies.set("user-id", result.data.id);
+          cookies.set("user-name", result.data.username);
+          window.location.reload();
+        }
+      })
+      .catch(() => {
+        alert("Please check your login information.");
+      });
 
     console.log("Form data submitted:", formData);
     // You can use Axios or the Fetch API to send the data to your server for authentication

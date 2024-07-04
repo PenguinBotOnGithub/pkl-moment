@@ -19,6 +19,13 @@ span.icon-size-48 {
   font-size: 48px;
   font-variation-settings: 'OPSZ' 48;
 }
+span.icon-size-164 {
+  font-size: 164px;
+  font-variation-settings: 'OPSZ' 164;
+}
+span.icon-fill {
+  font-variation-settings: 'FILL' 1;
+}
 
 /* Rules for using icons as black on a light background. */
 .dark {

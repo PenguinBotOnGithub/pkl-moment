@@ -1,19 +1,21 @@
 import React from "react";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
 import { useTranslation } from "react-i18next";
 import Search from "../components/Search";
-import Statistic from "../components/Statistic";
-import Users from "../components/Tables/UsersTable";
-import StUser from "../components/StUser";
+import Users from "../components/tables/UsersTable";
+import StatisticUser from "../components/count/StatisticUser";
+import { useNavigate } from "react-router-dom";
 
 function AllUsers() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  function onAddHandle() {
+    navigate("/admin/user/add");
+  }
 
   return (
     <>
-      <Search />
-      <StUser />
+      <Search addOnClick={onAddHandle} />
+      <StatisticUser />
       <Users />
     </>
   );

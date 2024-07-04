@@ -3,6 +3,8 @@
 Secrets*.toml
 migrations-old/
 assets/signatures/*
+assets/pdf/*
+!assets/pdf/example.pdf
 !assets/signatures/0.jpg
 .idea
 .idea/*

@@ -1,8 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import Cookies from "universal-cookie";
 
 function Settings({ cookies }) {
   const { t } = useTranslation();
+  const username = cookies.get("user-name");
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -19,7 +21,7 @@ function Settings({ cookies }) {
               <div className="p-2 flex-1 border-r-2 border-neutral">
                 Username
               </div>
-              <div className="p-2 flex-1">Johan Yanuar</div>
+              <div className="p-2 flex-1">{username}</div>
             </div>
           </div>
         </div>
@@ -29,7 +31,7 @@ function Settings({ cookies }) {
         <div className="bg-base-100 text-white p-4 rounded-lg flex flex-col items-start flex-1">
           <div className="flex items-center">
             <span className="material-symbols-rounded icon-size-24">brush</span>
-            <span className="ml-2 text-lg font-bold">Tampilan</span>
+            <span className="ml-2 text-lg font-bold">Tampilan (In Progress)</span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
             <span>Bahasa</span>
@@ -49,10 +51,10 @@ function Settings({ cookies }) {
         <div className="bg-base-100 text-white p-4 rounded-lg flex flex-col items-start flex-1">
           <div className="flex items-center">
             <span className="material-symbols-rounded icon-size-24">
-              dashboard
+              description
             </span>
             <span className="ml-2 text-lg font-bold">
-              Konfigurasi Dashboard
+              Konfigurasi Tabel (In Progress)
             </span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
@@ -61,7 +63,8 @@ function Settings({ cookies }) {
               <input
                 type="number"
                 className="grow w-8 placeholder:text-neutral-content placeholder:opacity-50"
-                defaultValue={10}
+                defaultValue={cookies.get("max-item")}
+                onChange={(event) => cookies.set("max-item",event.target.value)}
               />
             </label>
           </div>
@@ -75,14 +78,14 @@ function Settings({ cookies }) {
       <div className="flex justify-between gap-2 w-full max-w-xl">
         <button
           className="btn btn-lg bg-base-100 text-error p-4 rounded-lg flex flex-row items-center flex-1"
-          onClick={() => document.getElementById("my_modal_1").showModal()}
+          onClick={() => document.getElementById("logout_confirmation_modal").showModal()}
         >
           <span className="material-symbols-rounded icon-size-24 text-error">
             logout
           </span>
           <span className="text-lg font-bold text-error">Logout</span>
         </button>
-        <dialog id="my_modal_1" className="modal">
+        <dialog id="logout_confirmation_modal" className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg text-error">Warning!</h3>
             <p className="py-4">
@@ -95,6 +98,10 @@ function Settings({ cookies }) {
                   className="btn text-error"
                   onClick={() => {
                     cookies.remove("access-token");
+                    cookies.remove("selected-wave");
+                    cookies.remove("user-id");
+                    cookies.remove("user-name");
+                    cookies.remove("role");
                     window.location.reload();
                   }}
                 >

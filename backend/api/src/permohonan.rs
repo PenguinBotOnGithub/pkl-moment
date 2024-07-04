@@ -5,6 +5,8 @@ use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
 use models::permohonan_student::{CreatePermohonanStudent, PermohonanStudent};
 use models::types::UserRole;
 use parking_lot::Mutex;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -13,6 +15,7 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
+use crate::pdf::gen_permohonan_chromium;
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse,
@@ -116,6 +119,15 @@ pub fn permohonans_routes(
         .and(with_db(db.clone()))
         .and_then(unverify_permohonan);
 
+    let pdf_permohonan_route = permohonan
+        .and(warp::path::param::<i32>())
+        .and(warp::path("pdf"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(gen_permohonan_pdf);
+
     get_permohonans_route
         .or(create_permohonan_route)
         .or(read_permohonan_route)
@@ -126,6 +138,7 @@ pub fn permohonans_routes(
         .or(remove_permohonan_student_route)
         .or(verify_permohonan_route)
         .or(unverify_permohonan_route)
+        .or(pdf_permohonan_route)
 }
 
 async fn get_permohonans(
@@ -538,4 +551,67 @@ async fn unverify_permohonan(
             "permohonan not found".to_owned(),
         )))
     }
+}
+
+async fn gen_permohonan_pdf(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let Some(n) = Permohonan::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )));
+    };
+
+    if let UserRole::Advisor = &claims.role {
+        if n != claims.id {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to view others data".to_owned(),
+            )));
+        }
+    }
+
+    let detail = Permohonan::read_with_joins(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(detail) = detail else {
+        return Err(reject::custom(ClientError::NotFound(
+            "permohonan not found".to_owned(),
+        )));
+    };
+
+    if !&detail.verified {
+        return Err(reject::custom(ClientError::Authorization(
+            "permohonan not verified".to_string(),
+        )));
+    }
+
+    let buffer = gen_permohonan_chromium(
+        &detail,
+        Permohonan::get_letter_order(&mut db, detail.id, detail.wave.id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    )
+    .await?;
+
+    let file = fs::File::create(format!(
+        "assets/pdf/{}.pdf",
+        chrono::Local::now().to_string()
+    ))
+    .await
+    .ok();
+    if let Some(mut v) = file {
+        v.write_all(&buffer.clone()).await.ok();
+    }
+
+    Ok(reply::with_header(
+        buffer,
+        "Content-Type",
+        "application/pdf",
+    ))
 }

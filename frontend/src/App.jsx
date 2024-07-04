@@ -1,4 +1,3 @@
-// src/App.js
 import React from "react";
 import {
   createBrowserRouter,
@@ -14,12 +13,26 @@ import Root from "./components/Root";
 import NotFound from "./routes/NotFound";
 import Login from "./routes/Login";
 import Cookies from "universal-cookie";
+import Company from "./routes/detail/Company";
+import Student from "./routes/detail/Student";
+import CompanyAdd from "./routes/detail/CompanyAdd";
+import StudentAdd from "./routes/detail/StudentAdd";
+import Entry from "./routes/detail/Entry";
+import EntryAdd from "./routes/detail/EntryAdd";
+import Wave from "./routes/detail/Wave";
+import WaveAdd from "./routes/detail/WaveAdd";
+import User from "./routes/detail/User";
+import UserAdd from "./routes/detail/UserAdd";
+import SearchEntry from "./routes/SearchEntry";
+import SearchEntryDummy from "./routes/detail/SearchEntryDummy";
+import SearchEntrySiswa from "./routes/detail/SearchEntrySiswa";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
   const isLoggedIn = cookies.get("access-token");
   const router = createBrowserRouter([
     { path: "*", element: <NotFound /> },
+
     {
       path: "login",
       element: !isLoggedIn ? (
@@ -28,7 +41,9 @@ function App() {
         <Navigate to="../admin" />
       ),
     },
-    { path: "admin", element: <Navigate to="dashboard" /> },
+
+    { path: "admin", element: <Navigate to="entries/0" /> },
+
     {
       path: "admin",
       element: cookies.get("access-token") ? (
@@ -38,9 +53,33 @@ function App() {
       ),
       children: [
         { path: "dashboard", element: <Dashboard /> },
-        { path: "entries", element: <EntriesAndDocuments /> },
-        { path: "users", element: <AllUsers /> },
+        { path: "entries/:page", element: <EntriesAndDocuments /> },
+        { path: "users/:page", element: <AllUsers /> },
+        { path: "user", element: <User /> },
+        { path: "user/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
+      ],
+    },
+
+    {
+      path: "admin/entries",
+      element: cookies.get("access-token") ? (
+        <Root />
+      ) : (
+        <Navigate to="../login" />
+      ),
+      children: [
+        { path: "search", element: <SearchEntry /> },
+        { path: "searchdummy", element: <SearchEntryDummy /> },
+        { path: "search/siswa", element: <SearchEntrySiswa /> },
+        { path: ":entry/:id", element: <Entry /> },
+        { path: ":entry/add", element: <EntryAdd /> },
+        { path: "wave/:page", element: <Wave /> },
+        { path: "wave/add", element: <WaveAdd /> },
+        { path: "company", element: <Company /> },
+        { path: "company/add", element: <CompanyAdd /> },
+        { path: "student", element: <Student /> },
+        { path: "student/add", element: <StudentAdd /> },
       ],
     },
   ]);
