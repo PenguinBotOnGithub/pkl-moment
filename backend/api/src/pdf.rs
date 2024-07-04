@@ -1,22 +1,25 @@
-use crate::error::InternalError;
-use chrono::format::StrftimeItems;
-use chrono::{Datelike, Locale};
-use hijri_date::HijriDate;
-use models::penarikan::PenarikanJoined;
-use models::pengantaran::PengantaranJoined;
-use models::permohonan::PermohonanJoined;
-use serde::Serialize;
-use simple_pdf_generator::PrintOptions;
-use simple_pdf_generator_derive::PdfTemplate;
 use std::cell::RefCell;
 use std::error::Error;
 use std::io::Write;
 use std::rc::Rc;
 use std::sync::OnceLock;
+
+use chrono::format::StrftimeItems;
+use chrono::{Datelike, Locale};
+use hijri_date::HijriDate;
+use serde::Serialize;
 use tera::Tera;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::debug;
 use warp::{reject, Rejection};
+
+use models::penarikan::PenarikanJoined;
+use models::pengantaran::PengantaranJoined;
+use models::permohonan::PermohonanJoined;
+use simple_pdf_generator::PrintOptions;
+use simple_pdf_generator_derive::PdfTemplate;
+
+use crate::error::InternalError;
 
 fn tera() -> &'static Tera {
     static TERA: OnceLock<Tera> = OnceLock::new();
@@ -29,57 +32,25 @@ fn tera() -> &'static Tera {
     })
 }
 
-struct WrappedVecU8 {
-    vec: Rc<RefCell<Vec<u8>>>,
-}
-
-impl WrappedVecU8 {
-    pub fn new() -> Self {
-        WrappedVecU8 {
-            vec: Rc::new(RefCell::new(Vec::new())),
-        }
-    }
-}
-
-impl Write for WrappedVecU8 {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        <WrappedVecU8 as Write>::write(self, buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        <WrappedVecU8 as Write>::flush(self)
-    }
-}
-
 mod permohonan {
-    use crate::pdf::StudentTableData;
-    use simple_pdf_generator_derive::{PdfTemplate, PdfTemplateForHtml};
+    use simple_pdf_generator_derive::PdfTemplateForHtml;
 
     #[derive(PdfTemplateForHtml)]
     pub struct PermohonanPdf {}
 }
 
 mod pengantaran {
-    use crate::pdf::StudentTableData;
-    use simple_pdf_generator_derive::{PdfTemplate, PdfTemplateForHtml};
+    use simple_pdf_generator_derive::PdfTemplateForHtml;
 
     #[derive(PdfTemplateForHtml)]
     pub struct PengantaranPdf {}
 }
 
 mod penarikan {
-    use crate::pdf::StudentTableData;
-    use simple_pdf_generator_derive::{PdfTemplate, PdfTemplateForHtml};
+    use simple_pdf_generator_derive::PdfTemplateForHtml;
 
     #[derive(PdfTemplateForHtml)]
     pub struct PenarikanPdf {}
-}
-
-#[derive(Serialize)]
-struct StudentTableData {
-    index: u8,
-    student_name: String,
-    student_class: String,
 }
 
 pub async fn gen_penarikan_chromium(

@@ -3,7 +3,6 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 use diesel_async::AsyncPgConnection;
 use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
 use models::permohonan_student::{CreatePermohonanStudent, PermohonanStudent};
-use models::signature::Signature;
 use models::types::UserRole;
 use parking_lot::Mutex;
 use tokio::fs;
@@ -19,7 +18,7 @@ use crate::error::handle_fk_data_not_exists;
 use crate::pdf::gen_permohonan_chromium;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn permohonans_routes(
