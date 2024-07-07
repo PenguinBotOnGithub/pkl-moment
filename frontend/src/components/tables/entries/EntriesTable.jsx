@@ -4,6 +4,7 @@ import Cookies from "universal-cookie";
 import Search from "../../Search";
 import Statistic from "../../count/Statistic";
 import host from "../../../assets/strings/host";
+import { fetchEntries } from "../../../services";
 
 function EntriesTable() {
   const navigate = useNavigate();
@@ -55,32 +56,21 @@ function EntriesTable() {
   // };
 
   const fetchDataForEntry = async (entryType) => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${host}/api/${entryType}?page=${page}&size=${max_item}`,
-        {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let entryData = await response.json();
-      setData(entryData.data.items);
-      setIsDataEdited(entryData.data.items.map(() => false));
-      setPageData(entryData.data);
-      setError(null);
-    } catch (err) {
-      console.log("Error fetching data: " + err);
-      setError(err.message);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const entryData = await fetchEntries(entryType, page, max_item);
+    setData(entryData.data.items);
+    setIsDataEdited(entryData.data.items.map(() => false));
+    setPageData(entryData.data);
+    setError(null);
+  } catch (err) {
+    console.log("Error fetching data: " + err);
+    setError(err.message);
+    setData([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     console.log(data);

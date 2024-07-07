@@ -3,7 +3,6 @@ use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 use diesel_async::AsyncPgConnection;
 use models::permohonan::{CreatePermohonan, Permohonan, UpdatePermohonan};
 use models::permohonan_student::{CreatePermohonanStudent, PermohonanStudent};
-use models::signature::Signature;
 use models::types::UserRole;
 use parking_lot::Mutex;
 use tokio::fs;
@@ -16,10 +15,10 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
-use crate::pdf::{example_pdf, gen_permohonan_chromium};
+use crate::pdf::gen_permohonan_chromium;
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, AddStudentRequest, ApiResponse, GenPdfRequest,
+    with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn permohonans_routes(
@@ -576,56 +575,6 @@ async fn gen_permohonan_pdf(
             )));
         }
     }
-    // let (sig1, sig2) = match (
-    //     Signature::read(&mut db, payload.signature_1_id)
-    //         .await
-    //         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
-    //     Signature::read(&mut db, payload.signature_2_id)
-    //         .await
-    //         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
-    // ) {
-    //     (Some(h), Some(i)) => (
-    //         fs::OpenOptions::new()
-    //             .read(true)
-    //             .open(format!("assets/signatures/{}", h.id))
-    //             .await
-    //             .map_err(|e| {
-    //                 ClientError::NotFound(format!(
-    //                     "signature {}'s image not found: {}",
-    //                     h.id,
-    //                     e.to_string()
-    //                 ))
-    //             })?,
-    //         fs::OpenOptions::new()
-    //             .read(true)
-    //             .open(format!("assets/signatures/{}", i.id))
-    //             .await
-    //             .map_err(|e| {
-    //                 ClientError::NotFound(format!(
-    //                     "signature {}'s image not found: {}",
-    //                     i.id,
-    //                     e.to_string()
-    //                 ))
-    //             })?,
-    //     ),
-    //     (None, Some(_)) => {
-    //         return Err(reject::custom(ClientError::NotFound(format!(
-    //             "signature {} not found",
-    //             payload.signature_1_id
-    //         ))));
-    //     }
-    //     (Some(_), None) => {
-    //         return Err(reject::custom(ClientError::NotFound(format!(
-    //             "signature {} not found",
-    //             payload.signature_2_id
-    //         ))));
-    //     }
-    //     (None, None) => {
-    //         return Err(reject::custom(ClientError::NotFound(
-    //             "no signature found".to_owned(),
-    //         )));
-    //     }
-    // };
 
     let detail = Permohonan::read_with_joins(&mut db, id)
         .await
@@ -636,7 +585,19 @@ async fn gen_permohonan_pdf(
         )));
     };
 
-    let buffer = gen_permohonan_chromium(&detail).await?;
+    if !&detail.verified {
+        return Err(reject::custom(ClientError::Authorization(
+            "permohonan not verified".to_string(),
+        )));
+    }
+
+    let buffer = gen_permohonan_chromium(
+        &detail,
+        Permohonan::get_letter_order(&mut db, detail.id, detail.wave.id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    )
+    .await?;
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",

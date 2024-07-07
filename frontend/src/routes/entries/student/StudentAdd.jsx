@@ -2,8 +2,8 @@ import React from "react";
 
 import StudentAddTable from "../../../components/tables/student/StudentAddTable";
 
-function CompanyAdd() {
+function StudentAdd() {
   return <StudentAddTable />;
 }
 
-export default CompanyAdd;
+export default StudentAdd;

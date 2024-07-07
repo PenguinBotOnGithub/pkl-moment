@@ -46,19 +46,15 @@
 </style>
 <body style="margin: 0; padding: 0; display: flex; flex-direction: column; font-family: Cantarell,serif; gap: 0; font-family: Arial; line-height: 1.5; justify-content: center">
 
-<img src="../static/pkl-header.jpeg" alt="pkl-header">
+<img src="assets/static/pkl-header.jpeg" alt="pkl-header">
 
 <div id="letter_info" style="font-size: 14.666666666666666px;">
     <div style="display: flex; flex-direction: row; justify-content: space-between">
-        <p>Nomor&nbsp;&nbsp;&nbsp;: %%nomor_lampiran%%
-            /HUBIN/SMK.RUS/PKL/%%month%%/
-            %%year%%
-        </p>
-        <p>Kudus,
-            %%hijriah%%</p></div>
-    <div style="display: flex; flex-direction: row; justify-content: space-between"><p>Lamp.&nbsp;&nbsp;&nbsp;&nbsp;: 1
-        bendel</p>
-        <p>%%georgian%%</p></div>
+        <p>Nomor&nbsp;&nbsp;&nbsp;: {{nomor_lampiran}}/HUBIN/SMK.RUS/PKL/{{month}}/{{year}}</p>
+        <p>Kudus, <i style="text-decoration: underline; font-style: normal">{{hijriah}}</i></p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between">
+        <p>Lamp.&nbsp;&nbsp;&nbsp;&nbsp;: 1 bendel</p>
+        <p>{{georgian}} M</p></div>
     <p>Hal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong style="font-style: italic">Surat
         Penarikan</strong></p>
 </div>
@@ -68,9 +64,9 @@
 <div id="letter_receiver" style="font-size: 16px;">
     <p>Kepada Yth.
         <br>
-        Pimpinan <strong>%%company%%</strong>
+        Pimpinan <strong>{{company}}</strong>
         <br>
-        <i style="font-size: 14px">%%company_address%%,</i>
+        <i style="font-size: 14px">{{company_address}},</i>
         <br>
         di Tempat.
     </p>
@@ -88,10 +84,9 @@
     yang mencintainya, hingga Yaumil Qiyamah.
     <br><br>
     Selanjutnya sesuai dengan program kerja, Praktik Kerja Lapangan (<i style="font-style: italic">PKL</i>) SMK Raden
-    Umar Said Kudus Tahun Pelajaran
-    %%school_year%%
-    , tentang pelaksanaan Praktik Kerja Lapangan (PKL), kami beritahukan bahwa terhitung tanggal
-    <strong>%%end_date%%</strong> sudah berakhir, Maka dari itu perkenankan siswa kami tarik kembali untuk melakukan
+    Umar Said Kudus Tahun Pelajaran {{school_year}}, tentang pelaksanaan Praktik Kerja Lapangan (PKL), kami beritahukan
+    bahwa terhitung tanggal
+    <strong>{{end_date}}</strong> sudah berakhir, Maka dari itu perkenankan siswa kami tarik kembali untuk melakukan
     bimbingan di sekolahan, dengan daftar nama terlampir.
     <br><br>
     Demikian agar bisa ditindak lanjuti sesuai prosedur yang ada. Atas kerjasamanya kami sampaikan terima kasih
@@ -105,18 +100,21 @@
 
 <div id="letter_footer_1" style="font-size: 14.666666666666666px;">
     <p>Mengetahui</p>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>
-        %%signature_title_1%%</p>
-        <p>
-            %%signature_title_2%%</p></div>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>SMK Raden Umar Said,</p>
-        <p>Bidang Humas & Industri,</p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <p>{{signature_title_1}}</p>
+        <p>{{signature_title_2}}</p>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <p>SMK Raden Umar Said,</p>
+        <p>Bidang Humas & Industri,</p>
+    </div>
     <p><br></p>
     <p><br></p>
     <p><br></p>
-    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;"><strong>
-        %%signature_name_1%%</strong><strong>
-        %%signature_name_2%%</strong></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;">
+        <strong>{{signature_name_1}}</strong>
+        <strong>{{signature_name_2}}</strong>
+    </div>
 </div>
 
 <p><br></p>
@@ -125,29 +123,39 @@
 
 <p style="font-size: 13.333333333333332px">Lampiran Surat Penarikan PKL</p>
 <p style="font-size: 13.333333333333332px">Nomor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
-    %%nomor_lampiran%%
-    /HUBIN/SMK.RUS/PKL/
-    %%month%%/
-    %%year%%</p>
+    {{nomor_lampiran}}/HUBIN/SMK.RUS/PKL/{{month}}/{{year}}</p>
 
 <p><br></p>
 
 <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
     <p style="font-size: 16px"><strong>Daftar Nama Siswa PKL</strong></p>
     <p style="font-size: 16px"><strong>SMK Raden Umar Said</strong></p>
-    <p style="font-size: 16px"><strong>Tahun Pelalajaran %%school_year%%</strong></p>
-    <p style="font-size: 16px"><strong>Di %%company%%</strong></p>
+    <p style="font-size: 16px"><strong>Tahun Pelalajaran {{school_year}}</strong></p>
+    <p style="font-size: 16px"><strong>Di {{company}}</strong></p>
 </div>
 
 <p><br></p>
 <p><br></p>
 <p><br></p>
 
-<inject-table items="student_table">
-    <inject-column prop="index" label="No"/>
-    <inject-column prop="student_name" label="Nama"/>
-    <inject-column prop="student_class" label="Kelas"/>
-</inject-table>
+<table>
+    <thead>
+    <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Kelas</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for student in students %}
+    <tr>
+        <td>{{loop.index}}</td>
+        <td>{{student.name}}</td>
+        <td>{{student.class}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
 
 
 <p><br></p>
@@ -156,18 +164,21 @@
 
 <div id="letter_footer_2" style="font-size: 14.666666666666666px;">
     <p>Mengetahui</p>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>
-        %%signature_title_1%%</p>
-        <p>
-            %%signature_title_2%%</p></div>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;"><p>SMK Raden Umar Said,</p>
-        <p>Bidang Humas & Industri,</p></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <p>{{signature_title_1}}</p>
+        <p>{{signature_title_2}}</p>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <p>SMK Raden Umar Said,</p>
+        <p>Bidang Humas & Industri,</p>
+    </div>
     <p><br></p>
     <p><br></p>
     <p><br></p>
-    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;"><strong>
-        %%signature_name_1%%</strong><strong>
-        %%signature_name_2%%</strong></div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; font-size: 16px;">
+        <strong>{{signature_name_1}}</strong>
+        <strong>{{signature_name_2}}</strong>
+    </div>
 </div>
 
 </body>
