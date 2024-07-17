@@ -1,15 +1,10 @@
-use std::cell::RefCell;
 use std::error::Error;
-use std::io::Write;
-use std::rc::Rc;
 use std::sync::OnceLock;
 
-use chrono::format::StrftimeItems;
 use chrono::{Datelike, Locale};
 use hijri_date::HijriDate;
-use serde::Serialize;
 use tera::Tera;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tracing::debug;
 use warp::{reject, Rejection};
 
@@ -17,7 +12,6 @@ use models::penarikan::PenarikanJoined;
 use models::pengantaran::PengantaranJoined;
 use models::permohonan::PermohonanJoined;
 use simple_pdf_generator::PrintOptions;
-use simple_pdf_generator_derive::PdfTemplate;
 
 use crate::error::InternalError;
 
