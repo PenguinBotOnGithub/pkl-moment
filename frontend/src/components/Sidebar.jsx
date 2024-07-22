@@ -39,7 +39,11 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
+<<<<<<< HEAD
         <li>
+=======
+        {role == "admin" && <li>
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
           <NavLink
             to="/admin/journal"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}

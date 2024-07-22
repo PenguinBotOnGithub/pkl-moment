@@ -17,6 +17,20 @@ export default {
           warning: "#D9D936",
           error: "#F84F31",
         },
+<<<<<<< HEAD
+=======
+        airlight: {
+          primary: "#f8ab64",
+          secondary: "#ec2939",
+          accent: "#f8ab64",
+          neutral: "#d2d2d2",
+          "base-100": "#ededed",
+          info: "#1b80e5",
+          success: "#29e560",
+          warning: "#d9d936",
+          error: "#f84f31",
+        },
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
       },
       "light",
       "dark",

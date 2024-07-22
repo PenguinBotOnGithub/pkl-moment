@@ -180,14 +180,68 @@ function EntriesAndDocument() {
               </button>
             ))}
           </div>
+<<<<<<< HEAD
+=======
+          {/* <div className="flex gap-2">
+            <button
+              className={`btn btn-warning btn-sm text-black ${
+                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={selectedRows.length === 0}
+            >
+              Export{<span className="hidden lg:block"> yang terpilih</span>}
+            </button>
+            <button
+              className={`btn btn-error btn-sm text-black ${
+                selectedRows.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={selectedRows.length === 0}
+              onClick={() =>
+                selectedRows.forEach((rowIndex) =>
+                  deleteEntry(data[rowIndex].id)
+                )
+              }
+            >
+              Delete{<span className="hidden lg:block"> yang terpilih</span>}
+            </button>
+          </div> */}
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
         </div>
         {loading ? (
           <div>Loading...</div>
         ) : (
+<<<<<<< HEAD
           <table className="table bg-base-100 border-0 overflow-hidden rounded-box">
             <thead className="bg-base-300">
               <tr className="border-0">
                 <th className="pl-3 pb-2 pr-0 w-0">No</th>
+=======
+          <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
+            <thead className="bg-neutral">
+              <tr className="border-0">
+                <th className="pl-3 pb-2 pr-0 w-0">
+                  {/* <label className="swap">
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRows(data.map((_, index) => index));
+                        } else {
+                          setSelectedRows([]);
+                        }
+                      }}
+                      checked={selectedRows.length === data.length}
+                    />
+                    <span className="swap-off material-symbols-rounded">
+                      check_box_outline_blank
+                    </span>
+                    <span className="swap-on material-symbols-rounded">
+                      check_box
+                    </span>
+                  </label> */}
+                  No
+                </th>
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
                 <th>Pembimbing</th>
                 <th>Perusahaan</th>
                 <th>Tanggal Permintaan</th>
@@ -197,8 +251,28 @@ function EntriesAndDocument() {
             </thead>
             <tbody className="box-content">
               {data.map((row, index) => (
+<<<<<<< HEAD
                 <tr key={row.id} className="border-t-2 border-base-300">
                   <td className="p-3 pb-2">{index + 1}</td>
+=======
+                <tr key={row.id} className="border-t-2 border-neutral">
+                  <td className="p-3 pb-2">
+                    {/* <label className="swap opacity-60">
+                      <input
+                        type="checkbox"
+                        onChange={() => handleSelectRow(index)}
+                        checked={selectedRows.includes(index)}
+                      />
+                      <span className="swap-off material-symbols-rounded">
+                        check_box_outline_blank
+                      </span>
+                      <span className="swap-on material-symbols-rounded">
+                        check_box
+                      </span>
+                    </label> */}
+                    {index + 1}
+                  </td>
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
                   <td>{row.user}</td>
                   <td>{row.company}</td>
                   <td>{new Date(row.created_at).toLocaleDateString()}</td>
@@ -213,7 +287,11 @@ function EntriesAndDocument() {
 
                   <td className="flex flex-row flex-nowrap gap-2">
                     <button
+<<<<<<< HEAD
                       className="btn btn-info btn-xs"
+=======
+                      className="btn btn-info btn-xs rounded-lg"
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
                       onClick={() => {
                         navigate(
                           `/admin/entries/${entryValue[currentEntry]}/${row.id}`
@@ -222,6 +300,15 @@ function EntriesAndDocument() {
                     >
                       Detail
                     </button>
+<<<<<<< HEAD
+=======
+                    {/* <button
+                      className="btn btn-error btn-xs rounded-lg"
+                      onClick={() => deleteEntry(row.id)}
+                    >
+                      Delete
+                    </button> */}
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
                     {row.verified && (
                       <button
                         className="btn btn-warning btn-xs"
@@ -237,7 +324,11 @@ function EntriesAndDocument() {
           </table>
         )}
         {pageData && (
+<<<<<<< HEAD
           <div className="flex justify-center items-center gap-2">
+=======
+          <div className="flex justify-center items-center gap-2 mt-4">
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
             <button
               className="flex-none btn bg-base-100"
               onClick={() => handlePageChange(pageData.page - 1)}
@@ -252,7 +343,11 @@ function EntriesAndDocument() {
                 <button
                   key={index}
                   className={`join-item btn ${
+<<<<<<< HEAD
                     pageData.page === index ? "bg-primary text-primary-content" : "bg-base-100"
+=======
+                    pageData.page === index ? "bg-primary text-base-300" : ""
+>>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
                   }`}
                   onClick={() => handlePageChange(index)}
                 >
