@@ -30,9 +30,9 @@ function Login({ cookies }) {
         cookies.set("max-item", 10);
         cookies.set("selected-wave", 2);
         cookies.set("role", result.data.role);
+        // cookies.set("role", "advisor_school");
         cookies.set("user-id", result.data.id);
         cookies.set("user-name", result.data.username);
-        navigate('/admin/entries/0'); // Navigate to the desired route after login
         location.reload();
       }
     } catch (error) {

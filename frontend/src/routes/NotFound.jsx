@@ -6,7 +6,9 @@ function NotFound() {
   return (
     <div className="flex h-full flex-col">
       <Navbar title="Are you lost?" href="/admin/entries/0" />
-      <div className="flex-1 flex justify-center items-center bg-base-200"><NotFoundMessage/></div>
+      <div className="flex-1 flex justify-center items-center bg-base-200">
+        <NotFoundMessage />
+      </div>
     </div>
   );
 }

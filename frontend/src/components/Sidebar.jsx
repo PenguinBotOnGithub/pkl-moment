@@ -48,7 +48,7 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
-        {role != "advisor" && <li>
+        {role == "admin" && <li>
           <NavLink
             to="/admin/users/0"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
