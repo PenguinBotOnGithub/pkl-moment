@@ -43,15 +43,27 @@ export const deleteEntry = async (entryType, id) => {
   });
 };
 
-export const exportEntry = async (entryType, id) => {
-  const response = await fetch(`${BASE_URL}/api/${entryType}/${id}/pdf`, {
-    headers: { Authorization: token ? `Bearer ${token}` : '' },
-  });
-
-  if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-  const blob = await response.blob();
-  return blob;
+export const exportEntry = async (entryType, index) => {
+  try {
+    const response = await fetch(
+      `${host}/api/${entryType}/${index}/pdf`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        method: "GET",
+      }
+    );
+    let bin = [];
+    for await (const chunk of response.body) {
+      bin.push(chunk);
+    }
+    let blob = new Blob(bin, { type: "application/pdf" });
+    downloadBlob(blob, "pkl.pdf");
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export default { login, fetchEntries, deleteEntry, exportEntry };
