@@ -10,12 +10,8 @@ pub enum TableRef {
     Company,
     Student,
     Signature,
-    Permohonan,
-    PermohonanStudent,
-    Pengantaran,
-    PengantaranStudent,
-    Penarikan,
-    PenarikanStudent,
+    Letters,
+    LettersStudent,
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -25,7 +21,6 @@ pub enum Operation {
     Update,
     Delete,
     Verify,
-    Unverify,
     Register,
     Upload,
 }
@@ -33,8 +28,8 @@ pub enum Operation {
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy)]
 #[ExistingTypePath = "crate::schema::sql_types::UserRole"]
 pub enum UserRole {
-    Admin,
-    Advisor,
+    Secretary,
+    Coordinator,
 }
 
 impl Serialize for UserRole {
@@ -43,8 +38,10 @@ impl Serialize for UserRole {
         S: Serializer,
     {
         match self {
-            UserRole::Admin => serializer.serialize_unit_variant("UserRole", 0, "admin"),
-            UserRole::Advisor => serializer.serialize_unit_variant("UserRole", 0, "advisor"),
+            UserRole::Secretary => serializer.serialize_unit_variant("UserRole", 0, "secretary"),
+            UserRole::Coordinator => {
+                serializer.serialize_unit_variant("UserRole", 0, "coordinator")
+            }
         }
     }
 }
@@ -60,7 +57,7 @@ impl<'de> Deserialize<'de> for UserRole {
             type Value = UserRole;
 
             fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-                formatter.write_str("expected values: 'admin' or 'string'")
+                formatter.write_str("expected values: 'secretary' or 'coordinator'")
             }
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -68,8 +65,8 @@ impl<'de> Deserialize<'de> for UserRole {
                 E: Error,
             {
                 match v {
-                    "admin" => Ok(UserRole::Admin),
-                    "advisor" => Ok(UserRole::Advisor),
+                    "secretary" => Ok(UserRole::Secretary),
+                    "coordinator" => Ok(UserRole::Coordinator),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }
@@ -79,8 +76,8 @@ impl<'de> Deserialize<'de> for UserRole {
                 E: Error,
             {
                 match v {
-                    "admin" => Ok(UserRole::Admin),
-                    "advisor" => Ok(UserRole::Advisor),
+                    "secretary" => Ok(UserRole::Secretary),
+                    "coordinator" => Ok(UserRole::Coordinator),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }
@@ -90,8 +87,8 @@ impl<'de> Deserialize<'de> for UserRole {
                 E: Error,
             {
                 match &v[..] {
-                    "admin" => Ok(UserRole::Admin),
-                    "advisor" => Ok(UserRole::Advisor),
+                    "secretary" => Ok(UserRole::Secretary),
+                    "coordinator" => Ok(UserRole::Coordinator),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }
