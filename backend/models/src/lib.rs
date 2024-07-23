@@ -2,15 +2,15 @@ use diesel::sql_types::Bool;
 use diesel::BoxableExpression;
 use diesel_async::AsyncPgConnection;
 
+pub use diesel;
+
+pub mod class;
 pub mod company;
+pub mod department;
 pub mod invalidated_jwt;
+pub mod letters;
+pub mod letters_student;
 pub mod log;
-pub mod penarikan;
-pub mod penarikan_student;
-pub mod pengantaran;
-pub mod pengantaran_student;
-pub mod permohonan;
-pub mod permohonan_student;
 pub mod schema;
 pub mod signature;
 pub mod student;
