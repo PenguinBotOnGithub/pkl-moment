@@ -15,10 +15,26 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    class (id) {
+        id -> Int4,
+        number -> Int4,
+        department_id -> Int4,
+    }
+}
+
+diesel::table! {
     company (id) {
         id -> Int4,
         name -> Text,
         address -> Text,
+        mou_url -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    department (id) {
+        id -> Int4,
+        name -> Text,
     }
 }
 
@@ -28,6 +44,29 @@ diesel::table! {
         jwt -> Text,
         invalidated_timestamp -> Timestamptz,
         expires_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    letters (id) {
+        id -> Int4,
+        user_id -> Int4,
+        company_id -> Int4,
+        start_date -> Date,
+        end_date -> Date,
+        verified -> Bool,
+        verified_at -> Nullable<Timestamptz>,
+        wave_id -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    letters_student (id) {
+        id -> Int4,
+        letters_id -> Int4,
+        student_id -> Int4,
     }
 }
 
@@ -47,74 +86,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    penarikan (id) {
-        id -> Int4,
-        user_id -> Int4,
-        company_id -> Int4,
-        end_date -> Date,
-        verified -> Bool,
-        verified_date -> Nullable<Date>,
-        wave_id -> Int4,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    penarikan_student (id) {
-        id -> Int4,
-        penarikan_id -> Int4,
-        student_id -> Int4,
-    }
-}
-
-diesel::table! {
-    pengantaran (id) {
-        id -> Int4,
-        user_id -> Int4,
-        company_id -> Int4,
-        start_date -> Date,
-        end_date -> Date,
-        verified -> Bool,
-        verified_date -> Nullable<Date>,
-        wave_id -> Int4,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    pengantaran_student (id) {
-        id -> Int4,
-        pengantaran_id -> Int4,
-        student_id -> Int4,
-    }
-}
-
-diesel::table! {
-    permohonan (id) {
-        id -> Int4,
-        user_id -> Int4,
-        company_id -> Int4,
-        start_date -> Date,
-        end_date -> Date,
-        verified -> Bool,
-        verified_date -> Nullable<Date>,
-        wave_id -> Int4,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    permohonan_student (id) {
-        id -> Int4,
-        permohonan_id -> Int4,
-        student_id -> Int4,
-    }
-}
-
-diesel::table! {
     signature (id) {
         id -> Int4,
         name -> Text,
@@ -126,7 +97,7 @@ diesel::table! {
     student (id) {
         id -> Int4,
         name -> Text,
-        class -> Text,
+        class_id -> Int4,
         #[max_length = 5]
         nis -> Varchar,
     }
@@ -148,38 +119,28 @@ diesel::table! {
 diesel::table! {
     wave (id) {
         id -> Int4,
-        start_date -> Date,
-        end_date -> Date,
+        start_year -> Int2,
+        end_year -> Int2,
     }
 }
 
+diesel::joinable!(class -> department (department_id));
+diesel::joinable!(letters -> company (company_id));
+diesel::joinable!(letters -> user (user_id));
+diesel::joinable!(letters -> wave (wave_id));
+diesel::joinable!(letters_student -> letters (letters_id));
+diesel::joinable!(letters_student -> student (student_id));
 diesel::joinable!(log -> user (user_id));
-diesel::joinable!(penarikan -> company (company_id));
-diesel::joinable!(penarikan -> user (user_id));
-diesel::joinable!(penarikan -> wave (wave_id));
-diesel::joinable!(penarikan_student -> penarikan (penarikan_id));
-diesel::joinable!(penarikan_student -> student (student_id));
-diesel::joinable!(pengantaran -> company (company_id));
-diesel::joinable!(pengantaran -> user (user_id));
-diesel::joinable!(pengantaran -> wave (wave_id));
-diesel::joinable!(pengantaran_student -> pengantaran (pengantaran_id));
-diesel::joinable!(pengantaran_student -> student (student_id));
-diesel::joinable!(permohonan -> company (company_id));
-diesel::joinable!(permohonan -> user (user_id));
-diesel::joinable!(permohonan -> wave (wave_id));
-diesel::joinable!(permohonan_student -> permohonan (permohonan_id));
-diesel::joinable!(permohonan_student -> student (student_id));
+diesel::joinable!(student -> class (class_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    class,
     company,
+    department,
     invalidated_jwt,
+    letters,
+    letters_student,
     log,
-    penarikan,
-    penarikan_student,
-    pengantaran,
-    pengantaran_student,
-    permohonan,
-    permohonan_student,
     signature,
     student,
     user,

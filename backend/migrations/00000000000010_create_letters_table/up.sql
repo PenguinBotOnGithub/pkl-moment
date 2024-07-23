@@ -1,12 +1,13 @@
 -- Your SQL goes here
 CREATE TABLE
-    "penarikan" (
+    "letters" (
         id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         user_id INT NOT NULL,
         company_id INT NOT NULL,
+        start_date DATE NOT NULL,
         end_date DATE NOT NULL,
         verified BOOLEAN NOT NULL DEFAULT FALSE,
-        verified_date DATE,
+        verified_at TIMESTAMPTZ,
         wave_id INT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -16,4 +17,4 @@ CREATE TABLE
     );
 
 CREATE TRIGGER updated_at_trigger BEFORE
-UPDATE ON "penarikan" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();
+UPDATE ON "letters" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();

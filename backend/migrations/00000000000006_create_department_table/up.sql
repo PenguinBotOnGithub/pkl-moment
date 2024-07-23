@@ -1,0 +1,5 @@
+-- Your SQL goes here
+CREATE TABLE "department" (
+    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL UNIQUE
+);
