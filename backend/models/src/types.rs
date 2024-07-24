@@ -12,6 +12,8 @@ pub enum TableRef {
     Signature,
     Letters,
     LettersStudent,
+    Class,
+    Department,
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]

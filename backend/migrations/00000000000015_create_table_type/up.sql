@@ -6,5 +6,7 @@ CREATE TYPE table_ref AS ENUM (
     'student',
     'signature',
     'letters',
-    'letters_student'
+    'letters_student',
+    'class',
+    'department'
 );
