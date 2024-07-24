@@ -2,11 +2,18 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 
+<<<<<<< HEAD
 function ThemeController({ maxWidth = "xs", style = "join" }) {
   const cookies = new Cookies(null, { path: "/" });
   const [theme, setTheme] = useState(cookies.get("theme"));
   const navigate = useNavigate();
 
+=======
+function ThemeController({ cookies }) {
+  const [theme, setTheme] = useState(cookies.get("theme"));
+  const navigate = useNavigate();
+  
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
   const themeRefs = useRef({});
 
   const onOptionChange = (e) => {
@@ -17,14 +24,19 @@ function ThemeController({ maxWidth = "xs", style = "join" }) {
 
   useEffect(() => {
     if (themeRefs.current[theme]) {
+<<<<<<< HEAD
       themeRefs.current[theme].scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
+=======
+      themeRefs.current[theme].scrollIntoView({ behavior: "smooth", block: "nearest" });
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
     }
   }, [theme]);
 
   const themeData = [
+<<<<<<< HEAD
     "airdark",
     "light",
     "dark",
@@ -110,6 +122,35 @@ function ThemeController({ maxWidth = "xs", style = "join" }) {
       </div>
     );
   }
+=======
+    "airdark", "light", "dark", "cupcake", "bumblebee", "emerald",
+    "corporate", "synthwave", "retro", "cyberpunk", "valentine",
+    "halloween", "garden", "forest", "aqua", "lofi", "pastel",
+    "fantasy", "wireframe", "black", "luxury", "dracula", "cmyk",
+    "autumn", "business", "acid", "lemonade", "night", "coffee",
+    "winter", "dim", "nord", "sunset",
+  ];
+
+  return (
+    <div className="overflow-x-auto max-w-xs rounded-t-btn bg-base-200">
+      <div className="join join-horizontal rounded-none">
+        {themeData.map((singletheme, index) => (
+          <input
+            key={index}
+            ref={(el) => (themeRefs.current[singletheme] = el)}
+            type="radio"
+            name="theme-buttons"
+            className="btn theme-controller join-item"
+            aria-label={singletheme}
+            value={singletheme}
+            checked={theme === singletheme}
+            onChange={onOptionChange}
+          />
+        ))}
+      </div>
+    </div>
+  );
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
 }
 
 export default ThemeController;

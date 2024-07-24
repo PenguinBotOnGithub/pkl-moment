@@ -39,16 +39,28 @@ function App() {
     },
     {
       path: "admin",
+<<<<<<< HEAD
       element: isLoggedIn ? <Root cookies={cookies} /> : <Navigate to="/login" />,
       children: [
         { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
         { path: "users", element: <Navigate to="0" /> },
         { path: "journal/:page", element: <Journal /> },
+=======
+      element: cookies.get("access-token") ? (
+        <Root cookies={cookies} />
+      ) : (
+        <Navigate to="../login" />
+      ),
+      children: [
+        { path: "entries", element: <Navigate to="0" /> },
+        { path: "users", element: <Navigate to="0" /> },
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
         { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
         { path: "users/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
+<<<<<<< HEAD
         {
           path: "entries",
           children: [
@@ -63,6 +75,30 @@ function App() {
           ],
         },
         
+=======
+      ],
+    },
+
+    {
+      path: "admin/entries",
+      element: cookies.get("access-token") ? (
+        <Root cookies={cookies}/>
+      ) : (
+        <Navigate to="../login" />
+      ),
+      children: [
+        // { path: "search", element: <SearchEntry /> },
+        // { path: "searchdummy", element: <SearchEntryDummy /> },
+        // { path: "search/siswa", element: <SearchEntrySiswa /> },
+        { path: ":entry/:id", element: <Entry /> },
+        { path: ":entry/add", element: <EntryAdd role={cookies.get("role")} /> },
+        { path: "wave/:page", element: <Wave /> },
+        { path: "wave/add", element: <WaveAdd /> },
+        { path: "company", element: <Company /> },
+        { path: "company/add", element: <CompanyAdd /> },
+        { path: "student", element: <Student /> },
+        { path: "student/add", element: <StudentAdd /> },
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
       ],
     },
   ]);

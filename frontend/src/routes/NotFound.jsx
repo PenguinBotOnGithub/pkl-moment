@@ -13,7 +13,7 @@ function NotFound({cookies}) {
 =======
     <div className="flex h-full flex-col">
       <Navbar title="Are you lost?" href="/admin/entries/0" />
-      <div className="flex-1 flex justify-center items-center bg-base-200">
+      <div className="flex-1 flex justify-center items-center bg-base-100">
         <NotFoundMessage />
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
       </div>

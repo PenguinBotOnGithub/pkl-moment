@@ -18,6 +18,7 @@ export default {
           error: "#F84F31",
         },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         airlight: {
           primary: "#f8ab64",
@@ -31,6 +32,8 @@ export default {
           error: "#f84f31",
         },
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
       },
       "light",
       "dark",

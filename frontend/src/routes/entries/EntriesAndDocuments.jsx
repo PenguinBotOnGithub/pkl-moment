@@ -181,6 +181,7 @@ function EntriesAndDocument() {
             ))}
           </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
           {/* <div className="flex gap-2">
             <button
@@ -206,10 +207,13 @@ function EntriesAndDocument() {
             </button>
           </div> */}
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
         </div>
         {loading ? (
           <div>Loading...</div>
         ) : (
+<<<<<<< HEAD
 <<<<<<< HEAD
           <table className="table bg-base-100 border-0 overflow-hidden rounded-box">
             <thead className="bg-base-300">
@@ -242,6 +246,12 @@ function EntriesAndDocument() {
                   No
                 </th>
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+          <table className="table bg-base-100 border-0 overflow-hidden rounded-box">
+            <thead className="bg-base-300">
+              <tr className="border-0">
+                <th className="pl-3 pb-2 pr-0 w-0">No</th>
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                 <th>Pembimbing</th>
                 <th>Perusahaan</th>
                 <th>Tanggal Permintaan</th>
@@ -251,6 +261,7 @@ function EntriesAndDocument() {
             </thead>
             <tbody className="box-content">
               {data.map((row, index) => (
+<<<<<<< HEAD
 <<<<<<< HEAD
                 <tr key={row.id} className="border-t-2 border-base-300">
                   <td className="p-3 pb-2">{index + 1}</td>
@@ -273,6 +284,10 @@ function EntriesAndDocument() {
                     {index + 1}
                   </td>
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+                <tr key={row.id} className="border-t-2 border-base-300">
+                  <td className="p-3 pb-2">{index + 1}</td>
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                   <td>{row.user}</td>
                   <td>{row.company}</td>
                   <td>{new Date(row.created_at).toLocaleDateString()}</td>
@@ -288,10 +303,14 @@ function EntriesAndDocument() {
                   <td className="flex flex-row flex-nowrap gap-2">
                     <button
 <<<<<<< HEAD
+<<<<<<< HEAD
                       className="btn btn-info btn-xs"
 =======
                       className="btn btn-info btn-xs rounded-lg"
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+                      className="btn btn-info btn-xs"
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                       onClick={() => {
                         navigate(
                           `/admin/entries/${entryValue[currentEntry]}/${row.id}`
@@ -301,6 +320,7 @@ function EntriesAndDocument() {
                       Detail
                     </button>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                     {/* <button
                       className="btn btn-error btn-xs rounded-lg"
@@ -309,6 +329,8 @@ function EntriesAndDocument() {
                       Delete
                     </button> */}
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                     {row.verified && (
                       <button
                         className="btn btn-warning btn-xs"
@@ -325,10 +347,14 @@ function EntriesAndDocument() {
         )}
         {pageData && (
 <<<<<<< HEAD
+<<<<<<< HEAD
           <div className="flex justify-center items-center gap-2">
 =======
           <div className="flex justify-center items-center gap-2 mt-4">
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+          <div className="flex justify-center items-center gap-2">
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
             <button
               className="flex-none btn bg-base-100"
               onClick={() => handlePageChange(pageData.page - 1)}
@@ -344,10 +370,14 @@ function EntriesAndDocument() {
                   key={index}
                   className={`join-item btn ${
 <<<<<<< HEAD
+<<<<<<< HEAD
                     pageData.page === index ? "bg-primary text-primary-content" : "bg-base-100"
 =======
                     pageData.page === index ? "bg-primary text-base-300" : ""
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
+=======
+                    pageData.page === index ? "bg-primary text-primary-content" : "bg-base-100"
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                   }`}
                   onClick={() => handlePageChange(index)}
                 >

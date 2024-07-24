@@ -94,6 +94,7 @@ function UsersTable() {
           ))}
         </tbody>
       </table>
+<<<<<<< HEAD
       {pageData && (
           <div className="flex justify-center items-center gap-2 mt-2">
             <button
@@ -129,6 +130,41 @@ function UsersTable() {
             </button>
           </div>
         )}
+=======
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button className="flex-none btn bg-base-100">
+          <span className="material-symbols-rounded icon-size-20">
+            arrow_back
+          </span>
+        </button>
+        <div className="join flex">
+          {pageData &&
+            [...Array(pageData.num_pages)].map((_, index) => (
+              <button
+                key={index}
+                className={`join-item btn ${
+                  pageData.page === index ? "btn-primary text-primary-content" : ""
+                }`}
+                onClick={() => handlePageChange(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
+        </div>
+        <button className="flex-none btn bg-base-100">
+          <span className="material-symbols-rounded icon-size-20">
+            arrow_forward
+          </span>
+        </button>
+      </div>
+      <button
+        onClick={() => {
+          console.log(pageData.page);
+        }}
+      >
+        debug button
+      </button>
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
     </div>
   );
 }

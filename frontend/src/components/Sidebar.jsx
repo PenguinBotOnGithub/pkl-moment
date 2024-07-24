@@ -48,8 +48,13 @@ function Sidebar({ index = -1 }) {
             to="/admin/journal"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
+<<<<<<< HEAD
             <span className="material-symbols-rounded">book_2</span>
             {isExpanded && t("Journal")}
+=======
+            <span className="material-symbols-rounded">people</span>
+            {isExpanded && t("All Users")}
+>>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
           </NavLink>
         </li>
         {role == "admin" && (
