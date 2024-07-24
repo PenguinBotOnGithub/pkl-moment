@@ -46,15 +46,16 @@ function App() {
     {
       path: "admin",
       element: cookies.get("access-token") ? (
-        <Root />
+        <Root cookies={cookies} />
       ) : (
         <Navigate to="../login" />
       ),
       children: [
+        { path: "entries", element: <Navigate to="0" /> },
+        { path: "users", element: <Navigate to="0" /> },
         { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
-        { path: "user", element: <User /> },
-        { path: "user/add", element: <UserAdd /> },
+        { path: "users/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
       ],
     },
@@ -62,16 +63,16 @@ function App() {
     {
       path: "admin/entries",
       element: cookies.get("access-token") ? (
-        <Root />
+        <Root cookies={cookies}/>
       ) : (
         <Navigate to="../login" />
       ),
       children: [
-        { path: "search", element: <SearchEntry /> },
-        { path: "searchdummy", element: <SearchEntryDummy /> },
-        { path: "search/siswa", element: <SearchEntrySiswa /> },
+        // { path: "search", element: <SearchEntry /> },
+        // { path: "searchdummy", element: <SearchEntryDummy /> },
+        // { path: "search/siswa", element: <SearchEntrySiswa /> },
         { path: ":entry/:id", element: <Entry /> },
-        { path: ":entry/add", element: <EntryAdd /> },
+        { path: ":entry/add", element: <EntryAdd role={cookies.get("role")} /> },
         { path: "wave/:page", element: <Wave /> },
         { path: "wave/add", element: <WaveAdd /> },
         { path: "company", element: <Company /> },

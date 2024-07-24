@@ -9,7 +9,7 @@ function AllUsers() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   function onAddHandle() {
-    navigate("/admin/user/add");
+    navigate("/admin/users/add");
   }
 
   return (
