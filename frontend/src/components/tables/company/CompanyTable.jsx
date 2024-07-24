@@ -102,7 +102,7 @@ function CompanyTable() {
   return (
     <div className="overflow-x-auto">
       <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
-        <thead className="bg-neutral">
+        <thead className="bg-base-300">
           <tr className="border-0">
             <th className="w-0">No</th>
             <th>Nama Perusahaan</th>
@@ -112,7 +112,7 @@ function CompanyTable() {
         </thead>
         <tbody className="box-content">
           {data.map((row, index) => (
-            <tr key={row.id} className="border-t-2 border-neutral">
+            <tr key={row.id} className="border-t-2 border-base-300">
               <td>{index + 1}</td>
               <td>
                 <input

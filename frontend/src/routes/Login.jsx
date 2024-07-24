@@ -30,7 +30,6 @@ function Login({ cookies }) {
         cookies.set("max-item", 10);
         cookies.set("selected-wave", 2);
         cookies.set("role", result.data.role);
-        // cookies.set("role", "advisor_school");
         cookies.set("user-id", result.data.id);
         cookies.set("user-name", result.data.username);
         location.reload();
@@ -44,9 +43,9 @@ function Login({ cookies }) {
   };
 
   return (
-    <div className="flex flex-col size-full">
+    <div className="flex flex-col size-full" data-theme="airdark">
       <Navbar title="Login" />
-      <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-200 p-4 pb-14">
+      <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-100 p-4 pb-14">
         <div className="flex items-center mb-6">
           <PKLMomentIcon size={64} />
           <span className="text-4xl text-primary">PKL</span>
@@ -83,7 +82,7 @@ function Login({ cookies }) {
           <div className="flex justify-end">
             <a href="">Forgot your password?</a>
           </div>
-          <button type="submit" className="btn btn-secondary text-base">
+          <button type="submit" className="btn btn-primary text-base">
             Login
           </button>
         </form>

@@ -68,7 +68,7 @@ function StudentAddTable() {
   return (
     <div className="overflow-x-auto">
       <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
-        <thead className="bg-neutral">
+        <thead className="bg-base-300">
           <tr className="border-0">
             <th className="w-0">No</th>
             <th>Nama Siswa</th>
@@ -79,7 +79,7 @@ function StudentAddTable() {
         </thead>
         <tbody className="box-content">
           {rows.map((row, index) => (
-            <tr key={index} className="border-t-2 border-neutral ">
+            <tr key={index} className="border-t-2 border-base-300 ">
               <td>{index + 1}</td>
               <td>
                 <input
