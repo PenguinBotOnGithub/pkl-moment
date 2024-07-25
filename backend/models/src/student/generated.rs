@@ -31,6 +31,7 @@ pub struct Student {
     pub nis: String,
 }
 
+#[derive(Debug, Serialize, Clone)]
 pub struct StudentJoined {
     pub id: i32,
     pub name: String,
