@@ -63,6 +63,19 @@ impl InvalidatedJwt {
             .await
     }
 
+    pub async fn find_by_token(
+        db: &mut Connection,
+        param_token: &str,
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::invalidated_jwt::dsl::*;
+
+        invalidated_jwt
+            .filter(jwt.eq(param_token))
+            .first::<Self>(db)
+            .await
+            .optional()
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
