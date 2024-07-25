@@ -1,8 +1,8 @@
 /* This file is generated and managed by dsync */
 
+use crate::diesel::prelude::*;
 use crate::schema::*;
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -48,7 +48,7 @@ impl InvalidatedJwt {
     pub async fn create(db: &mut Connection, item: &CreateInvalidatedJwt) -> QueryResult<Self> {
         use crate::schema::invalidated_jwt::dsl::*;
 
-        insert_into(invalidated_jwt)
+        diesel::insert_into(invalidated_jwt)
             .values(item)
             .get_result::<Self>(db)
             .await
@@ -61,19 +61,6 @@ impl InvalidatedJwt {
             .filter(id.eq(param_id))
             .first::<Self>(db)
             .await
-    }
-
-    pub async fn find_by_token(
-        db: &mut Connection,
-        param_token: &str,
-    ) -> QueryResult<Option<Self>> {
-        use crate::schema::invalidated_jwt::dsl::*;
-
-        invalidated_jwt
-            .filter(jwt.eq(param_token))
-            .first::<Self>(db)
-            .await
-            .optional()
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
