@@ -31,6 +31,13 @@ pub struct Student {
     pub nis: String,
 }
 
+pub struct StudentJoined {
+    pub id: i32,
+    pub name: String,
+    pub class: (i32, String),
+    pub nis: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=student)]
 pub struct CreateStudent {
