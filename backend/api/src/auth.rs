@@ -54,7 +54,7 @@ pub struct LoginRequest {
 pub struct RegisterRequest {
     username: String,
     password: String,
-    role: String,
+    role: UserRole,
 }
 
 pub fn auth_routes(
@@ -179,15 +179,7 @@ async fn register_handler(
     let user = CreateUser {
         username: payload.username.trim().to_owned(),
         password: hash,
-        role: match &payload.role[..] {
-            "admin" => UserRole::Admin,
-            "advisor" => UserRole::Advisor,
-            _ => {
-                return Err(reject::custom(ClientError::InvalidInput(
-                    "field 'role' must be either 'admin' or 'advisor'".to_owned(),
-                )))
-            }
-        },
+        role: payload.role,
     };
 
     let mut db = db.lock();
@@ -212,17 +204,17 @@ async fn register_handler(
 }
 
 pub fn with_auth_with_claims(
-    require_admin: bool,
+    require_secretary: bool,
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> impl Filter<Extract = (JwtClaims,), Error = Rejection> + Clone {
     warp::header::<String>("Authorization")
-        .and(warp::any().map(move || require_admin))
+        .and(warp::any().map(move || require_secretary))
         .and(with_jwt_key(jwt_key))
         .and(with_db(db))
         .and_then(
             |token: String,
-             require_admin: bool,
+             require_secretary: bool,
              secret: String,
              db: Arc<Mutex<AsyncPgConnection>>| async move {
                 let token = if token.trim().starts_with(BEARER) {
@@ -254,13 +246,12 @@ pub fn with_auth_with_claims(
                     )));
                 }
 
-                if require_admin {
-                    if decoded.claims.name == "admin" {
-                        Ok::<JwtClaims, Rejection>(decoded.claims)
-                    } else {
-                        Err(reject::custom(ClientError::Authorization(
+                if require_secretary {
+                    match decoded.claims.role {
+                        UserRole::Secretary => Ok::<JwtClaims, Rejection>(decoded.claims),
+                        _ => Err(reject::custom(ClientError::Authorization(
                             "insufficient permission".to_owned(),
-                        )))
+                        ))),
                     }
                 } else {
                     Ok::<JwtClaims, Rejection>(decoded.claims)
@@ -270,17 +261,17 @@ pub fn with_auth_with_claims(
 }
 
 pub fn with_auth(
-    require_admin: bool,
+    require_secretary: bool,
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> impl Filter<Extract = ((),), Error = Rejection> + Clone {
     warp::header::<String>("Authorization")
-        .and(warp::any().map(move || require_admin))
+        .and(warp::any().map(move || require_secretary))
         .and(with_jwt_key(jwt_key))
         .and(with_db(db))
         .and_then(
             |token: String,
-             require_admin: bool,
+             require_secretary: bool,
              secret: String,
              db: Arc<Mutex<AsyncPgConnection>>| async move {
                 let token = if token.trim().starts_with(BEARER) {
@@ -311,16 +302,15 @@ pub fn with_auth(
                     )));
                 }
 
-                if require_admin {
-                    if decoded.claims.name == "admin" {
-                        Ok(())
-                    } else {
-                        Err(reject::custom(ClientError::Authorization(
+                if require_secretary {
+                    match decoded.claims.role {
+                        UserRole::Secretary => Ok::<(), Rejection>(()),
+                        _ => Err(reject::custom(ClientError::Authorization(
                             "insufficient permission".to_owned(),
-                        )))
+                        ))),
                     }
                 } else {
-                    Ok(())
+                    Ok::<(), Rejection>(())
                 }
             },
         )
