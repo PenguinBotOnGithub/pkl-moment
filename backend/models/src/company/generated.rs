@@ -1,13 +1,12 @@
 /* This file is generated and managed by dsync */
 
-use crate::log::{CreateLog, Log};
+use crate::diesel::prelude::*;
+use crate::log::Log;
 use crate::schema::*;
 use crate::types::{Operation, TableRef};
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use tracing::error;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -17,6 +16,7 @@ pub struct Company {
     pub id: i32,
     pub name: String,
     pub address: String,
+    pub mou_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -24,6 +24,7 @@ pub struct Company {
 pub struct CreateCompany {
     pub name: String,
     pub address: String,
+    pub mou_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -31,6 +32,7 @@ pub struct CreateCompany {
 pub struct UpdateCompany {
     pub name: Option<String>,
     pub address: Option<String>,
+    pub mou_url: Option<Option<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -51,27 +53,20 @@ impl Company {
     ) -> QueryResult<Self> {
         use crate::schema::company::dsl::*;
 
-        let res = insert_into(company)
+        let res = diesel::insert_into(company)
             .values(item)
             .get_result::<Self>(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Create,
-                table_affected: TableRef::Company,
+        if let Ok(_) = res {
+            Log::log(
+                db,
+                Operation::Create,
+                TableRef::Company,
                 user_id,
-                snapshot: None,
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                None::<u8>,
+            )
+            .await;
         }
 
         res
@@ -121,11 +116,7 @@ impl Company {
     ) -> QueryResult<Option<Self>> {
         use crate::schema::company::dsl::*;
 
-        let previous = company
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Company::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(None);
         };
@@ -136,31 +127,15 @@ impl Company {
             .await
             .optional();
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Update,
-                table_affected: TableRef::Company,
+        if let Ok(Some(_)) = res {
+            Log::log(
+                db,
+                Operation::Update,
+                TableRef::Company,
                 user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Some(previous),
+            )
+            .await;
         }
 
         res
@@ -169,11 +144,7 @@ impl Company {
     pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
         use crate::schema::company::dsl::*;
 
-        let previous = company
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Company::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(0);
         };
@@ -182,33 +153,24 @@ impl Company {
             .execute(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
+        match res {
+            Ok(n) => {
+                if n <= 0 {
+                    return res;
+                }
 
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Delete,
-                table_affected: TableRef::Company,
-                user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::Company,
+                    user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
         }
-
-        res
     }
 }
