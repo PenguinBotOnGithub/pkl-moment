@@ -32,7 +32,7 @@ function Sidebar({ index = -1 }) {
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
         <li>
           <NavLink
-            to="/admin/entries/0"
+            to="/admin/entries"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
@@ -45,7 +45,11 @@ function Sidebar({ index = -1 }) {
         {role == "admin" && <li>
 >>>>>>> 49af8b3 (frontend/refactor: [AS] delete entries table and move to entries and document)
           <NavLink
+<<<<<<< HEAD
             to="/admin/journal"
+=======
+            to="/admin/users"
+>>>>>>> 1a0cbff (frontend/fix: [AS] entry add fix, UI adjustments (sidebar active fix, entry detail, not found page), Users Table pagination limiter)
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
 <<<<<<< HEAD

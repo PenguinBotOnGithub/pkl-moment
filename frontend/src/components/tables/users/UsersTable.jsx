@@ -95,6 +95,9 @@ function UsersTable() {
         </tbody>
       </table>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1a0cbff (frontend/fix: [AS] entry add fix, UI adjustments (sidebar active fix, entry detail, not found page), Users Table pagination limiter)
       {pageData && (
           <div className="flex justify-center items-center gap-2 mt-2">
             <button
@@ -130,6 +133,7 @@ function UsersTable() {
             </button>
           </div>
         )}
+<<<<<<< HEAD
 =======
       <div className="flex justify-center items-center gap-2 mt-4">
         <button className="flex-none btn bg-base-100">
@@ -165,6 +169,8 @@ function UsersTable() {
         debug button
       </button>
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
+=======
+>>>>>>> 1a0cbff (frontend/fix: [AS] entry add fix, UI adjustments (sidebar active fix, entry detail, not found page), Users Table pagination limiter)
     </div>
   );
 }

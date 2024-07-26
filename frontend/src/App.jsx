@@ -26,6 +26,11 @@ import Journal from "./routes/entries/Journal";
 function App() {
   const cookies = new Cookies(null, { path: "/" });
   const isLoggedIn = cookies.get("access-token");
+<<<<<<< HEAD
+=======
+  const router = createBrowserRouter([
+    { path: "*", element: <NotFound cookies={cookies} /> },
+>>>>>>> 1a0cbff (frontend/fix: [AS] entry add fix, UI adjustments (sidebar active fix, entry detail, not found page), Users Table pagination limiter)
 
   const router = createBrowserRouter([
     { path: "*", element: <NotFound cookies={cookies} /> },
@@ -37,6 +42,10 @@ function App() {
         <Navigate to="../admin/entries" />
       ),
     },
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1a0cbff (frontend/fix: [AS] entry add fix, UI adjustments (sidebar active fix, entry detail, not found page), Users Table pagination limiter)
     {
       path: "admin",
 <<<<<<< HEAD
