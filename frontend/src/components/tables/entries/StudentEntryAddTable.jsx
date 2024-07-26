@@ -14,20 +14,19 @@ function StudentEntryAddTable({
   function handleSearchChange(value) {
     setSearchStudentValue(value);
     onSearchStudent(value, setVisibleStudents);
-    if(value.trim != ""){
+    if (value.trim != "") {
       setIsOpenStudent(true);
     }
   }
 
   return (
     <table
-      className={`table bg-base-100 border-0 rounded-lg ${
+      className={`table bg-base-100 border-0 rounded-box overflow-hidden ${
         isMaxWidth && "max-w-screen-sm"
       }`}
     >
       <thead className="relative">
-        <div className="bg-neutral-content absolute left-0 right-0 bottom-0 top-0 opacity-5 rounded-t-lg" />
-        <tr className="border-0 ">
+        <tr className="border-0 bg-base-300">
           <th className="w-0 z-20">No</th>
           <th>Nama Siswa</th>
           <th>Kelas</th>
@@ -36,13 +35,16 @@ function StudentEntryAddTable({
       </thead>
       <tbody className="box-content">
         {rows.map((row, index) => (
-          <tr key={index} className="border-t-2 border-neutral ">
+          <tr key={index} className="border-t-2 border-base-300 ">
             <td>{index + 1}</td>
             <td>{row.name}</td>
-            <td>{row.class}{row.grade}</td>
+            <td>
+              {row.class}
+              {row.grade}
+            </td>
             <td>
               <div
-                className="btn btn-error btn-xs rounded-lg mr-2"
+                className="btn btn-error btn-xs mr-2"
                 onMouseDown={() => {
                   onDeleteRow(index);
                 }}

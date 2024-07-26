@@ -285,8 +285,8 @@ function Entry() {
 
   return (
     <>
-      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
-        <thead className="bg-neutral">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-box ">
+        <thead className="bg-base-300">
           <tr className="border-0">
             <th>Pembimbing</th>
             <th>Jenis Entri</th>
@@ -331,8 +331,8 @@ function Entry() {
         </tbody>
       </table>
       <h2>Perusahaan</h2>
-      <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
-        <thead className="bg-neutral">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-box ">
+        <thead className="bg-base-300">
           <tr className="border-0">
             <th>Nama Perusahaan</th>
             <th>Alamat</th>
@@ -362,7 +362,7 @@ function Entry() {
         <button
           className={`btn btn-${
             isStudentListChanged ? "success" : "disabled"
-          } flex-1 rounded-lg btn-sm`}
+          } flex-1 rounded-btn btn-sm`}
           onClick={handleConfirmEdit}
         >
           <span>Confirm Edit</span>
@@ -370,7 +370,7 @@ function Entry() {
         <button
           className={`btn btn-${
             isStudentListChanged ? "error" : "disabled"
-          } flex-1 rounded-lg btn-sm`}
+          } flex-1 rounded-btn btn-sm`}
           onClick={handleCancelEdit}
         >
           <span>Cancel Edit</span>
@@ -380,8 +380,8 @@ function Entry() {
       {role != "advisor" && (
         <>
           <h2>Tanda Tangan</h2>
-          <table className="table bg-base-100 border-0 overflow-hidden rounded-lg ">
-            <thead className="bg-neutral">
+          <table className="table bg-base-100 border-0 overflow-hidden rounded-box ">
+            <thead className="bg-base-300">
               <tr className="border-0">
                 <th>Nama</th>
                 <th>Jabatan</th>
@@ -389,7 +389,7 @@ function Entry() {
               </tr>
             </thead>
             <tbody className="box-content">
-              <tr className="border-t-2 border-neutral">
+              <tr className="border-t-2 border-base-300">
                 <td>Pak Agus</td>
                 <td>Jabatan</td>
                 <td className="p-3 pb-2">
@@ -408,7 +408,7 @@ function Entry() {
                   </label>
                 </td>
               </tr>
-              <tr className="border-t-2 border-neutral">
+              <tr className="border-t-2 border-base-300">
                 <td>Pak Agus</td>
                 <td>Jabatan</td>
                 <td className="p-3 pb-2">
@@ -433,7 +433,7 @@ function Entry() {
       )}
       {role !== "advisor" && !verifikasi && (
         <button
-          className="btn btn-success rounded-lg btn-md"
+          className="btn btn-success rounded-box btn-md"
           onClick={() =>
             document.getElementById("verify_confirmation_modal").showModal()
           }

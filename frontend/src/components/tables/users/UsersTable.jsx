@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from "react";
 import host from "../../../assets/strings/host";
 import Cookies from "universal-cookie";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 function UsersTable() {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [pageData, setPageData] = useState();
   const { page } = useParams();
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
 
-  const fetchDataForCompanies = async () => {
+  function handlePageChange(index) {
+    navigate(`/admin/users/${index}`);
+  }
+
+  const fetchDataForUsers = async () => {
     try {
-      const response = await fetch(`${host}/api/user?page=${page}`, {
+      const response = await fetch(`${host}/api/user?page=${page}&size=${cookies.get("max-item-users")}`, {
         headers: {
           Authorization: token,
         },
@@ -42,7 +47,7 @@ function UsersTable() {
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      fetchDataForCompanies();
+      fetchDataForUsers();
     } catch (err) {
       alert("something went wrong:" + err);
     } finally {
@@ -50,8 +55,8 @@ function UsersTable() {
   };
 
   useEffect(() => {
-    fetchDataForCompanies();
-  }, []);
+    fetchDataForUsers();
+  }, [page]);
 
   return (
     <div className="overflow-x-auto">
@@ -89,39 +94,41 @@ function UsersTable() {
           ))}
         </tbody>
       </table>
-      <div className="flex justify-center items-center gap-2 mt-4">
-        <button className="flex-none btn bg-base-100">
-          <span className="material-symbols-rounded icon-size-20">
-            arrow_back
-          </span>
-        </button>
-        <div className="join flex">
-          {pageData &&
-            [...Array(pageData.num_pages)].map((_, index) => (
-              <button
-                key={index}
-                className={`join-item btn ${
-                  pageData.page === index ? "btn-primary text-primary-content" : ""
-                }`}
-                onClick={() => handlePageChange(index + 1)}
-              >
-                {index + 1}
-              </button>
-            ))}
-        </div>
-        <button className="flex-none btn bg-base-100">
-          <span className="material-symbols-rounded icon-size-20">
-            arrow_forward
-          </span>
-        </button>
-      </div>
-      <button
-        onClick={() => {
-          console.log(pageData.page);
-        }}
-      >
-        debug button
-      </button>
+      {pageData && (
+          <div className="flex justify-center items-center gap-2 mt-2">
+            <button
+              className="flex-none btn bg-base-100"
+              onClick={() => handlePageChange(pageData.page - 1)}
+              disabled={pageData.page === 0}
+            >
+              <span className="material-symbols-rounded icon-size-20">
+                arrow_back
+              </span>
+            </button>
+            <div className="join flex">
+              {[...Array(pageData.num_pages)].map((_, index) => (
+                <button
+                  key={index}
+                  className={`join-item btn ${
+                    pageData.page === index ? "bg-primary text-primary-content" : "bg-base-100"
+                  }`}
+                  onClick={() => handlePageChange(index)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              className="flex-none btn bg-base-100"
+              onClick={() => handlePageChange(pageData.page + 1)}
+              disabled={pageData.page === pageData.num_pages - 1}
+            >
+              <span className="material-symbols-rounded icon-size-20">
+                arrow_forward
+              </span>
+            </button>
+          </div>
+        )}
     </div>
   );
 }
