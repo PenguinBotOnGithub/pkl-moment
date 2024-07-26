@@ -41,7 +41,7 @@ function Sidebar({ index = -1 }) {
         </li> */}
         <li>
           <NavLink
-            to="/admin/entries/0"
+            to="/admin/entries"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
@@ -50,7 +50,7 @@ function Sidebar({ index = -1 }) {
         </li>
         {role == "admin" && <li>
           <NavLink
-            to="/admin/users/0"
+            to="/admin/users"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">people</span>

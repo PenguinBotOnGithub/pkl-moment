@@ -64,13 +64,24 @@ function Settings({ cookies }) {
             </span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
-            <span>Max item di tabel</span>
+            <span>Max item di tabel entri</span>
             <label className="bg-base-200 input flex-none w-12 flex items-center gap-2">
               <input
                 type="number"
                 className="grow w-8 placeholder:text-neutral-content placeholder:opacity-50"
                 defaultValue={cookies.get("max-item")}
                 onChange={(event) => cookies.set("max-item",event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="flex items-center justify-between mt-4 w-full">
+            <span>Max item di tabel user</span>
+            <label className="bg-base-200 input flex-none w-12 flex items-center gap-2">
+              <input
+                type="number"
+                className="grow w-8 placeholder:text-neutral-content placeholder:opacity-50"
+                defaultValue={cookies.get("max-item-users")}
+                onChange={(event) => cookies.set("max-item-users",event.target.value)}
               />
             </label>
           </div>

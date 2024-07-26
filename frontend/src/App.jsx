@@ -20,7 +20,6 @@ import Entry from "./routes/entries/Entry";
 import EntryAdd from "./routes/entries/EntryAdd";
 import Wave from "./routes/entries/wave/Wave";
 import WaveAdd from "./routes/entries/wave/WaveAdd";
-import User from "./routes/users/User";
 import UserAdd from "./routes/users/UserAdd";
 import SearchEntry from "./routes/SearchEntry";
 import SearchEntryDummy from "./routes/search/SearchEntryDummy";
@@ -30,7 +29,7 @@ function App() {
   const cookies = new Cookies(null, { path: "/" });
   const isLoggedIn = cookies.get("access-token");
   const router = createBrowserRouter([
-    { path: "*", element: <NotFound /> },
+    { path: "*", element: <NotFound cookies={cookies} /> },
 
     {
       path: "login",
@@ -40,8 +39,6 @@ function App() {
         <Navigate to="../admin" />
       ),
     },
-
-    { path: "admin", element: <Navigate to="entries/0" /> },
 
     {
       path: "admin",
