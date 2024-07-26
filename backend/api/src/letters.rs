@@ -1,9 +1,8 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
-use models::pengantaran::{CreatePengantaran, Pengantaran, UpdatePengantaran};
-use models::pengantaran_student::CreatePengantaranStudent;
-use models::pengantaran_student::PengantaranStudent;
+use models::letters::{CreateLetter, Letter, UpdateLetter};
+use models::letters_student::{CreateLettersStudent, LettersStudent};
 use models::types::UserRole;
 use parking_lot::Mutex;
 use tokio::fs;
@@ -16,44 +15,44 @@ use warp::{
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_data_not_exists;
-use crate::pdf::gen_pengantaran_chromium;
+use crate::pdf::{gen_penarikan_chromium, gen_pengantaran_chromium, gen_permohonan_chromium};
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
-pub fn pengantarans_routes(
+pub fn letters_routes(
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
-    let pengantaran = warp::any().and(warp::path("pengantaran"));
+    let letters = warp::any().and(warp::path("letters"));
 
-    let get_pengantarans_route = pengantaran
+    let get_letters_route = letters
         .and(warp::path::end())
         .and(warp::get())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(warp::query::query::<HashMap<String, String>>())
         .and(with_db(db.clone()))
-        .and_then(get_pengantarans);
+        .and_then(get_letters);
 
-    let create_pengantaran_route = pengantaran
+    let create_letters_route = letters
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
-        .and_then(create_pengantaran);
+        .and_then(create_letters);
 
-    let read_pengantaran_route = pengantaran
+    let read_letters_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(warp::get())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(read_pengantaran);
+        .and_then(read_letters);
 
-    let update_pengantaran_route = pengantaran
+    let update_letters_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("update"))
         .and(warp::path::end())
@@ -61,27 +60,27 @@ pub fn pengantarans_routes(
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
-        .and_then(update_pengantaran);
+        .and_then(update_letters);
 
-    let delete_pengantaran_route = pengantaran
+    let delete_letters_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("delete"))
         .and(warp::path::end())
         .and(warp::delete())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(delete_pengantaran);
+        .and_then(delete_letters);
 
-    let get_pengantaran_students_route = pengantaran
+    let get_letters_students_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("student"))
         .and(warp::path::end())
         .and(warp::get())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(get_pengantaran_students);
+        .and_then(get_letters_students);
 
-    let add_pengantaran_student_route = pengantaran
+    let add_letters_student_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("student"))
         .and(warp::path("add"))
@@ -90,9 +89,9 @@ pub fn pengantarans_routes(
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
-        .and_then(add_pengantaran_student);
+        .and_then(add_letters_student);
 
-    let remove_pengantaran_student_route = pengantaran
+    let remove_letters_student_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("student"))
         .and(warp::path::param::<i32>())
@@ -101,39 +100,40 @@ pub fn pengantarans_routes(
         .and(warp::delete())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(remove_pengantaran_student);
+        .and_then(remove_letters_student);
 
-    let verify_pengantaran_route = pengantaran
+    let verify_letters_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("verify"))
         .and(warp::path::end())
         .and(warp::patch())
         .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(verify_pengantaran);
+        .and_then(verify_letters);
 
-    let pdf_pengantaran_route = pengantaran
+    let pdf_letters_route = letters
         .and(warp::path::param::<i32>())
         .and(warp::path("pdf"))
+        .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and(warp::get())
         .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
-        .and_then(gen_pengantaran_pdf);
+        .and_then(gen_letters_pdf);
 
-    get_pengantarans_route
-        .or(create_pengantaran_route)
-        .or(read_pengantaran_route)
-        .or(update_pengantaran_route)
-        .or(delete_pengantaran_route)
-        .or(get_pengantaran_students_route)
-        .or(add_pengantaran_student_route)
-        .or(remove_pengantaran_student_route)
-        .or(verify_pengantaran_route)
-        .or(pdf_pengantaran_route)
+    get_letters_route
+        .or(create_letters_route)
+        .or(read_letters_route)
+        .or(update_letters_route)
+        .or(delete_letters_route)
+        .or(get_letters_students_route)
+        .or(add_letters_student_route)
+        .or(remove_letters_student_route)
+        .or(verify_letters_route)
+        .or(pdf_letters_route)
 }
 
-async fn get_pengantarans(
+async fn get_letters(
     claims: JwtClaims,
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -164,18 +164,15 @@ async fn get_pengantarans(
 
     let mut db = db.lock();
     match &claims.role {
-        UserRole::Admin => {
+        UserRole::Secretary => {
             let by_user = queries.get("user");
             match by_user {
                 None => {
-                    let pengantarans = Pengantaran::paginate_brief(&mut db, page, page_size, None)
+                    let letters = Letter::paginate_brief(&mut db, page, page_size, None)
                         .await
                         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-                    Ok(reply::json(&ApiResponse::ok(
-                        "success".to_owned(),
-                        pengantarans,
-                    )))
+                    Ok(reply::json(&ApiResponse::ok("success".to_owned(), letters)))
                 }
                 Some(v) => {
                     let by_user = v.parse::<i32>().map_err(|e| {
@@ -185,86 +182,76 @@ async fn get_pengantarans(
                         )))
                     })?;
 
-                    let pengantarans =
-                        Pengantaran::paginate_brief(&mut db, page, page_size, Some(by_user))
-                            .await
-                            .map_err(|e| {
-                                reject::custom(InternalError::DatabaseError(e.to_string()))
-                            })?;
+                    let letters = Letter::paginate_brief(&mut db, page, page_size, Some(by_user))
+                        .await
+                        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-                    Ok(reply::json(&ApiResponse::ok(
-                        "success".to_owned(),
-                        pengantarans,
-                    )))
+                    Ok(reply::json(&ApiResponse::ok("success".to_owned(), letters)))
                 }
             }
         }
-        UserRole::Advisor => {
-            let pengantarans =
-                Pengantaran::paginate_brief(&mut db, page, page_size, Some(claims.id))
-                    .await
-                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        UserRole::Coordinator => {
+            let letters = Letter::paginate_brief(&mut db, page, page_size, Some(claims.id))
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-            Ok(reply::json(&ApiResponse::ok(
-                "success".to_owned(),
-                pengantarans,
-            )))
+            Ok(reply::json(&ApiResponse::ok("success".to_owned(), letters)))
         }
     }
 }
 
-async fn create_pengantaran(
+async fn create_letters(
     claims: JwtClaims,
-    mut payload: CreatePengantaran,
+    mut payload: CreateLetter,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     match &claims.role {
-        UserRole::Admin => {
+        UserRole::Secretary => {
             if let None = payload.user_id {
                 payload.user_id = Some(claims.id);
             }
 
             if let Some(b) = payload.verified {
                 if b {
-                    payload.verified_date = Some(chrono::Local::now().date_naive());
+                    payload.verified_at = Some(chrono::Utc::now());
                 } else {
-                    payload.verified_date = None;
+                    payload.verified_at = None;
                 }
             } else {
                 payload.verified = Some(false);
-                payload.verified_date = None;
+                payload.verified_at = None;
             }
         }
-        UserRole::Advisor => {
+        UserRole::Coordinator => {
             payload.user_id = Some(claims.id);
 
             payload.verified = Some(false);
-            payload.verified_date = None;
+            payload.verified_at = None;
         }
     }
 
     let mut db = db.lock();
-    let result = Pengantaran::create(&mut db, &payload, claims.id)
+    let result = Letter::create(&mut db, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 
-async fn read_pengantaran(
+async fn read_letters(
     id: i32,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let pengantaran = Pengantaran::read_with_joins(&mut db, id)
+    let letters = Letter::read_with_joins(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    if let Some(v) = pengantaran {
+    if let Some(v) = letters {
         match &claims.role {
-            UserRole::Admin => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
-            UserRole::Advisor => {
+            UserRole::Secretary => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+            UserRole::Coordinator => {
                 if v.user.id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to view other users data".to_owned(),
@@ -276,29 +263,29 @@ async fn read_pengantaran(
         }
     } else {
         Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )))
     }
 }
 
-async fn update_pengantaran(
+async fn update_letters(
     id: i32,
     claims: JwtClaims,
-    mut payload: UpdatePengantaran,
+    mut payload: UpdateLetter,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let Some(v) = Pengantaran::get_owner_id(&mut db, id)
+    let Some(v) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
     else {
         return Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )));
     };
 
-    if let UserRole::Advisor = &claims.role {
+    if let UserRole::Coordinator = &claims.role {
         if v != claims.id {
             return Err(reject::custom(ClientError::Authorization(
                 "insufficient privilege to update other users data".to_owned(),
@@ -313,9 +300,9 @@ async fn update_pengantaran(
     }
 
     payload.verified = Some(false);
-    payload.verified_date = Some(None);
+    payload.verified_at = Some(None);
 
-    let result = Pengantaran::update(&mut db, id, &payload, claims.id)
+    let result = Letter::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
 
@@ -323,26 +310,26 @@ async fn update_pengantaran(
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
     } else {
         Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )))
     }
 }
 
-async fn delete_pengantaran(
+async fn delete_letters(
     id: i32,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
-    let letter = Pengantaran::read(&mut db, id)
+    let letter = Letter::read(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(v) = letter {
         match &claims.role {
-            UserRole::Admin => (),
-            UserRole::Advisor => {
+            UserRole::Secretary => (),
+            UserRole::Coordinator => {
                 if v.user_id != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to delete other users data".to_owned(),
@@ -352,11 +339,11 @@ async fn delete_pengantaran(
         }
     } else {
         return Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )));
     }
 
-    let result = Pengantaran::delete(&mut db, id, claims.id)
+    let result = Letter::delete(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
@@ -364,58 +351,67 @@ async fn delete_pengantaran(
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
     } else {
         Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )))
     }
 }
 
-async fn get_pengantaran_students(
+async fn get_letters_students(
     id: i32,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = PengantaranStudent::filter_by_letter_and_return_letter_id(&mut db, id)
+    let owner = Letter::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(owner) = owner else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters not found".to_owned(),
+        )));
+    };
+
+    let result = LettersStudent::filter_by_letter(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     match result {
         Some(v) => match &claims.role {
-            UserRole::Admin => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1))),
-            UserRole::Advisor => {
-                if v.0 != claims.id {
+            UserRole::Secretary => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
+            UserRole::Coordinator => {
+                if owner != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to view others data".to_owned(),
                     )));
                 }
 
-                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v.1)))
+                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
             }
         },
         None => Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_string(),
+            "letters not found".to_string(),
         ))),
     }
 }
 
-async fn add_pengantaran_student(
+async fn add_letters_student(
     id: i32,
     claims: JwtClaims,
     payload: AddStudentRequest,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let letter_owner = Pengantaran::get_owner_id(&mut db, id)
+    let letter_owner = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     if let Some(n) = letter_owner {
         match &claims.role {
-            UserRole::Admin => {
-                let res = PengantaranStudent::create(
+            UserRole::Secretary => {
+                let res = LettersStudent::create(
                     &mut db,
-                    &CreatePengantaranStudent {
-                        pengantaran_id: id,
+                    &CreateLettersStudent {
+                        letters_id: id,
                         student_id: payload.student_id,
                     },
                     claims.id,
@@ -425,17 +421,17 @@ async fn add_pengantaran_student(
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
-            UserRole::Advisor => {
+            UserRole::Coordinator => {
                 if n != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to modify others data".to_owned(),
                     )));
                 }
 
-                let res = PengantaranStudent::create(
+                let res = LettersStudent::create(
                     &mut db,
-                    &CreatePengantaranStudent {
-                        pengantaran_id: id,
+                    &CreateLettersStudent {
+                        letters_id: id,
                         student_id: payload.student_id,
                     },
                     claims.id,
@@ -448,34 +444,33 @@ async fn add_pengantaran_student(
         }
     } else {
         Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )))
     }
 }
 
-async fn remove_pengantaran_student(
+async fn remove_letters_student(
     id: i32,
     student_id: i32,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let Some(n) = Pengantaran::get_owner_id(&mut db, id)
+    let Some(n) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
     else {
         return Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )));
     };
 
     match &claims.role {
-        UserRole::Admin => {
-            let res = PengantaranStudent::delete_by_student_and_letter_id(
-                &mut db, student_id, id, claims.id,
-            )
-            .await
-            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        UserRole::Secretary => {
+            let res =
+                LettersStudent::delete_by_student_letter_id(&mut db, student_id, id, claims.id)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
@@ -485,18 +480,17 @@ async fn remove_pengantaran_student(
                 )))
             }
         }
-        UserRole::Advisor => {
+        UserRole::Coordinator => {
             if n != claims.id {
                 return Err(reject::custom(ClientError::Authorization(
                     "insufficient privilege to modify others data".to_owned(),
                 )));
             }
 
-            let res = PengantaranStudent::delete_by_student_and_letter_id(
-                &mut db, student_id, id, claims.id,
-            )
-            .await
-            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let res =
+                LettersStudent::delete_by_student_letter_id(&mut db, student_id, id, claims.id)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
             if res > 0 {
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
@@ -509,41 +503,54 @@ async fn remove_pengantaran_student(
     }
 }
 
-async fn verify_pengantaran(
+async fn verify_letters(
     id: i32,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let res = Pengantaran::verify(&mut db, id, claims.id)
+    let res = Letter::verify_letter(&mut db, id, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    if let Some(v) = res {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    if res > 0 {
+        Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
     } else {
         Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )))
     }
 }
 
-async fn gen_pengantaran_pdf(
+async fn gen_letters_pdf(
     id: i32,
+    letter_type: String,
     claims: JwtClaims,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    enum LetterType {
+        Permohonan,
+        Pengantaran,
+        Penarikan,
+    }
+    let letter_type = match &letter_type[..] {
+        "permohonan" => LetterType::Permohonan,
+        "pengantaran" => LetterType::Pengantaran,
+        "penarikan" => LetterType::Penarikan,
+        _ => return Err(reject::not_found()),
+    };
+
     let mut db = db.lock();
-    let Some(n) = Pengantaran::get_owner_id(&mut db, id)
+    let Some(n) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
     else {
         return Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )));
     };
 
-    if let UserRole::Advisor = &claims.role {
+    if let UserRole::Coordinator = &claims.role {
         if n != claims.id {
             return Err(reject::custom(ClientError::Authorization(
                 "insufficient privilege to view others data".to_owned(),
@@ -551,28 +558,50 @@ async fn gen_pengantaran_pdf(
         }
     }
 
-    let detail = Pengantaran::read_with_joins(&mut db, id)
+    let detail = Letter::read_with_joins(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
     let Some(detail) = detail else {
         return Err(reject::custom(ClientError::NotFound(
-            "pengantaran not found".to_owned(),
+            "letters not found".to_owned(),
         )));
     };
 
     if !&detail.verified {
         return Err(reject::custom(ClientError::Authorization(
-            "pengantaran not verified".to_string(),
+            "letters not verified".to_string(),
         )));
     }
 
-    let buffer = gen_pengantaran_chromium(
-        &detail,
-        Pengantaran::get_letter_order(&mut db, detail.id, detail.wave.id)
-            .await
-            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
-    )
-    .await?;
+    let buffer = match letter_type {
+        LetterType::Permohonan => {
+            gen_permohonan_chromium(
+                &detail,
+                Letter::get_letter_order(&mut db, detail.id, detail.wave.id)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+            )
+            .await?
+        }
+        LetterType::Pengantaran => {
+            gen_pengantaran_chromium(
+                &detail,
+                Letter::get_letter_order(&mut db, detail.id, detail.wave.id)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+            )
+            .await?
+        }
+        LetterType::Penarikan => {
+            gen_penarikan_chromium(
+                &detail,
+                Letter::get_letter_order(&mut db, detail.id, detail.wave.id)
+                    .await
+                    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+            )
+            .await?
+        }
+    };
 
     let file = fs::File::create(format!(
         "assets/pdf/{}.pdf",

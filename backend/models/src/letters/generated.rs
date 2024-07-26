@@ -67,11 +67,11 @@ pub struct LetterJoined {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=letters)]
 pub struct CreateLetter {
-    pub user_id: i32,
+    pub user_id: Option<i32>,
     pub company_id: i32,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
-    pub verified: bool,
+    pub verified: Option<bool>,
     pub verified_at: Option<chrono::DateTime<chrono::Utc>>,
     pub wave_id: i32,
 }
@@ -382,5 +382,69 @@ impl Letter {
             }
             Err(_) => res,
         }
+    }
+
+    pub async fn verify_letter(
+        db: &mut Connection,
+        param_id: i32,
+        param_user_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::letters::dsl::*;
+
+        let previous = Letter::read(db, param_id).await?;
+        let Some(previous) = previous else {
+            return Ok(0);
+        };
+
+        let res = diesel::update(letters.filter(id.eq(param_id)))
+            .set(UpdateLetter {
+                user_id: None,
+                company_id: None,
+                start_date: None,
+                end_date: None,
+                verified: Some(true),
+                verified_at: Some(Some(chrono::Utc::now())),
+                wave_id: None,
+            })
+            .execute(db)
+            .await;
+
+        match res {
+            Ok(n) => {
+                if n == 0 {
+                    return res;
+                }
+
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::Letters,
+                    param_user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
+        }
+    }
+
+    pub async fn get_letter_order(
+        db: &mut Connection,
+        letter_id: i32,
+        letter_wave_id: i32,
+    ) -> QueryResult<u32> {
+        use crate::schema::letters::dsl::*;
+
+        let letter = letters
+            .filter(verified.eq(true))
+            .filter(wave_id.eq(letter_wave_id))
+            .order(verified_at.asc())
+            .select(id)
+            .load::<i32>(db)
+            .await?;
+
+        Ok((letter.iter().position(|n| *n == letter_id).unwrap_or(0) as u32) + 1)
     }
 }
