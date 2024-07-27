@@ -18,7 +18,7 @@ use crate::error::handle_fk_data_not_exists;
 use crate::pdf::{gen_penarikan_chromium, gen_pengantaran_chromium, gen_permohonan_chromium};
 use crate::{
     error::{ClientError, InternalError},
-    with_db, with_json, AddStudentRequest, ApiResponse,
+    wave, with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn letters_routes(
@@ -231,6 +231,12 @@ async fn create_letters(
     }
 
     let mut db = db.lock();
+
+    let wave = wave::current_wave(&mut db, claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    payload.wave_id = wave.id;
+
     let result = Letter::create(&mut db, &payload, claims.id)
         .await
         .map_err(handle_fk_data_not_exists)?;
@@ -301,6 +307,7 @@ async fn update_letters(
 
     payload.verified = Some(false);
     payload.verified_at = Some(None);
+    payload.wave_id = None;
 
     let result = Letter::update(&mut db, id, &payload, claims.id)
         .await
