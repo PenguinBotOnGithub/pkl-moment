@@ -1,21 +1,19 @@
-use std::{collections::HashMap, num::ParseIntError, sync::Arc};
-
+use chrono::Datelike;
 use diesel_async::AsyncPgConnection;
-use models::wave::{CreateWave, UpdateWave, Wave};
+use models::wave::{CreateWave, Wave};
 use parking_lot::Mutex;
-use warp::{
-    reject::{self, Rejection},
-    reply::{self, Reply},
-    Filter,
-};
+use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use warp::reject;
+use warp::reject::Rejection;
+use warp::reply;
+use warp::reply::Reply;
+use warp::Filter;
 
-use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_depended_data_delete;
-use crate::{
-    auth::with_auth,
-    error::{ClientError, InternalError},
-    with_db, with_json, ApiResponse,
-};
+use crate::auth::with_auth;
+use crate::error::ClientError;
+use crate::error::InternalError;
+use crate::with_db;
+use crate::ApiResponse;
 
 pub fn waves_routes(
     jwt_key: String,
@@ -32,15 +30,6 @@ pub fn waves_routes(
         .and(with_db(db.clone()))
         .and_then(get_waves);
 
-    let create_wave_route = wave
-        .and(warp::path("create"))
-        .and(warp::path::end())
-        .and(warp::post())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
-        .and(with_json())
-        .and(with_db(db.clone()))
-        .and_then(create_wave);
-
     let read_wave_route = wave
         .and(warp::path::param::<i32>())
         .and(warp::path::end())
@@ -49,30 +38,7 @@ pub fn waves_routes(
         .and(with_db(db.clone()))
         .and_then(read_wave);
 
-    let update_wave_route = wave
-        .and(warp::path::param::<i32>())
-        .and(warp::path("update"))
-        .and(warp::path::end())
-        .and(warp::patch())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
-        .and(with_json())
-        .and(with_db(db.clone()))
-        .and_then(update_wave);
-
-    let delete_wave_route = wave
-        .and(warp::path::param::<i32>())
-        .and(warp::path("delete"))
-        .and(warp::path::end())
-        .and(warp::delete())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
-        .and(with_db(db.clone()))
-        .and_then(delete_wave);
-
-    get_waves_route
-        .or(create_wave_route)
-        .or(read_wave_route)
-        .or(update_wave_route)
-        .or(delete_wave_route)
+    get_waves_route.or(read_wave_route)
 }
 
 async fn get_waves(
@@ -112,17 +78,34 @@ async fn get_waves(
     Ok(reply::json(&ApiResponse::ok("success".to_string(), waves)))
 }
 
-async fn create_wave(
-    claims: JwtClaims,
-    payload: CreateWave,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let result = Wave::create(&mut db, &payload, claims.id)
-        .await
-        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+pub async fn current_wave(
+    db: &mut AsyncPgConnection,
+    user_id: i32,
+) -> Result<Wave, diesel::result::Error> {
+    let now = chrono::Local::now();
+    let school_year = if now.month() >= 7 {
+        (now.year() as i16, (now.year() + 1) as i16)
+    } else {
+        ((now.year() - 1) as i16, now.year() as i16)
+    };
 
-    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    let wave = Wave::find_by_school_year(db, school_year).await?;
+
+    if let Some(v) = wave {
+        return Ok(v);
+    }
+
+    let wave = Wave::create(
+        db,
+        &CreateWave {
+            start_year: school_year.0,
+            end_year: school_year.1,
+        },
+        user_id,
+    )
+    .await?;
+
+    Ok(wave)
 }
 
 async fn read_wave(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
@@ -133,45 +116,6 @@ async fn read_wave(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Re
 
     if let Some(v) = wave {
         Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
-    } else {
-        Err(reject::custom(ClientError::NotFound(
-            "wave not found".to_owned(),
-        )))
-    }
-}
-
-async fn update_wave(
-    id: i32,
-    claims: JwtClaims,
-    payload: UpdateWave,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let result = Wave::update(&mut db, id, &payload, claims.id)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
-
-    if let Some(v) = result {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
-    } else {
-        Err(reject::custom(ClientError::NotFound(
-            "student not found".to_owned(),
-        )))
-    }
-}
-
-async fn delete_wave(
-    id: i32,
-    claims: JwtClaims,
-    db: Arc<Mutex<AsyncPgConnection>>,
-) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let result = Wave::delete(&mut db, id, claims.id)
-        .await
-        .map_err(handle_fk_depended_data_delete)?;
-
-    if result > 0 {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
     } else {
         Err(reject::custom(ClientError::NotFound(
             "wave not found".to_owned(),

@@ -66,6 +66,19 @@ impl Wave {
             .optional()
     }
 
+    pub async fn find_by_school_year(
+        db: &mut Connection,
+        (start, end): (i16, i16),
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::wave::dsl::*;
+
+        wave.filter(start_year.eq(start))
+            .filter(end_year.eq(end))
+            .first::<Self>(db)
+            .await
+            .optional()
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
