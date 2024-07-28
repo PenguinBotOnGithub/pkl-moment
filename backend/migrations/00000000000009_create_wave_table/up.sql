@@ -2,6 +2,6 @@
 CREATE TABLE
     "wave" (
         id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL
+        start_year SMALLINT NOT NULL,
+        end_year SMALLINT NOT NULL
     );

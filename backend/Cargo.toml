@@ -12,12 +12,12 @@ diesel-async = { version = "0.4.1", features = ["postgres"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel_async_migrations = { version = "0.12.0" }
 parking_lot = { version = "0.12.2", features = ["send_guard"] }
-shuttle-runtime = "0.45.0"
-shuttle-shared-db = { version = "0.45.0", features = [
+shuttle-runtime = "0.46.0"
+shuttle-shared-db = { version = "0.46.0", features = [
     "postgres",
     "diesel-async",
 ] }
-shuttle-warp = "0.45.0"
+shuttle-warp = "0.46.0"
 thiserror = "1.0.60"
 tokio = "1.26.0"
 tracing = "0.1.40"

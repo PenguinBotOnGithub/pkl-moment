@@ -8,13 +8,13 @@ use warp::{reject, reject::Rejection, Buf, Filter};
 use crate::error::ClientError;
 
 pub mod auth;
+pub mod class;
 pub mod company;
+pub mod department;
 pub mod error;
+pub mod letters;
 pub mod log;
-mod pdf;
-pub mod penarikan;
-pub mod pengantaran;
-pub mod permohonan;
+pub mod pdf;
 pub mod routes;
 pub mod signature;
 pub mod student;

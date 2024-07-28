@@ -5,13 +5,14 @@ use parking_lot::Mutex;
 use tracing::log::debug;
 use warp::{reject::Rejection, Filter, Reply};
 
+use crate::auth::auth_routes;
+use crate::company::companies_routes;
+use crate::letters::letters_routes;
 use crate::log::logs_routes;
+use crate::signature::signatures_routes;
+use crate::student::students_routes;
 use crate::user::users_routes;
-use crate::{
-    auth::auth_routes, company::companies_routes, penarikan::penarikans_routes,
-    pengantaran::pengantarans_routes, permohonan::permohonans_routes, signature::signatures_routes,
-    student::students_routes, wave::waves_routes,
-};
+use crate::wave::waves_routes;
 
 pub fn routes(
     db: Arc<Mutex<AsyncPgConnection>>,
@@ -28,9 +29,7 @@ pub fn routes(
         .or(api.and(waves_routes(jwt_key.clone(), db.clone())))
         .or(api.and(students_routes(jwt_key.clone(), db.clone())))
         .or(api.and(companies_routes(jwt_key.clone(), db.clone())))
-        .or(api.and(permohonans_routes(jwt_key.clone(), db.clone())))
-        .or(api.and(pengantarans_routes(jwt_key.clone(), db.clone())))
-        .or(api.and(penarikans_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(letters_routes(jwt_key.clone(), db.clone())))
         .or(api.and(signatures_routes(jwt_key.clone(), db.clone())))
         .or(api.and(users_routes(jwt_key.clone(), db.clone())))
         .or(api.and(logs_routes(jwt_key.clone(), db.clone())))

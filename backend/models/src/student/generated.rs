@@ -1,22 +1,41 @@
 /* This file is generated and managed by dsync */
-
-use crate::log::{CreateLog, Log};
+use crate::class::Class;
+use crate::diesel::prelude::*;
+use crate::log::Log;
 use crate::schema::*;
 use crate::types::{Operation, TableRef};
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use std::mem;
 
 type Connection = diesel_async::AsyncPgConnection;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset, Selectable)]
-#[diesel(table_name=student, primary_key(id))]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Identifiable,
+    Associations,
+    Selectable,
+)]
+#[diesel(table_name=student, primary_key(id), belongs_to(Class, foreign_key=class_id))]
 pub struct Student {
     pub id: i32,
     pub name: String,
-    pub class: String,
+    pub class_id: i32,
+    pub nis: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct StudentJoined {
+    pub id: i32,
+    pub name: String,
+    pub class: (i32, String),
     pub nis: String,
 }
 
@@ -24,7 +43,7 @@ pub struct Student {
 #[diesel(table_name=student)]
 pub struct CreateStudent {
     pub name: String,
-    pub class: String,
+    pub class_id: i32,
     pub nis: String,
 }
 
@@ -32,7 +51,7 @@ pub struct CreateStudent {
 #[diesel(table_name=student)]
 pub struct UpdateStudent {
     pub name: Option<String>,
-    pub class: Option<String>,
+    pub class_id: Option<i32>,
     pub nis: Option<String>,
 }
 
@@ -54,40 +73,45 @@ impl Student {
     ) -> QueryResult<Self> {
         use crate::schema::student::dsl::*;
 
-        let res = insert_into(student)
+        let res = diesel::insert_into(student)
             .values(item)
             .get_result::<Self>(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Create,
-                table_affected: TableRef::Student,
+        if let Ok(_) = res {
+            Log::log(
+                db,
+                Operation::Create,
+                TableRef::Student,
                 user_id,
-                snapshot: None,
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                None::<u8>,
+            )
+            .await;
         }
 
         res
     }
 
-    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
+    pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<StudentJoined>> {
+        use crate::schema::class;
+        use crate::schema::department;
         use crate::schema::student::dsl::*;
 
-        student
+        let res = student
             .filter(id.eq(param_id))
-            .first::<Self>(db)
+            .inner_join(class::table.inner_join(department::table))
+            .select((id, name, class::number, department::name, nis))
+            .first::<(i32, String, i32, String, String)>(db)
             .await
-            .optional()
+            .optional()?;
+        let Some(mut res) = res else { return Ok(None) };
+
+        Ok(Some(StudentJoined {
+            id: res.0,
+            name: mem::take(&mut res.1),
+            class: (res.2, mem::take(&mut res.3)),
+            nis: mem::take(&mut res.4),
+        }))
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -95,16 +119,28 @@ impl Student {
         db: &mut Connection,
         page: i64,
         page_size: i64,
-    ) -> QueryResult<PaginationResult<Self>> {
+    ) -> QueryResult<PaginationResult<StudentJoined>> {
         use crate::schema::student::dsl::*;
+        use crate::schema::class;
+        use crate::schema::department;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = student.count().get_result(db).await?;
         let items = student
             .limit(page_size)
+            .inner_join(class::table.inner_join(department::table))
+            .select((id, name, class::number, department::name, nis))
             .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
+            .load::<(i32, String, i32, String, String)>(db)
+            .await?
+            .iter_mut()
+            .map(|(s_id, s_name, c_num, d_name, s_nis)| StudentJoined {
+                id: *s_id,
+                name: mem::take(s_name),
+                class: (*c_num, mem::take(d_name)),
+                nis: mem::take(s_nis),
+            })
+            .collect();
 
         Ok(PaginationResult {
             items,
@@ -124,11 +160,7 @@ impl Student {
     ) -> QueryResult<Option<Self>> {
         use crate::schema::student::dsl::*;
 
-        let previous = student
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Student::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(None);
         };
@@ -139,31 +171,15 @@ impl Student {
             .await
             .optional();
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Update,
-                table_affected: TableRef::Student,
+        if let Ok(Some(_)) = res {
+            Log::log(
+                db,
+                Operation::Update,
+                TableRef::Student,
                 user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Some(previous),
+            )
+            .await;
         }
 
         res
@@ -172,11 +188,7 @@ impl Student {
     pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
         use crate::schema::student::dsl::*;
 
-        let previous = student
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Student::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(0);
         };
@@ -185,33 +197,24 @@ impl Student {
             .execute(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
+        match res {
+            Ok(n) => {
+                if n <= 0 {
+                    return res;
+                }
 
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Delete,
-                table_affected: TableRef::Student,
-                user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::Student,
+                    user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
         }
-
-        res
     }
 }

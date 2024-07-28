@@ -1,14 +1,11 @@
 /* This file is generated and managed by dsync */
 
-use crate::log::{CreateLog, Log};
 use crate::schema::*;
+use crate::types::{Operation, TableRef};
+use crate::{diesel::prelude::*, log::Log};
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use tracing::error;
-
-use crate::types::{Operation, TableRef};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -52,27 +49,20 @@ impl Signature {
     ) -> QueryResult<Self> {
         use crate::schema::signature::dsl::*;
 
-        let res = insert_into(signature)
+        let res = diesel::insert_into(signature)
             .values(item)
             .get_result::<Self>(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Create,
-                table_affected: TableRef::Signature,
+        if let Ok(_) = res {
+            Log::log(
+                db,
+                Operation::Create,
+                TableRef::Signature,
                 user_id,
-                snapshot: None,
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                None::<u8>,
+            )
+            .await;
         }
 
         res
@@ -122,11 +112,7 @@ impl Signature {
     ) -> QueryResult<Option<Self>> {
         use crate::schema::signature::dsl::*;
 
-        let previous = signature
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Signature::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(None);
         };
@@ -137,31 +123,15 @@ impl Signature {
             .await
             .optional();
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Update,
-                table_affected: TableRef::Signature,
+        if let Ok(Some(_)) = res {
+            Log::log(
+                db,
+                Operation::Update,
+                TableRef::Signature,
                 user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Some(previous),
+            )
+            .await;
         }
 
         res
@@ -170,11 +140,7 @@ impl Signature {
     pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
         use crate::schema::signature::dsl::*;
 
-        let previous = signature
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Signature::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(0);
         };
@@ -183,33 +149,24 @@ impl Signature {
             .execute(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
+        match res {
+            Ok(n) => {
+                if n <= 0 {
+                    return res;
+                }
 
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Delete,
-                table_affected: TableRef::Signature,
-                user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::Signature,
+                    user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
         }
-
-        res
     }
 }
