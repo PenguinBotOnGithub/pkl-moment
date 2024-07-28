@@ -447,4 +447,18 @@ impl Letter {
 
         Ok((letter.iter().position(|n| *n == letter_id).unwrap_or(0) as u32) + 1)
     }
+
+    pub async fn get_verification_status(
+        db: &mut Connection,
+        letter_id: i32,
+    ) -> QueryResult<Option<bool>> {
+        use crate::schema::letters::dsl::*;
+
+        letters
+            .filter(id.eq(letter_id))
+            .select(verified)
+            .first::<bool>(db)
+            .await
+            .optional()
+    }
 }

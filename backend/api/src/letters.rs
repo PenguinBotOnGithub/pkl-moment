@@ -282,6 +282,15 @@ async fn update_letters(
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
 
+    let Some(b) = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters not found".to_owned(),
+        )));
+    };
+
     let Some(v) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
@@ -303,10 +312,21 @@ async fn update_letters(
                 "insufficient privilege to update data ownership".to_owned(),
             )));
         }
+
+        if b {
+            return Err(reject::custom(ClientError::Authorization(
+                "insufficient privilege to update letters data after verified".to_owned(),
+            )));
+        }
     }
 
-    payload.verified = Some(false);
-    payload.verified_at = Some(None);
+    if b {
+        payload.verified = None;
+        payload.verified_at = None;
+    } else {
+        payload.verified = Some(false);
+        payload.verified_at = Some(None);
+    }
     payload.wave_id = None;
 
     let result = Letter::update(&mut db, id, &payload, claims.id)
@@ -328,6 +348,20 @@ async fn delete_letters(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let Some(b) = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+    else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters not found".to_owned(),
+        )));
+    };
+    if b {
+        return Err(reject::custom(ClientError::Conflict(
+            "letters data can not be deleted after reaching verified status".to_owned(),
+        )));
+    }
 
     let letter = Letter::read(&mut db, id)
         .await
