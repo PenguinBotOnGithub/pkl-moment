@@ -8,7 +8,9 @@ use warp::{reject, reject::Rejection, Buf, Filter};
 use crate::error::ClientError;
 
 pub mod auth;
+pub mod class;
 pub mod company;
+pub mod department;
 pub mod error;
 pub mod letters;
 pub mod log;

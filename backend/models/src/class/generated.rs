@@ -1,5 +1,4 @@
 /* This file is generated and managed by dsync */
-
 use crate::department::Department;
 use crate::diesel::prelude::*;
 use crate::log::Log;
@@ -8,6 +7,7 @@ use crate::types::{Operation, TableRef};
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use std::mem;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -28,6 +28,13 @@ pub struct Class {
     pub id: i32,
     pub number: i32,
     pub department_id: i32,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ClassJoined {
+    pub id: i32,
+    pub number: i32,
+    pub department: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -84,12 +91,38 @@ impl Class {
             .optional()
     }
 
+    pub async fn read_joined(
+        db: &mut Connection,
+        param_id: i32,
+    ) -> QueryResult<Option<ClassJoined>> {
+        use crate::schema::class::dsl::*;
+        use crate::schema::department;
+
+        let res = class
+            .filter(id.eq(param_id))
+            .inner_join(department::table)
+            .select((id, number, department::name))
+            .first::<(i32, i32, String)>(db)
+            .await
+            .optional()?;
+
+        let Some(mut res) = res else {
+            return Ok(None);
+        };
+
+        Ok(Some(ClassJoined {
+            id: res.0,
+            number: res.1,
+            department: mem::take(&mut res.2),
+        }))
+    }
+
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
     pub async fn paginate(
         db: &mut Connection,
         page: i64,
         page_size: i64,
-    ) -> QueryResult<PaginationResult<Self>> {
+    ) -> QueryResult<PaginationResult<ClassJoined>> {
         use crate::schema::class::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
@@ -97,8 +130,17 @@ impl Class {
         let items = class
             .limit(page_size)
             .offset(page * page_size)
-            .load::<Self>(db)
-            .await?;
+            .inner_join(department::table)
+            .select((id, number, department::name))
+            .load::<(i32, i32, String)>(db)
+            .await?
+            .iter_mut()
+            .map(|v| ClassJoined {
+                id: v.0,
+                number: v.1,
+                department: mem::take(&mut v.2),
+            })
+            .collect();
 
         Ok(PaginationResult {
             items,
