@@ -14,7 +14,7 @@ use warp::{
 };
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_data_not_exists;
+use crate::error::{handle_fk_data_not_exists, handle_fk_not_exists_unique_violation};
 use crate::pdf::{gen_penarikan_chromium, gen_pengantaran_chromium, gen_permohonan_chromium};
 use crate::{
     error::{ClientError, InternalError},
@@ -458,7 +458,7 @@ async fn add_letters_student(
                     claims.id,
                 )
                 .await
-                .map_err(handle_fk_data_not_exists)?;
+                .map_err(handle_fk_not_exists_unique_violation)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
@@ -478,7 +478,7 @@ async fn add_letters_student(
                     claims.id,
                 )
                 .await
-                .map_err(handle_fk_data_not_exists)?;
+                .map_err(handle_fk_not_exists_unique_violation)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
             }
