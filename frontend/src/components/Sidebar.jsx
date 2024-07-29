@@ -14,9 +14,9 @@ function Sidebar({ index = -1 }) {
     setIsExpanded(!isExpanded);
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log(role);
-  },[]);
+  }, []);
 
   return (
     <div className="flex-none p-2">
@@ -30,24 +30,6 @@ function Sidebar({ index = -1 }) {
         </span>
       </label>
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
-        {/* <li>
-          <NavLink
-            to="/admin/dashboard"
-            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
-          >
-            <span className="material-symbols-rounded">dashboard</span>
-            {isExpanded && t("Dashboard")}
-          </NavLink>
-        </li> */}
-                <li>
-          <NavLink
-            to="/admin/journal"
-            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
-          >
-            <span className="material-symbols-rounded">book</span>
-            {isExpanded && t("Journal")}
-          </NavLink>
-        </li>
         <li>
           <NavLink
             to="/admin/entries"
@@ -57,15 +39,26 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
-        {role == "admin" && <li>
+        <li>
           <NavLink
-            to="/admin/users"
+            to="/admin/journal"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
-            <span className="material-symbols-rounded">people</span>
-            {isExpanded && t("All Users")}
+            <span className="material-symbols-rounded">book_2</span>
+            {isExpanded && t("Journal")}
           </NavLink>
-        </li>}
+        </li>
+        {role == "admin" && (
+          <li>
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+            >
+              <span className="material-symbols-rounded">people</span>
+              {isExpanded && t("All Users")}
+            </NavLink>
+          </li>
+        )}
         <li>
           <NavLink
             to="/admin/settings"

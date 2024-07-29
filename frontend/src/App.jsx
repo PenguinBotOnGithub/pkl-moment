@@ -21,8 +21,6 @@ import SearchEntry from "./routes/SearchEntry";
 import SearchEntryDummy from "./routes/search/SearchEntryDummy";
 import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
 import Journal from "./routes/entries/Journal";
-import MentorAdd from "./routes/journal/mentor/MentorAdd";
-import Mentor from "./routes/journal/mentor/Mentor";
 
 
 function App() {
@@ -33,7 +31,11 @@ function App() {
     { path: "*", element: <NotFound cookies={cookies} /> },
     {
       path: "login",
-      element: !isLoggedIn ? <Login cookies={cookies} /> : <Navigate to="/admin" />,
+      element: !isLoggedIn ? (
+        <Login cookies={cookies} />
+      ) : (
+        <Navigate to="../admin/entries" />
+      ),
     },
     {
       path: "admin",
