@@ -235,7 +235,7 @@ async fn create_letters(
     let wave = wave::current_wave(&mut db, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
-    payload.wave_id = wave.id;
+    payload.wave_id = Some(wave.id);
 
     let result = Letter::create(&mut db, &payload, claims.id)
         .await

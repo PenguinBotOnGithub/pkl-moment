@@ -1,4 +1,5 @@
 /* This file is generated and managed by dsync */
+use crate::class::ClassJoined;
 use crate::diesel::prelude::*;
 use crate::letters::Letter;
 use crate::log::Log;
@@ -107,11 +108,13 @@ impl LettersStudent {
             .select((
                 student::id,
                 student::name,
+                class::id,
+                class::grade,
                 class::number,
                 department::name,
                 student::nis,
             ))
-            .load::<(i32, String, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String)>(db)
             .await
             .optional()?;
 
@@ -120,12 +123,27 @@ impl LettersStudent {
             Some(mut v) => {
                 let constructed = v
                     .iter_mut()
-                    .map(|v| StudentJoined {
-                        id: v.0,
-                        name: mem::take(&mut v.1),
-                        class: (v.2, mem::take(&mut v.3)),
-                        nis: mem::take(&mut v.4),
-                    })
+                    .map(
+                        |(
+                            ref s_id,
+                            ref mut name,
+                            ref c_id,
+                            ref grade,
+                            ref number,
+                            ref mut d_name,
+                            ref mut nis,
+                        )| StudentJoined {
+                            id: *s_id,
+                            name: mem::take(name),
+                            class: ClassJoined {
+                                id: *c_id,
+                                grade: *grade,
+                                number: *number,
+                                department: mem::take(d_name),
+                            },
+                            nis: mem::take(nis),
+                        },
+                    )
                     .collect();
 
                 Ok(Some(constructed))

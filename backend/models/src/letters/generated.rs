@@ -1,4 +1,5 @@
 /* This file is generated and managed by dsync */
+use crate::class::ClassJoined;
 use crate::company::Company;
 use crate::diesel::prelude::*;
 use crate::log::Log;
@@ -73,7 +74,7 @@ pub struct CreateLetter {
     pub end_date: chrono::NaiveDate,
     pub verified: Option<bool>,
     pub verified_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub wave_id: i32,
+    pub wave_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -176,19 +177,28 @@ impl Letter {
             .select((
                 student::id,
                 student::name,
+                class::id,
+                class::grade,
                 class::number,
                 department::name,
                 student::nis,
             ))
-            .load::<(i32, String, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String)>(db)
             .await?
             .iter_mut()
-            .map(|(s_id, s_name, c_num, d_name, s_nis)| StudentJoined {
-                id: *s_id,
-                name: mem::take(s_name),
-                class: (*c_num, mem::take(d_name)),
-                nis: mem::take(s_nis),
-            })
+            .map(
+                |(s_id, s_name, c_id, grade, num, d_name, s_nis)| StudentJoined {
+                    id: *s_id,
+                    name: mem::take(s_name),
+                    class: ClassJoined {
+                        id: *c_id,
+                        grade: *grade,
+                        number: *num,
+                        department: mem::take(d_name),
+                    },
+                    nis: mem::take(s_nis),
+                },
+            )
             .collect();
 
         Ok(Some(LetterJoined {
