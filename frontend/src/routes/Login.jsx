@@ -43,8 +43,8 @@ function Login({ cookies }) {
   };
 
   return (
-    <div className="flex flex-col size-full" data-theme="airdark">
-      <Navbar title="Login" />
+    <div className="flex flex-col size-full" data-theme={cookies.get("theme")}>
+      <Navbar cookies={cookies} />
       <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-100 p-4 pb-14">
         <div className="flex items-center mb-6">
           <PKLMomentIcon size={64} />
@@ -54,7 +54,7 @@ function Login({ cookies }) {
         {/* The form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <label htmlFor="username" className="w-40">
+            <label htmlFor="username" className="w-20">
               Username
             </label>
             <input
@@ -63,19 +63,19 @@ function Login({ cookies }) {
               id="username"
               value={formData.username}
               onChange={handleInputChange}
-              className="input border-2 border-neutral w-full max-w-xs"
+              className="input border-2 border-neutral w-72"
               required
             />
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-40">Password</div>
+            <div className="w-20">Password</div>
             <input
               type="password"
               name="password"
               id="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="input border-2 border-neutral w-full max-w-xs"
+              className="input border-2 border-neutral w-72"
               required
             />
           </div>

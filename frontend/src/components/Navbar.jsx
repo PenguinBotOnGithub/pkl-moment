@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import ThemeController from "./ThemeController";
 
 // Utility function to convert text to sentence case
 const toSentenceCase = (text) => {
@@ -10,10 +11,10 @@ const toSentenceCase = (text) => {
 // Utility function to check if a value is a number
 const isNumber = (value) => !isNaN(value) && isFinite(value);
 
-function Navbar({ breadcrumbs = [] }) {
+function Navbar({ breadcrumbs = [], cookies }) {
   // Filter out unwanted values (e.g., "ADMIN" and numbers)
-  const filteredBreadcrumbs = breadcrumbs.filter(breadcrumb => 
-    breadcrumb.label !== "ADMIN" && !isNumber(breadcrumb.label)
+  const filteredBreadcrumbs = breadcrumbs.filter(
+    (breadcrumb) => breadcrumb.label !== "ADMIN" && !isNumber(breadcrumb.label)
   );
 
   return (
@@ -26,7 +27,9 @@ function Navbar({ breadcrumbs = [] }) {
                 {index === filteredBreadcrumbs.length - 1 ? (
                   toSentenceCase(breadcrumb.label)
                 ) : (
-                  <Link to={breadcrumb.url}>{toSentenceCase(breadcrumb.label)}</Link>
+                  <Link to={breadcrumb.url}>
+                    {toSentenceCase(breadcrumb.label)}
+                  </Link>
                 )}
               </li>
             ))}
@@ -34,19 +37,7 @@ function Navbar({ breadcrumbs = [] }) {
         </div>
       </div>
       <div className="flex-none">
-        <label className="btn btn-square btn-ghost swap swap-rotate">
-          <input
-            type="checkbox"
-            className="theme-controller"
-            value="airlight"
-          />
-          <span className="swap-off fill-current material-symbols-rounded">
-            dark_mode
-          </span>
-          <span className="swap-on fill-current material-symbols-rounded">
-            light_mode
-          </span>
-        </label>
+        <ThemeController cookies={cookies} maxWidth="sm" style="dropdown" />
       </div>
     </div>
   );
