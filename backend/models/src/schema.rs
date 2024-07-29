@@ -17,6 +17,7 @@ pub mod sql_types {
 diesel::table! {
     class (id) {
         id -> Int4,
+        grade -> Int4,
         number -> Int4,
         department_id -> Int4,
     }

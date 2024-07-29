@@ -26,6 +26,7 @@ type Connection = diesel_async::AsyncPgConnection;
 #[diesel(table_name=class, primary_key(id), belongs_to(Department, foreign_key=department_id))]
 pub struct Class {
     pub id: i32,
+    pub grade: i32,
     pub number: i32,
     pub department_id: i32,
 }
@@ -33,6 +34,7 @@ pub struct Class {
 #[derive(Debug, Serialize, Clone)]
 pub struct ClassJoined {
     pub id: i32,
+    pub grade: i32,
     pub number: i32,
     pub department: String,
 }
@@ -40,6 +42,7 @@ pub struct ClassJoined {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=class)]
 pub struct CreateClass {
+    pub grade: i32,
     pub number: i32,
     pub department_id: i32,
 }
@@ -47,6 +50,7 @@ pub struct CreateClass {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=class)]
 pub struct UpdateClass {
+    pub grade: Option<i32>,
     pub number: Option<i32>,
     pub department_id: Option<i32>,
 }
@@ -101,8 +105,8 @@ impl Class {
         let res = class
             .filter(id.eq(param_id))
             .inner_join(department::table)
-            .select((id, number, department::name))
-            .first::<(i32, i32, String)>(db)
+            .select((id, grade, number, department::name))
+            .first::<(i32, i32, i32, String)>(db)
             .await
             .optional()?;
 
@@ -112,8 +116,9 @@ impl Class {
 
         Ok(Some(ClassJoined {
             id: res.0,
-            number: res.1,
-            department: mem::take(&mut res.2),
+            grade: res.1,
+            number: res.2,
+            department: mem::take(&mut res.3),
         }))
     }
 
@@ -131,14 +136,15 @@ impl Class {
             .limit(page_size)
             .offset(page * page_size)
             .inner_join(department::table)
-            .select((id, number, department::name))
-            .load::<(i32, i32, String)>(db)
+            .select((id, grade, number, department::name))
+            .load::<(i32, i32, i32, String)>(db)
             .await?
             .iter_mut()
             .map(|v| ClassJoined {
                 id: v.0,
-                number: v.1,
-                department: mem::take(&mut v.2),
+                grade: v.1,
+                number: v.2,
+                department: mem::take(&mut v.3),
             })
             .collect();
 

@@ -1,5 +1,5 @@
 /* This file is generated and managed by dsync */
-use crate::class::Class;
+use crate::class::{Class, ClassJoined};
 use crate::diesel::prelude::*;
 use crate::log::Log;
 use crate::schema::*;
@@ -35,7 +35,7 @@ pub struct Student {
 pub struct StudentJoined {
     pub id: i32,
     pub name: String,
-    pub class: (i32, String),
+    pub class: ClassJoined,
     pub nis: String,
 }
 
@@ -100,8 +100,16 @@ impl Student {
         let res = student
             .filter(id.eq(param_id))
             .inner_join(class::table.inner_join(department::table))
-            .select((id, name, class::number, department::name, nis))
-            .first::<(i32, String, i32, String, String)>(db)
+            .select((
+                id,
+                name,
+                class::id,
+                class::grade,
+                class::number,
+                department::name,
+                nis,
+            ))
+            .first::<(i32, String, i32, i32, i32, String, String)>(db)
             .await
             .optional()?;
         let Some(mut res) = res else { return Ok(None) };
@@ -109,8 +117,13 @@ impl Student {
         Ok(Some(StudentJoined {
             id: res.0,
             name: mem::take(&mut res.1),
-            class: (res.2, mem::take(&mut res.3)),
-            nis: mem::take(&mut res.4),
+            class: ClassJoined {
+                id: res.2,
+                grade: res.3,
+                number: res.4,
+                department: mem::take(&mut res.5),
+            },
+            nis: mem::take(&mut res.6),
         }))
     }
 
@@ -120,26 +133,41 @@ impl Student {
         page: i64,
         page_size: i64,
     ) -> QueryResult<PaginationResult<StudentJoined>> {
-        use crate::schema::student::dsl::*;
         use crate::schema::class;
         use crate::schema::department;
+        use crate::schema::student::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = student.count().get_result(db).await?;
         let items = student
             .limit(page_size)
             .inner_join(class::table.inner_join(department::table))
-            .select((id, name, class::number, department::name, nis))
+            .select((
+                id,
+                name,
+                class::id,
+                class::grade,
+                class::number,
+                department::name,
+                nis,
+            ))
             .offset(page * page_size)
-            .load::<(i32, String, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String)>(db)
             .await?
             .iter_mut()
-            .map(|(s_id, s_name, c_num, d_name, s_nis)| StudentJoined {
-                id: *s_id,
-                name: mem::take(s_name),
-                class: (*c_num, mem::take(d_name)),
-                nis: mem::take(s_nis),
-            })
+            .map(
+                |(s_id, s_name, c_id, grade, num, d_name, s_nis)| StudentJoined {
+                    id: *s_id,
+                    name: mem::take(s_name),
+                    class: ClassJoined {
+                        id: *c_id,
+                        grade: *grade,
+                        number: *num,
+                        department: mem::take(d_name),
+                    },
+                    nis: mem::take(s_nis),
+                },
+            )
             .collect();
 
         Ok(PaginationResult {
