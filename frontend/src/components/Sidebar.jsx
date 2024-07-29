@@ -30,6 +30,27 @@ function Sidebar({ index = -1 }) {
         </span>
       </label>
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
+<<<<<<< HEAD
+=======
+        {/* <li>
+          <NavLink
+            to="/admin/dashboard"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
+            <span className="material-symbols-rounded">dashboard</span>
+            {isExpanded && t("Dashboard")}
+          </NavLink>
+        </li> */}
+                <li>
+          <NavLink
+            to="/admin/journal"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
+            <span className="material-symbols-rounded">book</span>
+            {isExpanded && t("Journal")}
+          </NavLink>
+        </li>
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
         <li>
           <NavLink
             to="/admin/entries"

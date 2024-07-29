@@ -21,11 +21,17 @@ import SearchEntry from "./routes/SearchEntry";
 import SearchEntryDummy from "./routes/search/SearchEntryDummy";
 import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
 import Journal from "./routes/entries/Journal";
+<<<<<<< HEAD
+=======
+import MentorAdd from "./routes/journal/mentor/MentorAdd";
+import Mentor from "./routes/journal/mentor/Mentor";
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
 
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
   const isLoggedIn = cookies.get("access-token");
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
   const router = createBrowserRouter([
@@ -61,15 +67,35 @@ function App() {
       ) : (
         <Navigate to="../login" />
       ),
+=======
+
+  const router = createBrowserRouter([
+    { path: "*", element: <NotFound cookies={cookies} /> },
+    {
+      path: "login",
+      element: !isLoggedIn ? <Login cookies={cookies} /> : <Navigate to="/admin" />,
+    },
+    {
+      path: "admin",
+      element: isLoggedIn ? <Root cookies={cookies} /> : <Navigate to="/login" />,
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
       children: [
+        { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
         { path: "users", element: <Navigate to="0" /> },
+<<<<<<< HEAD
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
+=======
+        { path: "journal/:page", element: <Journal /> },
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
         { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
         { path: "users/add", element: <UserAdd /> },
         { path: "settings", element: <Settings cookies={cookies} /> },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
         {
           path: "entries",
           children: [
@@ -84,6 +110,7 @@ function App() {
           ],
         },
         
+<<<<<<< HEAD
 =======
       ],
     },
@@ -108,6 +135,8 @@ function App() {
         { path: "student", element: <Student /> },
         { path: "student/add", element: <StudentAdd /> },
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
+=======
+>>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
       ],
     },
   ]);
