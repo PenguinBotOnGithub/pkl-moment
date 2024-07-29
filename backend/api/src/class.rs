@@ -17,7 +17,7 @@ use crate::{
     with_db, with_json, ApiResponse,
 };
 
-pub fn companies_routes(
+pub fn classes_routes(
     jwt_key: String,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {

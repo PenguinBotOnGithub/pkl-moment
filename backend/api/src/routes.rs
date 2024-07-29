@@ -6,7 +6,9 @@ use tracing::log::debug;
 use warp::{reject::Rejection, Filter, Reply};
 
 use crate::auth::auth_routes;
+use crate::class::classes_routes;
 use crate::company::companies_routes;
+use crate::department::departments_routes;
 use crate::letters::letters_routes;
 use crate::log::logs_routes;
 use crate::signature::signatures_routes;
@@ -28,6 +30,8 @@ pub fn routes(
     root.or(api.and(auth_routes(jwt_key.clone(), db.clone())))
         .or(api.and(waves_routes(jwt_key.clone(), db.clone())))
         .or(api.and(students_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(classes_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(departments_routes(jwt_key.clone(), db.clone())))
         .or(api.and(companies_routes(jwt_key.clone(), db.clone())))
         .or(api.and(letters_routes(jwt_key.clone(), db.clone())))
         .or(api.and(signatures_routes(jwt_key.clone(), db.clone())))
