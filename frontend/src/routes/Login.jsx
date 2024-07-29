@@ -44,12 +44,17 @@ function Login({ cookies }) {
 
   return (
 <<<<<<< HEAD
+<<<<<<< HEAD
     <div className="flex flex-col size-full" data-theme={cookies.get("theme")}>
       <Navbar cookies={cookies} />
 =======
     <div className="flex flex-col size-full" data-theme="airdark">
       <Navbar title="Login" />
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
+=======
+    <div className="flex flex-col size-full" data-theme={cookies.get("theme")}>
+      <Navbar cookies={cookies} />
+>>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
       <div className="flex-1 flex flex-col gap-2 justify-center items-center bg-base-100 p-4 pb-14">
         <div className="flex items-center mb-6">
           <PKLMomentIcon size={64} />

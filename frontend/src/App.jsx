@@ -22,10 +22,13 @@ import SearchEntryDummy from "./routes/search/SearchEntryDummy";
 import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
 import Journal from "./routes/entries/Journal";
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import MentorAdd from "./routes/journal/mentor/MentorAdd";
 import Mentor from "./routes/journal/mentor/Mentor";
 >>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
+=======
+>>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
 
 
 function App() {
@@ -73,7 +76,11 @@ function App() {
     { path: "*", element: <NotFound cookies={cookies} /> },
     {
       path: "login",
-      element: !isLoggedIn ? <Login cookies={cookies} /> : <Navigate to="/admin" />,
+      element: !isLoggedIn ? (
+        <Login cookies={cookies} />
+      ) : (
+        <Navigate to="../admin/entries" />
+      ),
     },
     {
       path: "admin",

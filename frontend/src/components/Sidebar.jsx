@@ -31,6 +31,7 @@ function Sidebar({ index = -1 }) {
       </label>
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         {/* <li>
           <NavLink
@@ -51,6 +52,8 @@ function Sidebar({ index = -1 }) {
           </NavLink>
         </li>
 >>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
+=======
+>>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
         <li>
           <NavLink
             to="/admin/entries"
@@ -60,6 +63,7 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
+<<<<<<< HEAD
 <<<<<<< HEAD
         <li>
 =======
@@ -80,6 +84,15 @@ function Sidebar({ index = -1 }) {
             <span className="material-symbols-rounded">people</span>
             {isExpanded && t("All Users")}
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
+=======
+        <li>
+          <NavLink
+            to="/admin/journal"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
+            <span className="material-symbols-rounded">book_2</span>
+            {isExpanded && t("Journal")}
+>>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
           </NavLink>
         </li>
         {role == "admin" && (
