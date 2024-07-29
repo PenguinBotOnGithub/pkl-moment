@@ -39,6 +39,15 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Dashboard")}
           </NavLink>
         </li> */}
+                <li>
+          <NavLink
+            to="/admin/journal"
+            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+          >
+            <span className="material-symbols-rounded">book</span>
+            {isExpanded && t("Journal")}
+          </NavLink>
+        </li>
         <li>
           <NavLink
             to="/admin/entries"
