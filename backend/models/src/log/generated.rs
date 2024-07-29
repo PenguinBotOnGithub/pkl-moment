@@ -1,11 +1,13 @@
 /* This file is generated and managed by dsync */
 
+use crate::diesel::prelude::*;
 use crate::schema::*;
+use crate::types::{Operation, TableRef};
 use crate::user::User;
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -24,8 +26,8 @@ type Connection = diesel_async::AsyncPgConnection;
 #[diesel(table_name=log, primary_key(id), belongs_to(User, foreign_key=user_id))]
 pub struct Log {
     pub id: i32,
-    pub operation_type: crate::types::Operation,
-    pub table_affected: crate::types::TableRef,
+    pub operation_type: Operation,
+    pub table_affected: TableRef,
     pub user_id: i32,
     pub snapshot: Option<String>,
     pub logged_at: chrono::DateTime<chrono::Utc>,
@@ -34,8 +36,8 @@ pub struct Log {
 #[derive(Serialize, Clone, Debug)]
 pub struct LogBrief {
     pub id: i32,
-    pub operation_type: crate::types::Operation,
-    pub table_affected: crate::types::TableRef,
+    pub operation_type: Operation,
+    pub table_affected: TableRef,
     pub user: String,
     pub logged_at: chrono::DateTime<chrono::Utc>,
 }
@@ -43,8 +45,8 @@ pub struct LogBrief {
 #[derive(Serialize, Clone, Debug)]
 pub struct LogDetail {
     pub id: i32,
-    pub operation_type: crate::types::Operation,
-    pub table_affected: crate::types::TableRef,
+    pub operation_type: Operation,
+    pub table_affected: TableRef,
     pub user: crate::user::UserPublic,
     pub snapshot: Option<String>,
     pub logged_at: chrono::DateTime<chrono::Utc>,
@@ -53,8 +55,8 @@ pub struct LogDetail {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=log)]
 pub struct CreateLog {
-    pub operation_type: crate::types::Operation,
-    pub table_affected: crate::types::TableRef,
+    pub operation_type: Operation,
+    pub table_affected: TableRef,
     pub user_id: i32,
     pub snapshot: Option<String>,
 }
@@ -70,10 +72,47 @@ pub struct PaginationResult<T> {
 }
 
 impl Log {
+    pub async fn log(
+        db: &mut Connection,
+        op_type: Operation,
+        t_ref: TableRef,
+        u_id: i32,
+        ss: Option<impl serde::Serialize>,
+    ) {
+        if let Err(e) = Log::create(
+            db,
+            &CreateLog {
+                operation_type: op_type,
+                table_affected: t_ref,
+                user_id: u_id,
+                snapshot: match ss {
+                    None => None,
+                    Some(v) => match serde_json::to_string(&v) {
+                        Ok(v) => Some(v),
+                        Err(e) => {
+                            error!("error serializing snapshot to json: {}", e.to_string());
+                            Some(format!(
+                                "error serializing snapshot to json: {}",
+                                e.to_string()
+                            ))
+                        }
+                    },
+                },
+            },
+        )
+        .await
+        {
+            error!("error logging action: {}", e.to_string());
+        }
+    }
+
     pub async fn create(db: &mut Connection, item: &CreateLog) -> QueryResult<Self> {
         use crate::schema::log::dsl::*;
 
-        insert_into(log).values(item).get_result::<Self>(db).await
+        diesel::insert_into(log)
+            .values(item)
+            .get_result::<Self>(db)
+            .await
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<LogDetail>> {
@@ -94,8 +133,8 @@ impl Log {
             ))
             .first::<(
                 i32,
-                crate::types::Operation,
-                crate::types::TableRef,
+                Operation,
+                TableRef,
                 Option<String>,
                 chrono::DateTime<chrono::Utc>,
                 i32,
@@ -147,8 +186,8 @@ impl Log {
                 .offset(page * page_size)
                 .load::<(
                     i32,
-                    crate::types::Operation,
-                    crate::types::TableRef,
+                    Operation,
+                    TableRef,
                     chrono::DateTime<chrono::Utc>,
                     String,
                 )>(db)
@@ -175,8 +214,8 @@ impl Log {
                 ))
                 .load::<(
                     i32,
-                    crate::types::Operation,
-                    crate::types::TableRef,
+                    Operation,
+                    TableRef,
                     chrono::DateTime<chrono::Utc>,
                     String,
                 )>(db)

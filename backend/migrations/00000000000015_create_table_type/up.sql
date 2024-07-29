@@ -5,10 +5,8 @@ CREATE TYPE table_ref AS ENUM (
     'company',
     'student',
     'signature',
-    'permohonan',
-    'permohonan_student',
-    'pengantaran',
-    'pengantaran_student',
-    'penarikan',
-    'penarikan_student'
+    'letters',
+    'letters_student',
+    'class',
+    'department'
 );

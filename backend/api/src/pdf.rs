@@ -1,23 +1,15 @@
-use std::cell::RefCell;
 use std::error::Error;
-use std::io::Write;
-use std::rc::Rc;
 use std::sync::OnceLock;
 
-use chrono::format::StrftimeItems;
 use chrono::{Datelike, Locale};
 use hijri_date::HijriDate;
-use serde::Serialize;
 use tera::Tera;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tracing::debug;
 use warp::{reject, Rejection};
 
-use models::penarikan::PenarikanJoined;
-use models::pengantaran::PengantaranJoined;
-use models::permohonan::PermohonanJoined;
+use models::letters::LetterJoined;
 use simple_pdf_generator::PrintOptions;
-use simple_pdf_generator_derive::PdfTemplate;
 
 use crate::error::InternalError;
 
@@ -54,7 +46,7 @@ mod penarikan {
 }
 
 pub async fn gen_penarikan_chromium(
-    detail: &PenarikanJoined,
+    detail: &LetterJoined,
     letter_number: u32,
 ) -> Result<Vec<u8>, Rejection> {
     let hijri = {
@@ -106,11 +98,7 @@ pub async fn gen_penarikan_chromium(
     context.insert("company_address", &detail.company.address);
     context.insert(
         "school_year",
-        &format!(
-            "{}/{}",
-            detail.wave.start_date.year(),
-            detail.wave.end_date.year()
-        ),
+        &format!("{}/{}", detail.wave.start_year, detail.wave.end_year),
     );
     context.insert(
         "end_date",
@@ -169,7 +157,7 @@ pub async fn gen_penarikan_chromium(
 }
 
 pub async fn gen_permohonan_chromium(
-    detail: &PermohonanJoined,
+    detail: &LetterJoined,
     letter_number: u32,
 ) -> Result<Vec<u8>, Rejection> {
     let hijri = {
@@ -221,11 +209,7 @@ pub async fn gen_permohonan_chromium(
     context.insert("company_address", &detail.company.address);
     context.insert(
         "school_year",
-        &format!(
-            "{}/{}",
-            detail.wave.start_date.year(),
-            detail.wave.end_date.year()
-        ),
+        &format!("{}/{}", detail.wave.start_year, detail.wave.end_year),
     );
     context.insert(
         "start_date",
@@ -291,7 +275,7 @@ pub async fn gen_permohonan_chromium(
 }
 
 pub async fn gen_pengantaran_chromium(
-    detail: &PengantaranJoined,
+    detail: &LetterJoined,
     letter_number: u32,
 ) -> Result<Vec<u8>, Rejection> {
     let hijri = {
@@ -343,11 +327,7 @@ pub async fn gen_pengantaran_chromium(
     context.insert("company_address", &detail.company.address);
     context.insert(
         "school_year",
-        &format!(
-            "{}/{}",
-            detail.wave.start_date.year(),
-            detail.wave.end_date.year()
-        ),
+        &format!("{}/{}", detail.wave.start_year, detail.wave.end_year),
     );
     context.insert(
         "start_date",

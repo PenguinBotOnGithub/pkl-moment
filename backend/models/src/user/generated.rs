@@ -1,14 +1,13 @@
 /* This file is generated and managed by dsync */
 
-use crate::log::{CreateLog, Log};
+use crate::diesel::prelude::*;
+use crate::log::Log;
 use crate::schema::*;
 use crate::types::{Operation, TableRef};
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use std::mem;
-use tracing::error;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -66,24 +65,13 @@ impl User {
     pub async fn create(db: &mut Connection, item: &CreateUser, user_id: i32) -> QueryResult<Self> {
         use crate::schema::user::dsl::*;
 
-        let res = insert_into(user).values(item).get_result::<Self>(db).await;
+        let res = diesel::insert_into(user)
+            .values(item)
+            .get_result::<Self>(db)
+            .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Register,
-                table_affected: TableRef::User,
-                user_id,
-                snapshot: None,
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+        if let Ok(_) = res {
+            Log::log(db, Operation::Create, TableRef::User, user_id, None::<u8>).await;
         }
 
         res
@@ -159,31 +147,15 @@ impl User {
             .await
             .optional();
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Update,
-                table_affected: TableRef::User,
+        if let Ok(Some(_)) = res {
+            Log::log(
+                db,
+                Operation::Update,
+                TableRef::User,
                 user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Some(previous),
+            )
+            .await;
         }
 
         res
@@ -205,33 +177,24 @@ impl User {
             .execute(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
+        match res {
+            Ok(n) => {
+                if n <= 0 {
+                    return res;
+                }
 
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Delete,
-                table_affected: TableRef::User,
-                user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::User,
+                    user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
         }
-
-        res
     }
 }

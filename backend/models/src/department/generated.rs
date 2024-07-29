@@ -11,28 +11,22 @@ use serde::{Deserialize, Serialize};
 type Connection = diesel_async::AsyncPgConnection;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset, Selectable)]
-#[diesel(table_name=company, primary_key(id))]
-pub struct Company {
+#[diesel(table_name=department, primary_key(id))]
+pub struct Department {
     pub id: i32,
     pub name: String,
-    pub address: String,
-    pub mou_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name=company)]
-pub struct CreateCompany {
+#[diesel(table_name=department)]
+pub struct CreateDepartment {
     pub name: String,
-    pub address: String,
-    pub mou_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name=company)]
-pub struct UpdateCompany {
+#[diesel(table_name=department)]
+pub struct UpdateDepartment {
     pub name: Option<String>,
-    pub address: Option<String>,
-    pub mou_url: Option<Option<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -45,15 +39,15 @@ pub struct PaginationResult<T> {
     pub num_pages: i64,
 }
 
-impl Company {
+impl Department {
     pub async fn create(
         db: &mut Connection,
-        item: &CreateCompany,
+        item: &CreateDepartment,
         user_id: i32,
     ) -> QueryResult<Self> {
-        use crate::schema::company::dsl::*;
+        use crate::schema::department::dsl::*;
 
-        let res = diesel::insert_into(company)
+        let res = diesel::insert_into(department)
             .values(item)
             .get_result::<Self>(db)
             .await;
@@ -62,7 +56,7 @@ impl Company {
             Log::log(
                 db,
                 Operation::Create,
-                TableRef::Company,
+                TableRef::Department,
                 user_id,
                 None::<u8>,
             )
@@ -73,9 +67,9 @@ impl Company {
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Self>> {
-        use crate::schema::company::dsl::*;
+        use crate::schema::department::dsl::*;
 
-        company
+        department
             .filter(id.eq(param_id))
             .first::<Self>(db)
             .await
@@ -88,11 +82,11 @@ impl Company {
         page: i64,
         page_size: i64,
     ) -> QueryResult<PaginationResult<Self>> {
-        use crate::schema::company::dsl::*;
+        use crate::schema::department::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
-        let total_items = company.count().get_result(db).await?;
-        let items = company
+        let total_items = department.count().get_result(db).await?;
+        let items = department
             .limit(page_size)
             .offset(page * page_size)
             .load::<Self>(db)
@@ -111,17 +105,17 @@ impl Company {
     pub async fn update(
         db: &mut Connection,
         param_id: i32,
-        item: &UpdateCompany,
+        item: &UpdateDepartment,
         user_id: i32,
     ) -> QueryResult<Option<Self>> {
-        use crate::schema::company::dsl::*;
+        use crate::schema::department::dsl::*;
 
-        let previous = Company::read(db, param_id).await?;
+        let previous = Department::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(None);
         };
 
-        let res = diesel::update(company.filter(id.eq(param_id)))
+        let res = diesel::update(department.filter(id.eq(param_id)))
             .set(item)
             .get_result(db)
             .await
@@ -131,7 +125,7 @@ impl Company {
             Log::log(
                 db,
                 Operation::Update,
-                TableRef::Company,
+                TableRef::Department,
                 user_id,
                 Some(previous),
             )
@@ -142,14 +136,14 @@ impl Company {
     }
 
     pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
-        use crate::schema::company::dsl::*;
+        use crate::schema::department::dsl::*;
 
-        let previous = Company::read(db, param_id).await?;
+        let previous = Department::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(0);
         };
 
-        let res = diesel::delete(company.filter(id.eq(param_id)))
+        let res = diesel::delete(department.filter(id.eq(param_id)))
             .execute(db)
             .await;
 
@@ -162,7 +156,7 @@ impl Company {
                 Log::log(
                     db,
                     Operation::Delete,
-                    TableRef::Company,
+                    TableRef::Department,
                     user_id,
                     Some(previous),
                 )

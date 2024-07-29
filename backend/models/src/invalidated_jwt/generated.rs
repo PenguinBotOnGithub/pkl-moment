@@ -1,8 +1,8 @@
 /* This file is generated and managed by dsync */
 
+use crate::diesel::prelude::*;
 use crate::schema::*;
 use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
@@ -48,7 +48,7 @@ impl InvalidatedJwt {
     pub async fn create(db: &mut Connection, item: &CreateInvalidatedJwt) -> QueryResult<Self> {
         use crate::schema::invalidated_jwt::dsl::*;
 
-        insert_into(invalidated_jwt)
+        diesel::insert_into(invalidated_jwt)
             .values(item)
             .get_result::<Self>(db)
             .await

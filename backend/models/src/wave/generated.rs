@@ -1,13 +1,11 @@
 /* This file is generated and managed by dsync */
 
-use crate::log::{CreateLog, Log};
+use crate::diesel::prelude::*;
+use crate::log::Log;
 use crate::schema::*;
 use crate::types::{Operation, TableRef};
-use diesel::QueryResult;
-use diesel::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use tracing::error;
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -15,22 +13,22 @@ type Connection = diesel_async::AsyncPgConnection;
 #[diesel(table_name=wave, primary_key(id))]
 pub struct Wave {
     pub id: i32,
-    pub start_date: chrono::NaiveDate,
-    pub end_date: chrono::NaiveDate,
+    pub start_year: i16,
+    pub end_year: i16,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=wave)]
 pub struct CreateWave {
-    pub start_date: chrono::NaiveDate,
-    pub end_date: chrono::NaiveDate,
+    pub start_year: i16,
+    pub end_year: i16,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=wave)]
 pub struct UpdateWave {
-    pub start_date: Option<chrono::NaiveDate>,
-    pub end_date: Option<chrono::NaiveDate>,
+    pub start_year: Option<i16>,
+    pub end_year: Option<i16>,
 }
 
 #[derive(Debug, Serialize)]
@@ -47,24 +45,13 @@ impl Wave {
     pub async fn create(db: &mut Connection, item: &CreateWave, user_id: i32) -> QueryResult<Self> {
         use crate::schema::wave::dsl::*;
 
-        let res = insert_into(wave).values(item).get_result::<Self>(db).await;
+        let res = diesel::insert_into(wave)
+            .values(item)
+            .get_result::<Self>(db)
+            .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Create,
-                table_affected: TableRef::Wave,
-                user_id,
-                snapshot: None,
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+        if let Ok(_) = res {
+            Log::log(db, Operation::Create, TableRef::Wave, user_id, None::<u8>).await;
         }
 
         res
@@ -74,6 +61,19 @@ impl Wave {
         use crate::schema::wave::dsl::*;
 
         wave.filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()
+    }
+
+    pub async fn find_by_school_year(
+        db: &mut Connection,
+        (start, end): (i16, i16),
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::wave::dsl::*;
+
+        wave.filter(start_year.eq(start))
+            .filter(end_year.eq(end))
             .first::<Self>(db)
             .await
             .optional()
@@ -113,46 +113,26 @@ impl Wave {
     ) -> QueryResult<Option<Self>> {
         use crate::schema::wave::dsl::*;
 
-        let previous = wave
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Wave::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(None);
         };
 
         let res = diesel::update(wave.filter(id.eq(param_id)))
             .set(item)
-            .get_result(db)
+            .get_result::<Wave>(db)
             .await
             .optional();
 
-        let Ok(_) = res else {
-            return res;
-        };
-
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Update,
-                table_affected: TableRef::Wave,
+        if let Ok(Some(_)) = res {
+            Log::log(
+                db,
+                Operation::Update,
+                TableRef::Wave,
                 user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Some(previous),
+            )
+            .await;
         }
 
         res
@@ -161,11 +141,7 @@ impl Wave {
     pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
         use crate::schema::wave::dsl::*;
 
-        let previous = wave
-            .filter(id.eq(param_id))
-            .first::<Self>(db)
-            .await
-            .optional()?;
+        let previous = Wave::read(db, param_id).await?;
         let Some(previous) = previous else {
             return Ok(0);
         };
@@ -174,33 +150,24 @@ impl Wave {
             .execute(db)
             .await;
 
-        let Ok(_) = res.as_ref() else {
-            return res;
-        };
+        match res {
+            Ok(n) => {
+                if n <= 0 {
+                    return res;
+                }
 
-        if let Err(e) = Log::create(
-            db,
-            &CreateLog {
-                operation_type: Operation::Delete,
-                table_affected: TableRef::Wave,
-                user_id,
-                snapshot: match serde_json::to_string(&previous) {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        error!("error serializing snapshot to json: {}", e.to_string());
-                        Some(format!(
-                            "error serializing snapshot to json: {}",
-                            e.to_string()
-                        ))
-                    }
-                },
-            },
-        )
-        .await
-        {
-            error!("error logging action: {}", e.to_string());
+                Log::log(
+                    db,
+                    Operation::Delete,
+                    TableRef::Wave,
+                    user_id,
+                    Some(previous),
+                )
+                .await;
+
+                res
+            }
+            Err(_) => res,
         }
-
-        res
     }
 }
