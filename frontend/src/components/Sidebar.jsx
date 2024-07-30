@@ -95,7 +95,7 @@ function Sidebar({ index = -1 }) {
 >>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
           </NavLink>
         </li>
-        {role == "admin" && (
+        {role == "secretary" && (
           <li>
             <NavLink
               to="/admin/users"
