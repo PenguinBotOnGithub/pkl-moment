@@ -79,7 +79,7 @@ function UsersTable() {
                 <button className="btn btn-warning btn-xs rounded-lg mr-2">
                   Ganti Password
                 </button>
-                {row.role != "admin" && (
+                {row.role != "secretary" && (
                   <button
                     className="btn btn-error btn-xs rounded-lg"
                     onClick={() => {
