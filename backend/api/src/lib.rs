@@ -12,6 +12,7 @@ pub mod class;
 pub mod company;
 pub mod department;
 pub mod error;
+pub mod journal;
 pub mod letters;
 pub mod log;
 pub mod pdf;
