@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import Statistic from "../../components/count/Statistic";
-import { exportEntry, fetchEntries } from "../../services";
+import { exportEntry, fetchLetters } from "../../services";
 import Search from "../../components/Search";
-import host from "../../assets/strings/host";
 
 function EntriesAndDocument() {
   const navigate = useNavigate();
@@ -24,41 +23,10 @@ function EntriesAndDocument() {
   const [dataWave, setDataWave] = useState("");
   const { page } = useParams();
 
-  // const fetchWaveData = async () => {
-  //   try {
-  //     const response = await fetch(`${host}/api/wave?page=0&size=1000`, {
-  //       headers: {
-  //         Authorization: token,
-  //       },
-  //     });
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error: Status ${response.status}`);
-  //     }
-  //     const waveData = await response.json();
-  //     const selectedWaveId = cookies.get("selected-wave");
-  //     const wave = waveData.data.items.find(
-  //       (element) => element.id === parseInt(selectedWaveId)
-  //     );
-
-  //     if (wave) {
-  //       setDataWave(
-  //         `${new Date(wave.start_date).getFullYear()}/${new Date(
-  //           wave.end_date
-  //         ).getFullYear()}`
-  //       );
-  //     } else {
-  //       setDataWave("No wave selected");
-  //     }
-  //   } catch (err) {
-  //     alert("Something went wrong: " + err);
-  //     setDataWave("");
-  //   }
-  // };
-
-  const fetchDataForEntry = async (entryType) => {
+  const fetchDataForEntry = async () => {
     setLoading(true);
     try {
-      const entryData = await fetchEntries(entryType, page, max_item);
+      const entryData = await fetchLetters(page, max_item);
       setData(entryData.data.items);
       setIsDataEdited(entryData.data.items.map(() => false));
       setPageData(entryData.data);
@@ -74,79 +42,11 @@ function EntriesAndDocument() {
 
   useEffect(() => {
     console.log(data);
-    fetchDataForEntry(entryValue[currentEntry]);
-  }, [currentEntry, page]);
-
-  const deleteEntry = async (id) => {
-    try {
-      const response = await fetch(
-        `${host}/api/${entryValue[currentEntry]}/${id}/delete`,
-        {
-          headers: {
-            Authorization: token,
-          },
-          method: "DELETE",
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
-      setError(null);
-      fetchDataForEntry(entryValue[currentEntry]);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleInputChange = (index, field, value) => {
-    const newData = [...data];
-    newData[index][field] = value;
-    setData(newData);
-  };
-
-  function handleSelectRow(rowIndex) {
-    if (selectedRows.includes(rowIndex)) {
-      setSelectedRows(selectedRows.filter((index) => index !== rowIndex));
-    } else {
-      setSelectedRows([...selectedRows, rowIndex]);
-    }
-  }
-
-  function handleSelectTab(index) {
-    setCurrentEntry(index);
-  }
+    fetchDataForEntry();
+  }, [page]);
 
   function onAddHandle() {
-    navigate(`/admin/entries/${entryValue[currentEntry]}/add`);
-  }
-
-  function downloadBlob(blob, name = "file") {
-    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Create a link element
-    const link = document.createElement("a");
-
-    // Set link's href to point to the Blob URL
-    link.href = blobUrl;
-    link.download = name;
-
-    // Append link to the body
-    document.body.appendChild(link);
-
-    // Dispatch click event on the link
-    // This is necessary as link.click() does not work on the latest firefox
-    link.dispatchEvent(
-      new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-    );
-
-    // Remove link from body
-    document.body.removeChild(link);
+    navigate(`/admin/entries/add`);
   }
 
   const onExport = async (index) => {
@@ -162,27 +62,10 @@ function EntriesAndDocument() {
       <Search addOnClick={onAddHandle} />
       <Statistic entryCount={pageData && pageData.total_items} />
       <div className="flex flex-col gap-2">
-        <div className="flex justify-between items-center gap-2">
-          <div
-            role="tablist"
-            className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap"
-          >
-            {entryValue.map((entry, index) => (
-              <button
-                key={index}
-                role="tab"
-                onClick={() => handleSelectTab(index)}
-                className={`tab hover:bg-base-300 ease-in-out duration-150 ${
-                  currentEntry === index && `tab-active`
-                }`}
-              >
-                {entry.charAt(0).toUpperCase() + entry.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
         {loading ? (
           <div>Loading...</div>
+        ) : data.length === 0 ? (
+          <div>No data</div>
         ) : (
           <table className="table bg-base-100 border-0 overflow-hidden rounded-box">
             <thead className="bg-base-300">
@@ -202,7 +85,6 @@ function EntriesAndDocument() {
                   <td>{row.user}</td>
                   <td>{row.company}</td>
                   <td>{new Date(row.created_at).toLocaleDateString()}</td>
-
                   <td>
                     {row.verified ? (
                       <span className="opacity-60">Terverifikasi</span>
@@ -210,7 +92,6 @@ function EntriesAndDocument() {
                       <span>Belum Terversifikasi</span>
                     )}
                   </td>
-
                   <td className="flex flex-row flex-nowrap gap-2">
                     <button
                       className="btn btn-info btn-xs"
@@ -236,6 +117,7 @@ function EntriesAndDocument() {
             </tbody>
           </table>
         )}
+
         {pageData && (
           <div className="flex justify-center items-center gap-2">
             <button
@@ -252,7 +134,9 @@ function EntriesAndDocument() {
                 <button
                   key={index}
                   className={`join-item btn ${
-                    pageData.page === index ? "bg-primary text-primary-content" : "bg-base-100"
+                    pageData.page === index
+                      ? "bg-primary text-primary-content"
+                      : "bg-base-100"
                   }`}
                   onClick={() => handlePageChange(index)}
                 >

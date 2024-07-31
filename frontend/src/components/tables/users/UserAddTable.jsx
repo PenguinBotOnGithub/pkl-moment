@@ -43,11 +43,11 @@ function UserAddTable() {
       ) {
         alert("Please fill every data before submitting");
       } else {
-        const value = ["advisor"];
+        const value = ["coordinator"];
         if (value.includes(row.role.trim())) {
           handleSubmit(row);
         } else {
-          alert("please input role between admin or advisor");
+          alert("please input role between secretary or coordinator");
         }
       }
     });

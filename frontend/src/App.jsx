@@ -14,13 +14,8 @@ import CompanyAdd from "./routes/entries/company/CompanyAdd";
 import StudentAdd from "./routes/entries/student/StudentAdd";
 import Entry from "./routes/entries/Entry";
 import EntryAdd from "./routes/entries/EntryAdd";
-import Wave from "./routes/entries/wave/Wave";
-import WaveAdd from "./routes/entries/wave/WaveAdd";
 import UserAdd from "./routes/users/UserAdd";
-import SearchEntry from "./routes/SearchEntry";
-import SearchEntryDummy from "./routes/search/SearchEntryDummy";
-import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
-import Journal from "./routes/entries/Journal";
+import Journal from "./routes/journal/Journal";
 
 
 function App() {
@@ -53,9 +48,7 @@ function App() {
           path: "entries",
           children: [
             { path: ":entry/:id", element: <Entry /> },
-            { path: ":entry/add", element: <EntryAdd role={cookies.get("role")} /> },
-            { path: "wave/:page", element: <Wave /> },
-            { path: "wave/add", element: <WaveAdd /> },
+            { path: "add", element: <EntryAdd role={cookies.get("role")} /> },
             { path: "company", element: <Company /> },
             { path: "company/add", element: <CompanyAdd /> },
             { path: "student", element: <Student /> },

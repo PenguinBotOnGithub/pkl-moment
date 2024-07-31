@@ -15,7 +15,7 @@ function Search({ addOnClick }) {
       </div>
       <div className="flex flex-row-reverse flex-none gap-2">
         {addOnClick && (
-          <button className="flex-none btn bg-primary text-primary-content" onClick={addOnClick}>
+          <button className="flex-none btn btn-primary text-primary-content" onClick={addOnClick}>
             <span className="material-symbols-rounded icon-size-20">add</span>
             <span className="hidden md:block">Add</span>
           </button>
