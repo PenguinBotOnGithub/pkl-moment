@@ -8,6 +8,7 @@ pub mod class;
 pub mod company;
 pub mod department;
 pub mod invalidated_jwt;
+pub mod journal;
 pub mod letters;
 pub mod letters_student;
 pub mod log;

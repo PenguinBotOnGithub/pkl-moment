@@ -8,5 +8,6 @@ CREATE TYPE table_ref AS ENUM (
     'letters',
     'letters_student',
     'class',
-    'department'
+    'department',
+    'journal'
 );

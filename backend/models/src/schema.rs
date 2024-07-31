@@ -49,6 +49,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    journal (id) {
+        id -> Int4,
+        student_id -> Int4,
+        company_id -> Int4,
+        division -> Varchar,
+        entry_date -> Date,
+        start_time -> Time,
+        end_time -> Time,
+        activity -> Varchar,
+        img_url -> Varchar,
+        extra -> Nullable<Varchar>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     letters (id) {
         id -> Int4,
         user_id -> Int4,
@@ -126,6 +143,8 @@ diesel::table! {
 }
 
 diesel::joinable!(class -> department (department_id));
+diesel::joinable!(journal -> company (company_id));
+diesel::joinable!(journal -> student (student_id));
 diesel::joinable!(letters -> company (company_id));
 diesel::joinable!(letters -> user (user_id));
 diesel::joinable!(letters -> wave (wave_id));
@@ -139,6 +158,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     company,
     department,
     invalidated_jwt,
+    journal,
     letters,
     letters_student,
     log,
