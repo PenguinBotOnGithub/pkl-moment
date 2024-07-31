@@ -5,7 +5,7 @@ const token = cookies.get("access-token");
 
 const BASE_URL = 'http://127.0.0.1:8000';
 
-const fetchData = async (url, options = {}) => {
+export const fetchData = async (url, options = {}) => {
   try {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
@@ -32,8 +32,8 @@ export const login = async (formData) => {
   });
 };
 
-export const fetchEntries = async (entryType, page, size) => {
-  return await fetchData(`/api/${entryType}?page=${page}&size=${size}`);
+export const fetchLetters = async (page, size) => {
+  return await fetchData(`/api/letters?page=${page}&size=${size}`);
 };
 
 export const deleteEntry = async (entryType, id) => {
@@ -65,4 +65,4 @@ export const exportEntry = async (entryType, index) => {
   }
 };
 
-export default { login, fetchEntries, deleteEntry, exportEntry };
+export default { login, fetchLetters, deleteEntry, exportEntry, fetchData };

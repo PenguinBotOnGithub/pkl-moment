@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
-import CompanyDropdown from "../../components/dropdowns/CompanyDropdown";
-import AdviserDropdown from "../../components/dropdowns/AdviserDropdown";
 import host from "../../assets/strings/host";
 import Cookies from "universal-cookie";
+import Dropdown from "../../components/Dropdown";
+import { fetchData } from "../../services";
 
-function EntryAdd() {
+function EntryAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
-  const role = cookies.get("role");
   const token = cookies.get("access-token");
   const userId = cookies.get("user-id");
   const { entry } = useParams();
@@ -25,31 +24,23 @@ function EntryAdd() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentEndDate, setCurrentEndDate] = useState(0);
-  const entryValue = ["6 Bulan", "1 Tahun"];
-
-  const fetchData = async (url, setter, transform = (data) => data) => {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      const data = await response.json();
-      setter(transform(data.data.items));
-    } catch (err) {
-      alert("Something went wrong");
-      setter([]);
-    }
-  };
+  const endDateValue = ["6 Months", "1 Year"];
 
   useEffect(() => {
-    fetchData(`${host}/api/company?page=0&size=1000`, setCompany);
-    fetchData(`${host}/api/student?page=0&size=1000`, setStudents);
+    const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+      try {
+        const data = await fetchData(url);
+        setter(transform(data.data.items));
+      } catch (err) {
+        alert(err);
+        setter([]);
+      }
+    };
+
+    fetchDataWrapper(`/api/company?page=0&size=1000`, setCompany);
+    fetchDataWrapper(`/api/student?page=0&size=1000`, setStudents);
     if (role !== "advisor") {
-      fetchData(`${host}/api/user`, setAdvisers, (items) =>
+      fetchDataWrapper(`/api/user`, setAdvisers, (items) =>
         items.filter((user) => user.role === "advisor")
       );
     }
@@ -63,13 +54,12 @@ function EntryAdd() {
     setRows((prevRows) => prevRows.filter((_, i) => i !== index));
   };
 
-  const searchStudent = (value, setVisibleStudents) => {
+  const searchStudent = (value, setVisibleStudents, items) => {
     const searchTerm = value.toLowerCase();
-    const filteredStudents = matchSorter(value, searchTerm, {
-      threshold: matchSorter.rankings.STARTS_WITH,
-      keys: ["name"],
-    });
-    setVisibleStudents(filteredStudents);
+    const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().startsWith(searchTerm)
+  );
+    setVisibleStudents(filteredItems);
   };
 
   const addStudentsToEntry = async (entryId) => {
@@ -155,16 +145,20 @@ function EntryAdd() {
       {role !== "advisor" && (
         <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
           <label className={labelStyle}>Pembimbing</label>
-          <AdviserDropdown
-            value={advisers}
+          <Dropdown
+            items={advisers}
+            displayFields={["username","id"]}
+            searchField={"username"}
             setSelectedValue={setSelectedAdvisers}
           />
         </div>
       )}
       <div className="w-full max-w-screen-sm relative flex-row flex gap-2 items-center">
         <label className={labelStyle}>Perusahaan</label>
-        <CompanyDropdown
-          value={company}
+        <Dropdown
+          items={company}
+          displayFields={["name"]}
+          searchField={"name"}
           setSelectedValue={setSelectedCompany}
         />
       </div>
@@ -185,7 +179,7 @@ function EntryAdd() {
           role="tablist"
           className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap"
         >
-          {entryValue.map((entry, index) => (
+          {endDateValue.map((entry, index) => (
             <button
               key={index}
               role="tab"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import Statistic from "../../components/count/StatisticJournal";
-import { exportEntry, fetchEntries } from "../../services";
+import { exportEntry } from "../../services";
 import Search from "../../components/Search";
 import host from "../../assets/strings/host";
 
@@ -23,95 +23,6 @@ function Journal() {
   const [error, setError] = useState(null);
   const [dataWave, setDataWave] = useState("");
   const { page } = useParams();
-
-  // const fetchWaveData = async () => {
-  //   try {
-  //     const response = await fetch(`${host}/api/wave?page=0&size=1000`, {
-  //       headers: {
-  //         Authorization: token,
-  //       },
-  //     });
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error: Status ${response.status}`);
-  //     }
-  //     const waveData = await response.json();
-  //     const selectedWaveId = cookies.get("selected-wave");
-  //     const wave = waveData.data.items.find(
-  //       (element) => element.id === parseInt(selectedWaveId)
-  //     );
-
-  //     if (wave) {
-  //       setDataWave(
-  //         `${new Date(wave.start_date).getFullYear()}/${new Date(
-  //           wave.end_date
-  //         ).getFullYear()}`
-  //       );
-  //     } else {
-  //       setDataWave("No wave selected");
-  //     }
-  //   } catch (err) {
-  //     alert("Something went wrong: " + err);
-  //     setDataWave("");
-  //   }
-  // };
-
-  const fetchDataForEntry = async (entryType) => {
-    setLoading(true);
-    try {
-      const entryData = await fetchEntries(entryType, page, max_item);
-      setData(entryData.data.items);
-      setIsDataEdited(entryData.data.items.map(() => false));
-      setPageData(entryData.data);
-      setError(null);
-    } catch (err) {
-      console.log("Error fetching data: " + err);
-      setError(err.message);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log(data);
-    fetchDataForEntry(entryValue[currentEntry]);
-  }, [currentEntry, page]);
-
-  const deleteEntry = async (id) => {
-    try {
-      const response = await fetch(
-        `${host}/api/${entryValue[currentEntry]}/${id}/delete`,
-        {
-          headers: {
-            Authorization: token,
-          },
-          method: "DELETE",
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
-      setError(null);
-      fetchDataForEntry(entryValue[currentEntry]);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleInputChange = (index, field, value) => {
-    const newData = [...data];
-    newData[index][field] = value;
-    setData(newData);
-  };
-
-  function handleSelectRow(rowIndex) {
-    if (selectedRows.includes(rowIndex)) {
-      setSelectedRows(selectedRows.filter((index) => index !== rowIndex));
-    } else {
-      setSelectedRows([...selectedRows, rowIndex]);
-    }
-  }
 
   function handleSelectTab(index) {
     setCurrentEntry(index);
