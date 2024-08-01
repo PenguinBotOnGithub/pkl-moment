@@ -118,6 +118,17 @@ diesel::table! {
         class_id -> Int4,
         #[max_length = 5]
         nis -> Varchar,
+        user_id -> Int4,
+    }
+}
+
+diesel::table! {
+    tenure (id) {
+        id -> Int4,
+        student_id -> Int4,
+        advsch_id -> Int4,
+        advdudi_id -> Int4,
+        letters_id -> Int4,
     }
 }
 
@@ -152,6 +163,9 @@ diesel::joinable!(letters_student -> letters (letters_id));
 diesel::joinable!(letters_student -> student (student_id));
 diesel::joinable!(log -> user (user_id));
 diesel::joinable!(student -> class (class_id));
+diesel::joinable!(student -> user (user_id));
+diesel::joinable!(tenure -> letters (letters_id));
+diesel::joinable!(tenure -> student (student_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     class,
@@ -164,6 +178,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     log,
     signature,
     student,
+    tenure,
     user,
     wave,
 );

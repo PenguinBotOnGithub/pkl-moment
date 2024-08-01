@@ -6,6 +6,7 @@ use crate::log::Log;
 use crate::schema::*;
 use crate::student::{Student, StudentJoined};
 use crate::types::{Operation, TableRef};
+use crate::user::User;
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -129,10 +130,15 @@ impl Journal {
         use crate::schema::department;
         use crate::schema::journal::dsl::*;
         use crate::schema::student;
+        use crate::schema::user;
 
         let res = journal
             .filter(id.eq(param_id))
-            .inner_join(student::table.inner_join(class::table.inner_join(department::table)))
+            .inner_join(
+                student::table
+                    .inner_join(class::table.inner_join(department::table))
+                    .inner_join(user::table),
+            )
             .inner_join(company::table)
             .select((
                 id,
@@ -153,6 +159,7 @@ impl Journal {
                 created_at,
                 updated_at,
                 company::all_columns,
+                user::all_columns,
             ))
             .first::<(
                 i32,
@@ -173,6 +180,7 @@ impl Journal {
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
                 Company,
+                User,
             )>(db)
             .await
             .optional()?;
@@ -196,6 +204,7 @@ impl Journal {
             c_ts,
             u_ts,
             company,
+            mut user,
         )) = res
         else {
             return Ok(None);
@@ -213,6 +222,7 @@ impl Journal {
                     department: d_name,
                 },
                 nis: mem::take(&mut s_nis),
+                user: user.public(),
             },
             company: company,
             division: mem::take(&mut d_string),

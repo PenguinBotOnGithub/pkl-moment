@@ -6,6 +6,7 @@ use crate::log::Log;
 use crate::schema::*;
 use crate::student::{Student, StudentJoined};
 use crate::types::{Operation, TableRef};
+use crate::user::User;
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -101,10 +102,15 @@ impl LettersStudent {
         use crate::schema::department;
         use crate::schema::letters_student::dsl::*;
         use crate::schema::student;
+        use crate::schema::user;
 
         let res = letters_student
             .filter(letters_id.eq(param_letter_id))
-            .inner_join(student::table.inner_join(class::table.inner_join(department::table)))
+            .inner_join(
+                student::table
+                    .inner_join(class::table.inner_join(department::table))
+                    .inner_join(user::table),
+            )
             .select((
                 student::id,
                 student::name,
@@ -113,8 +119,9 @@ impl LettersStudent {
                 class::number,
                 department::name,
                 student::nis,
+                user::all_columns,
             ))
-            .load::<(i32, String, i32, i32, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String, User)>(db)
             .await
             .optional()?;
 
@@ -132,6 +139,7 @@ impl LettersStudent {
                             ref number,
                             ref mut d_name,
                             ref mut nis,
+                            ref mut user,
                         )| StudentJoined {
                             id: *s_id,
                             name: mem::take(name),
@@ -142,6 +150,7 @@ impl LettersStudent {
                                 department: mem::take(d_name),
                             },
                             nis: mem::take(nis),
+                            user: user.public(),
                         },
                     )
                     .collect();
