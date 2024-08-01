@@ -197,6 +197,9 @@ async fn get_letters(
 
             Ok(reply::json(&ApiResponse::ok("success".to_owned(), letters)))
         }
+        _ => Err(reject::custom(ClientError::Authorization(
+            "user not authorized to administrate letters".to_owned(),
+        ))),
     }
 }
 
@@ -227,6 +230,11 @@ async fn create_letters(
 
             payload.verified = Some(false);
             payload.verified_at = None;
+        }
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user not authorized to administrate letters".to_owned(),
+            )))
         }
     }
 
@@ -265,6 +273,11 @@ async fn read_letters(
                 }
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+            }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
             }
         }
     } else {
@@ -377,6 +390,11 @@ async fn delete_letters(
                     )));
                 }
             }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
+            }
         }
     } else {
         return Err(reject::custom(ClientError::NotFound(
@@ -427,6 +445,11 @@ async fn get_letters_students(
                 }
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+            }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
             }
         },
         None => Err(reject::custom(ClientError::NotFound(
@@ -481,6 +504,11 @@ async fn add_letters_student(
                 .map_err(handle_fk_not_exists_unique_violation)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
             }
         }
     } else {
@@ -540,6 +568,11 @@ async fn remove_letters_student(
                     "student not found".to_owned(),
                 )))
             }
+        }
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user not authorized to administrate letters".to_owned(),
+            )))
         }
     }
 }
