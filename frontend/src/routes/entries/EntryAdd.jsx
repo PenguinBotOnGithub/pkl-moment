@@ -27,7 +27,11 @@ function EntryAdd({ role }) {
   const endDateValue = ["6 Months", "1 Year"];
 
   useEffect(() => {
-    const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+    const fetchDataWrapper = async (
+      url,
+      setter,
+      transform = (data) => data
+    ) => {
       try {
         const data = await fetchData(url);
         setter(transform(data.data.items));
@@ -37,11 +41,19 @@ function EntryAdd({ role }) {
       }
     };
 
+    const flattenStudentData = (students) => {
+      return students.map((student) => ({
+        id: student.id,
+        name: student.name,
+        grade: `${student.class.grade} ${student.class.department} ${student.class.number}`,
+      }));
+    };
+
     fetchDataWrapper(`/api/company?page=0&size=1000`, setCompany);
-    fetchDataWrapper(`/api/student?page=0&size=1000`, setStudents);
+    fetchDataWrapper(`/api/student?page=0&size=1000`, setStudents, flattenStudentData);
     if (role !== "advisor") {
       fetchDataWrapper(`/api/user`, setAdvisers, (items) =>
-        items.filter((user) => user.role === "advisor")
+        items.filter((user) => user.role === "coordinator")
       );
     }
   }, []);
@@ -57,8 +69,8 @@ function EntryAdd({ role }) {
   const searchStudent = (value, setVisibleStudents, items) => {
     const searchTerm = value.toLowerCase();
     const filteredItems = items.filter((item) =>
-    item.name.toLowerCase().startsWith(searchTerm)
-  );
+      item.name.toLowerCase().startsWith(searchTerm)
+    );
     setVisibleStudents(filteredItems);
   };
 
@@ -70,7 +82,7 @@ function EntryAdd({ role }) {
 
       try {
         const response = await fetch(
-          `${host}/api/${entry}/${entryId}/student/add`,
+          `${host}/api/letters/${entryId}/student/add`,
           {
             method: "POST",
             headers: {
@@ -94,7 +106,7 @@ function EntryAdd({ role }) {
   const handleOnSubmit = async () => {
     const selectedWave = cookies.get("selected-wave");
 
-    if (role === "advisor") {
+    if (role === "coordinator") {
       setSelectedAdvisers(userId);
     }
 
@@ -107,7 +119,7 @@ function EntryAdd({ role }) {
     };
 
     try {
-      const response = await fetch(`${host}/api/${entry}/create`, {
+      const response = await fetch(`${host}/api/letters/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,8 +130,7 @@ function EntryAdd({ role }) {
 
       const result = await response.json();
       if (result.status === "success") {
-        const entryId = result.data.id;
-        await addStudentsToEntry(entryId);
+        await addStudentsToEntry(result.data.id);
         navigate("/admin/entries/0");
       } else {
         alert("Submission failed");
@@ -147,7 +158,7 @@ function EntryAdd({ role }) {
           <label className={labelStyle}>Pembimbing</label>
           <Dropdown
             items={advisers}
-            displayFields={["username","id"]}
+            displayFields={["username"]}
             searchField={"username"}
             setSelectedValue={setSelectedAdvisers}
           />
@@ -157,7 +168,7 @@ function EntryAdd({ role }) {
         <label className={labelStyle}>Perusahaan</label>
         <Dropdown
           items={company}
-          displayFields={["name"]}
+          displayFields={["name", "address"]}
           searchField={"name"}
           setSelectedValue={setSelectedCompany}
         />
@@ -200,12 +211,20 @@ function EntryAdd({ role }) {
         onDeleteRow={deleteRow}
         onSearchStudent={searchStudent}
         isMaxWidth={true}
+        items={students}
       />
       <button
         className="btn btn-primary max-w-screen-sm w-full"
         onClick={handleOnSubmit}
       >
         Send
+      </button>
+      <button
+        onClick={() => {
+          console.log(students);
+        }}
+      >
+        Debug
       </button>
     </div>
   );
