@@ -97,14 +97,14 @@ impl LettersStudent {
     pub async fn filter_by_letter(
         db: &mut Connection,
         param_letter_id: i32,
-    ) -> QueryResult<Option<Vec<StudentJoined>>> {
+    ) -> QueryResult<Vec<StudentJoined>> {
         use crate::schema::class;
         use crate::schema::department;
         use crate::schema::letters_student::dsl::*;
         use crate::schema::student;
         use crate::schema::user;
 
-        let res = letters_student
+        let mut res = letters_student
             .filter(letters_id.eq(param_letter_id))
             .inner_join(
                 student::table
@@ -122,42 +122,34 @@ impl LettersStudent {
                 user::all_columns,
             ))
             .load::<(i32, String, i32, i32, i32, String, String, User)>(db)
-            .await
-            .optional()?;
+            .await?;
 
-        match res {
-            None => Ok(None),
-            Some(mut v) => {
-                let constructed = v
-                    .iter_mut()
-                    .map(
-                        |(
-                            ref s_id,
-                            ref mut name,
-                            ref c_id,
-                            ref grade,
-                            ref number,
-                            ref mut d_name,
-                            ref mut nis,
-                            ref mut user,
-                        )| StudentJoined {
-                            id: *s_id,
-                            name: mem::take(name),
-                            class: ClassJoined {
-                                id: *c_id,
-                                grade: *grade,
-                                number: *number,
-                                department: mem::take(d_name),
-                            },
-                            nis: mem::take(nis),
-                            user: user.public(),
-                        },
-                    )
-                    .collect();
-
-                Ok(Some(constructed))
-            }
-        }
+        Ok(res
+            .iter_mut()
+            .map(
+                |(
+                    ref s_id,
+                    ref mut name,
+                    ref c_id,
+                    ref grade,
+                    ref number,
+                    ref mut d_name,
+                    ref mut nis,
+                    ref mut user,
+                )| StudentJoined {
+                    id: *s_id,
+                    name: mem::take(name),
+                    class: ClassJoined {
+                        id: *c_id,
+                        grade: *grade,
+                        number: *number,
+                        department: mem::take(d_name),
+                    },
+                    nis: mem::take(nis),
+                    user: user.public(),
+                },
+            )
+            .collect())
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
