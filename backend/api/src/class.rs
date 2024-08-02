@@ -10,7 +10,7 @@ use warp::{
 };
 
 use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_depended_data_delete;
+use crate::error::{handle_fk_data_not_exists, handle_fk_depended_data_delete};
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -119,7 +119,7 @@ async fn create_class(
     let mut db = db.lock();
     let result = Class::create(&mut db, &payload, claims.id)
         .await
-        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+        .map_err(handle_fk_data_not_exists)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
