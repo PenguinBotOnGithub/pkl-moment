@@ -53,7 +53,7 @@ function Entry() {
 
   const onExport = async (index) => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${index}/pdf`, {
+      const response = await fetch(`${host}/api/letters/${index}/pdf`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
@@ -82,7 +82,7 @@ function Entry() {
 
   const fetchDataForEntry = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}`, {
+      const response = await fetch(`${host}/api/letters/${id}`, {
         headers: {
           Authorization: token,
         },
@@ -104,7 +104,7 @@ function Entry() {
 
   const fetchDataForEntryStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}/student`, {
+      const response = await fetch(`${host}/api/letters/${id}/student`, {
         headers: {
           Authorization: token,
         },
@@ -142,7 +142,7 @@ function Entry() {
 
   const onVerify = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}/verify`, {
+      const response = await fetch(`${host}/api/letters/${id}/verify`, {
         headers: {
           Authorization: token,
         },
@@ -161,7 +161,7 @@ function Entry() {
 
   const onDelete = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}`, {
+      const response = await fetch(`${host}/api/letters/${id}/delete`, {
         headers: {
           Authorization: token,
         },
@@ -221,7 +221,7 @@ function Entry() {
       try {
         // Update entry data
         // if (updatedEntryData) {
-        //   await fetch(`${host}/api/${entry}/${id}/update`, {
+        //   await fetch(`${host}/api/letters/${id}/update`, {
         //     method: "PATCH",
         //     headers: {
         //       "Content-Type": "application/json",
@@ -233,7 +233,7 @@ function Entry() {
 
         // Add new students
         for (const student of studentsToAdd) {
-          await fetch(`${host}/api/${entry}/${id}/student/add`, {
+          await fetch(`${host}/api/letters/${id}/student/add`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -246,7 +246,7 @@ function Entry() {
         // Delete removed students
         for (const student of studentsToDelete) {
           await fetch(
-            `${host}/api/${entry}/${id}/student/${student.id}/remove`,
+            `${host}/api/letters/${id}/student/${student.id}/remove`,
             {
               method: "DELETE",
               headers: {
