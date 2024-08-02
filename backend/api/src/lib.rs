@@ -19,6 +19,7 @@ pub mod pdf;
 pub mod routes;
 pub mod signature;
 pub mod student;
+pub mod tenure;
 pub mod user;
 pub mod wave;
 

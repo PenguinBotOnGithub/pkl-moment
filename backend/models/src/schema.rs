@@ -126,8 +126,8 @@ diesel::table! {
     tenure (id) {
         id -> Int4,
         student_id -> Int4,
-        advsch_id -> Int4,
-        advdudi_id -> Int4,
+        advsch_id -> Nullable<Int4>,
+        advdudi_id -> Nullable<Int4>,
         letters_id -> Int4,
     }
 }

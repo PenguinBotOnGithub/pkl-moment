@@ -15,6 +15,7 @@ pub enum TableRef {
     Class,
     Department,
     Journal,
+    Tenure,
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]

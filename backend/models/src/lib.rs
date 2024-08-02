@@ -15,6 +15,7 @@ pub mod log;
 pub mod schema;
 pub mod signature;
 pub mod student;
+pub mod tenure;
 pub mod types;
 pub mod user;
 pub mod wave;

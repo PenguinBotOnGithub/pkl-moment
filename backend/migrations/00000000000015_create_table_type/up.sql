@@ -9,5 +9,6 @@ CREATE TYPE table_ref AS ENUM (
     'letters_student',
     'class',
     'department',
-    'journal'
+    'journal',
+    'tenure'
 );
