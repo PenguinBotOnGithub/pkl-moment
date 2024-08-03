@@ -139,19 +139,20 @@ async fn create_student(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let year = chrono::Local::now().year();
-    let mut name = payload.name.clone();
-    name.retain(|c| !c.is_whitespace());
-    name = format!("{}{}", year, name);
-    let c_name = name.clone();
+    let mut username = payload.name.trim().to_string();
+    username.retain(|c| !c.is_whitespace());
+    let mut username = username.to_lowercase();
+    username = format!("{}{}", year, username);
+    let c_name = username.clone();
 
     let salt = SaltString::generate(&mut OsRng);
     let hash = Argon2::default()
-        .hash_password(&name.as_bytes(), &salt)
+        .hash_password(&username.as_bytes(), &salt)
         .map_err(|e| reject::custom(InternalError::ArgonError(e.to_string())))?
         .to_string();
 
     let create_user = CreateUser {
-        username: name,
+        username: username,
         password: hash,
         role: UserRole::Student,
     };
@@ -165,9 +166,9 @@ async fn create_student(
                 let result = Student::create(
                     conn,
                     &CreateStudent {
-                        name: payload.name,
+                        name: payload.name.trim().to_owned(),
                         class_id: payload.class_id,
-                        nis: payload.nis,
+                        nis: payload.nis.trim().to_owned(),
                         user_id: user.id,
                     },
                     claims.id,
