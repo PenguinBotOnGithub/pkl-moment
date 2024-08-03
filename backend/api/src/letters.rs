@@ -461,6 +461,16 @@ async fn add_letters_student(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let verified = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(verified) = verified else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters data not found".to_owned(),
+        )));
+    };
+
     let letter_owner = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -485,6 +495,13 @@ async fn add_letters_student(
                 if n != claims.id {
                     return Err(reject::custom(ClientError::Authorization(
                         "insufficient privilege to modify others data".to_owned(),
+                    )));
+                }
+
+                if verified {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "user do not have permission to manipulate verified letters data"
+                            .to_owned(),
                     )));
                 }
 
@@ -521,6 +538,16 @@ async fn remove_letters_student(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let verified = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(verified) = verified else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters data not found".to_owned(),
+        )));
+    };
+
     let Some(n) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
@@ -549,6 +576,12 @@ async fn remove_letters_student(
             if n != claims.id {
                 return Err(reject::custom(ClientError::Authorization(
                     "insufficient privilege to modify others data".to_owned(),
+                )));
+            }
+
+            if verified {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user do not have permission to manipulate verified letters data".to_owned(),
                 )));
             }
 
