@@ -137,7 +137,7 @@ diesel::table! {
 
     user (id) {
         id -> Int4,
-        #[max_length = 20]
+        #[max_length = 50]
         username -> Varchar,
         password -> Text,
         role -> UserRole,
