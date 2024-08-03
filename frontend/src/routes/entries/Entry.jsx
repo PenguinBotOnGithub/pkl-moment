@@ -5,6 +5,7 @@ import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAd
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host"; // Import the host URL
 import { matchSorter } from "match-sorter";
+import { exportEntry } from "../../services/functions/letters";
 
 function Entry() {
   let { id, entry } = useParams();
@@ -13,71 +14,18 @@ function Entry() {
   const [dataEntryStudent, setDataEntryStudent] = useState([]);
   const [dataAllStudent, setDataAllStudent] = useState([]);
   const [verifikasi, setVerifikasi] = useState(true);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
   const cookies = new Cookies();
   const role = cookies.get("role");
   const token = cookies.get("access-token");
   const [isStudentListChanged, setIsStudentListChanged] = useState(false);
-  const [isEntryChanged, setIsEntryChanged] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const navigate = useNavigate();
 
-  function downloadBlob(blob, name = "file") {
-    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Create a link element
-    const link = document.createElement("a");
-
-    // Set link's href to point to the Blob URL
-    link.href = blobUrl;
-    link.download = name;
-
-    // Append link to the body
-    document.body.appendChild(link);
-
-    // Dispatch click event on the link
-    // This is necessary as link.click() does not work on the latest firefox
-    link.dispatchEvent(
-      new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-    );
-
-    // Remove link from body
-    document.body.removeChild(link);
-  }
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const onExport = async (index) => {
-    try {
-      const response = await fetch(`${host}/api/letters/${index}/pdf`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        method: "POST",
-        body: JSON.stringify({
-          signature_1_id: 1,
-          signature_2_id: 2,
-        }),
-      });
-      let bin = [];
-      for await (const chunk of response.body) {
-        console.log("dfdfd");
-        console.log(chunk);
-        bin.push(chunk);
-      }
-      let blob = new Blob(bin, { type: "application/pdf" });
-      console.log(await blob.arrayBuffer());
-      downloadBlob(blob, "pdfff.pdf");
-      setError(null);
-      fetchDataForEntry(entryValue[currentEntry]);
-    } catch (err) {
-      setError(err.message);
-    }
+    exportEntry(index);
   };
 
   const fetchDataForEntry = async () => {

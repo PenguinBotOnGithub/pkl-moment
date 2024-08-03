@@ -26,44 +26,11 @@ export const fetchData = async (url, options = {}) => {
   }
 };
 
-export const login = async (formData) => {
-  return await fetchData('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(formData),
+export const login = async (credentials) => {
+  return await fetchData("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
   });
 };
 
-export const fetchLetters = async (page, size) => {
-  return await fetchData(`/api/letters?page=${page}&size=${size}`);
-};
-
-export const deleteEntry = async (entryType, id) => {
-  return await fetchData(`/api/${entryType}/${id}/delete`, {
-    method: 'DELETE',
-  });
-};
-
-export const exportEntry = async (entryType, index) => {
-  try {
-    const response = await fetch(
-      `${host}/api/${entryType}/${index}/pdf`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        method: "GET",
-      }
-    );
-    let bin = [];
-    for await (const chunk of response.body) {
-      bin.push(chunk);
-    }
-    let blob = new Blob(bin, { type: "application/pdf" });
-    downloadBlob(blob, "pkl.pdf");
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-export default { login, fetchLetters, deleteEntry, exportEntry, fetchData };
+export default { fetchData, login };

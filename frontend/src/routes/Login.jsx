@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"; // To navigate after login
 import Navbar from "../components/Navbar";
 import PKLMomentIcon from "../assets/drawable/PKLMomentIcon";
 import getCurrentDate from "../assets/strings/getCurrentDate";
-import { login } from '../services/index'; // Import the login function from the api.js file
+import { login } from '../services'; // Import the login function from the api.js file
 
 function Login({ cookies }) {
   const [formData, setFormData] = useState({
