@@ -2,17 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import Statistic from "../../components/count/Statistic";
-import { exportEntry, fetchLetters } from "../../services";
+import { exportEntry, fetchLetters } from "../../services/functions/letters";
 import Search from "../../components/Search";
 
 function EntriesAndDocument() {
   const navigate = useNavigate();
   const cookies = new Cookies();
-  const role = cookies.get("role");
-  const token = cookies.get("access-token");
   const max_item = cookies.get("max-item");
 
-  const [selectedRows, setSelectedRows] = useState([]);
   const [currentEntry, setCurrentEntry] = useState(0);
   const entryValue = ["permohonan", "pengantaran", "penarikan"];
   const [pageData, setPageData] = useState();
@@ -20,7 +17,6 @@ function EntriesAndDocument() {
   const [isDataEdited, setIsDataEdited] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dataWave, setDataWave] = useState("");
   const { page } = useParams();
 
   const fetchDataForEntry = async () => {
@@ -49,8 +45,8 @@ function EntriesAndDocument() {
     navigate(`/admin/entries/add`);
   }
 
-  const onExport = async (index) => {
-    exportEntry();
+  const onExport = async (id) => {
+    exportEntry(id);
   };
 
   function handlePageChange(index) {

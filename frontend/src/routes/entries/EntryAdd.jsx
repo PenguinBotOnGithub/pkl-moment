@@ -5,6 +5,7 @@ import host from "../../assets/strings/host";
 import Cookies from "universal-cookie";
 import Dropdown from "../../components/Dropdown";
 import { fetchData } from "../../services";
+import { assignStudentToLetter } from "../../services/functions/students";
 
 function EntryAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
@@ -79,26 +80,12 @@ function EntryAdd({ role }) {
       const body = {
         student_id: row.id,
       };
-
-      try {
-        const response = await fetch(
-          `${host}/api/letters/${entryId}/student/add`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token,
-            },
-            body: JSON.stringify(body),
-          }
-        );
-
-        const result = await response.json();
-        if (result.status !== "success") {
-          alert(`Failed to add student ${row.name}`);
-        }
-      } catch (error) {
-        alert(`Something went wrong: ${error.message}`);
+  
+      const result = await assignStudentToLetter(entryId, body);
+  
+      // Optional: Handle errors or do something with the result
+      if (!result || result.status !== "success") {
+        console.error(`Failed to add student with ID ${row.id}`);
       }
     }
   };
