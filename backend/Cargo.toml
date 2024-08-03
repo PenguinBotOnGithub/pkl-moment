@@ -5,6 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.86"
 api = { path = "api" }
 argon2 = "0.5.3"
 diesel = { version = "2.1.6", features = ["chrono"] }
