@@ -155,12 +155,21 @@ impl Journal {
         param_user_id: i32,
     ) -> anyhow::Result<Journal> {
         use crate::schema::journal::dsl::*;
+        use crate::schema::letters;
         use crate::schema::tenure::dsl as tenure;
 
-        let tenure = tenure::tenure
+        let res = tenure::tenure
             .filter(tenure::id.eq(item.tenure_id))
-            .first::<Tenure>(db)
+            .inner_join(letters::table)
+            .select((
+                crate::schema::tenure::all_columns,
+                letters::verified,
+                letters::start_date,
+                letters::end_date,
+            ))
+            .first::<(Tenure, bool, chrono::NaiveDate, chrono::NaiveDate)>(db)
             .await?;
+        let (tenure, verified, s_date, e_date) = res;
 
         if let None = tenure.advsch_id {
             return Err(anyhow!(
@@ -171,6 +180,26 @@ impl Journal {
         if let None = tenure.advdudi_id {
             return Err(anyhow!(
                 "not allowed to create journal when an advisor from dudi has not been assigned"
+            ));
+        }
+
+        if !verified {
+            return Err(anyhow!("letters data is not verified"));
+        }
+
+        let today = chrono::Local::now().date_naive();
+        if today > s_date {
+            return Err(anyhow!("user's tenure has not started yet"));
+        }
+
+        if item.entry_date < s_date {
+            return Err(anyhow!(
+                "entry_date can not be earlier than tenure's start date"
+            ));
+        }
+        if item.entry_date > e_date {
+            return Err(anyhow!(
+                "entry_date can not be later than tenure's end date"
             ));
         }
 
