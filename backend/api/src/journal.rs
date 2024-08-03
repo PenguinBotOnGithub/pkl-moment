@@ -1,8 +1,7 @@
-use std::{collections::HashMap, num::ParseIntError, sync::Arc};
-
 use diesel_async::AsyncPgConnection;
 use models::journal::{CreateJournal, Journal, UpdateJournal};
 use parking_lot::Mutex;
+use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
@@ -117,9 +116,12 @@ async fn create_journal(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let result = Journal::create(&mut db, &payload, claims.id)
+    let result = Journal::create_checked(&mut db, &payload, claims.id)
         .await
-        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+        .map_err(|e| match e.downcast::<diesel::result::Error>() {
+            Ok(e) => reject::custom(InternalError::DatabaseError(e.to_string())),
+            Err(e) => reject::custom(ClientError::InvalidInput(e.to_string())),
+        })?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }

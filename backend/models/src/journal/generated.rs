@@ -1,13 +1,13 @@
 /* This file is generated and managed by dsync */
-use std::mem;
-
+use anyhow::anyhow;
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
+use std::mem;
 
 use crate::diesel::prelude::*;
 use crate::log::Log;
-use crate::schema::*;
+use crate::schema::journal;
 use crate::tenure::Tenure;
 use crate::types::{Operation, TableRef};
 
@@ -116,6 +116,48 @@ impl Journal {
         }
 
         res
+    }
+
+    pub async fn create_checked(
+        db: &mut Connection,
+        item: &CreateJournal,
+        param_user_id: i32,
+    ) -> anyhow::Result<Journal> {
+        use crate::schema::journal::dsl::*;
+        use crate::schema::tenure::dsl as tenure;
+
+        let tenure = tenure::tenure
+            .filter(tenure::id.eq(item.tenure_id))
+            .first::<Tenure>(db)
+            .await?;
+
+        if let None = tenure.advsch_id {
+            return Err(anyhow!(
+                "not allowed to create journal when an advisor from school has not been assigned"
+            ));
+        }
+
+        if let None = tenure.advdudi_id {
+            return Err(anyhow!(
+                "not allowed to create journal when an advisor from dudi has not been assigned"
+            ));
+        }
+
+        let res = diesel::insert_into(journal)
+            .values(item)
+            .get_result::<Self>(db)
+            .await?;
+
+        Log::log(
+            db,
+            Operation::Create,
+            TableRef::Journal,
+            param_user_id,
+            None::<u8>,
+        )
+        .await;
+
+        Ok(res)
     }
 
     pub async fn read_joined(
