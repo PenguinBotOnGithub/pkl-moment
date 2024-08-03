@@ -92,6 +92,37 @@ pub struct PaginationResult<T> {
 }
 
 impl Journal {
+    pub async fn get_owner_id(db: &mut Connection, param_id: i32) -> QueryResult<Option<i32>> {
+        use crate::schema::journal::dsl::*;
+        use crate::schema::student;
+        use crate::schema::tenure;
+        use crate::schema::user;
+
+        journal
+            .filter(id.eq(param_id))
+            .inner_join(tenure::table.inner_join(student::table.inner_join(user::table)))
+            .select(user::id)
+            .first::<i32>(db)
+            .await
+            .optional()
+    }
+
+    pub async fn get_advisors(
+        db: &mut Connection,
+        param_id: i32,
+    ) -> QueryResult<Option<(Option<i32>, Option<i32>)>> {
+        use crate::schema::journal::dsl::*;
+        use crate::schema::tenure;
+
+        journal
+            .filter(id.eq(param_id))
+            .inner_join(tenure::table)
+            .select((tenure::advsch_id, tenure::advdudi_id))
+            .first::<(Option<i32>, Option<i32>)>(db)
+            .await
+            .optional()
+    }
+
     pub async fn create(
         db: &mut Connection,
         item: &CreateJournal,

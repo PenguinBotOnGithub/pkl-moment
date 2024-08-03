@@ -1,19 +1,19 @@
-use diesel_async::AsyncPgConnection;
-use models::journal::{CreateJournal, Journal, UpdateJournal};
-use parking_lot::Mutex;
-use std::{collections::HashMap, num::ParseIntError, sync::Arc};
-use warp::{
-    reject::{self, Rejection},
-    reply::{self, Reply},
-    Filter,
-};
-
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_depended_data_delete;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
+};
+use diesel_async::AsyncPgConnection;
+use models::journal::{CreateJournal, Journal, UpdateJournal};
+use models::types::UserRole;
+use parking_lot::Mutex;
+use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use warp::{
+    reject::{self, Rejection},
+    reply::{self, Reply},
+    Filter,
 };
 
 pub fn journals_routes(
@@ -35,7 +35,7 @@ pub fn journals_routes(
         .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(create_journal);
@@ -53,7 +53,7 @@ pub fn journals_routes(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::patch())
-        .and(with_auth_with_claims(true, jwt_key.clone(), db.clone()))
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_json())
         .and(with_db(db.clone()))
         .and_then(update_journal);
@@ -147,6 +147,81 @@ async fn update_journal(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let owner = Journal::get_owner_id(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(owner) = owner else {
+        return Err(reject::custom(ClientError::NotFound(
+            "journal not found".to_owned(),
+        )));
+    };
+    match &claims.role {
+        UserRole::Secretary => {}
+        UserRole::Coordinator => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not allowed to manipulate journal entry".to_owned(),
+            )));
+        }
+        UserRole::AdvisorSchool => {
+            let adv = Journal::get_advisors(&mut db, id)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let Some((sch, _)) = adv else {
+                return Err(reject::custom(ClientError::NotFound(
+                    "journal entry not found".to_owned(),
+                )));
+            };
+
+            match sch {
+                None => {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "advisor is not assigned to this student".to_owned(),
+                    )));
+                }
+                Some(n) => {
+                    if n != *&claims.id {
+                        return Err(reject::custom(ClientError::Authorization(
+                            "advisor is not assigned to this student".to_owned(),
+                        )));
+                    }
+                }
+            }
+        }
+        UserRole::AdvisorDudi => {
+            let adv = Journal::get_advisors(&mut db, id)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let Some((_, dudi)) = adv else {
+                return Err(reject::custom(ClientError::NotFound(
+                    "journal entry not found".to_owned(),
+                )));
+            };
+
+            match dudi {
+                None => {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "advisor is not assigned to this student".to_owned(),
+                    )));
+                }
+                Some(n) => {
+                    if n != *&claims.id {
+                        return Err(reject::custom(ClientError::Authorization(
+                            "advisor is not assigned to this student".to_owned(),
+                        )));
+                    }
+                }
+            }
+        }
+        UserRole::Student => {
+            if owner != *&claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to modify other users' data".to_owned(),
+                )));
+            }
+        }
+    }
+
     let result = Journal::update(&mut db, id, &payload, claims.id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
