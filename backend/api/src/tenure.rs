@@ -74,10 +74,19 @@ pub fn tenures_routes(
         .and(with_db(db.clone()))
         .and_then(remove_advisor);
 
+    let my_tenures_route = tenure
+        .and(warp::path("my"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(my_tenures);
+
     get_tenures_route
         .or(read_tenure_route)
         .or(add_advisor_route)
         .or(remove_advisor_route)
+        .or(my_tenures_route)
 }
 
 async fn get_tenures(
@@ -194,4 +203,16 @@ async fn remove_advisor(
     }
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+}
+
+async fn my_tenures(
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let mut db = db.lock();
+    let result = Tenure::get_tenures_by_user(&mut db, *&claims.id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }

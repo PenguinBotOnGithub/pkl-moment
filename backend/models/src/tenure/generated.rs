@@ -54,6 +54,13 @@ pub struct TenureBrief {
     pub end_date: chrono::NaiveDate,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct TenureMini {
+    pub id: i32,
+    pub start_date: chrono::NaiveDate,
+    pub end_date: chrono::NaiveDate,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=tenure)]
 pub struct CreateTenure {
@@ -588,5 +595,32 @@ impl Tenure {
         }
 
         res
+    }
+
+    pub async fn get_tenures_by_user(
+        db: &mut Connection,
+        param_user_id: i32,
+    ) -> QueryResult<Vec<TenureMini>> {
+        use crate::schema::letters;
+        use crate::schema::student;
+        use crate::schema::tenure::dsl::*;
+        use crate::schema::user;
+
+        let res = tenure
+            .inner_join(student::table.inner_join(user::table))
+            .inner_join(letters::table)
+            .filter(user::id.eq(param_user_id))
+            .select((id, letters::start_date, letters::end_date))
+            .load::<(i32, chrono::NaiveDate, chrono::NaiveDate)>(db)
+            .await?
+            .iter()
+            .map(|v| TenureMini {
+                id: v.0,
+                start_date: v.1,
+                end_date: v.2,
+            })
+            .collect();
+
+        Ok(res)
     }
 }
