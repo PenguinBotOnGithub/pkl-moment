@@ -51,8 +51,7 @@ diesel::table! {
 diesel::table! {
     journal (id) {
         id -> Int4,
-        student_id -> Int4,
-        company_id -> Int4,
+        tenure_id -> Int4,
         division -> Varchar,
         entry_date -> Date,
         start_time -> Time,
@@ -154,8 +153,7 @@ diesel::table! {
 }
 
 diesel::joinable!(class -> department (department_id));
-diesel::joinable!(journal -> company (company_id));
-diesel::joinable!(journal -> student (student_id));
+diesel::joinable!(journal -> tenure (tenure_id));
 diesel::joinable!(letters -> company (company_id));
 diesel::joinable!(letters -> user (user_id));
 diesel::joinable!(letters -> wave (wave_id));

@@ -1,16 +1,15 @@
 /* This file is generated and managed by dsync */
-use crate::class::ClassJoined;
-use crate::company::Company;
-use crate::diesel::prelude::*;
-use crate::log::Log;
-use crate::schema::*;
-use crate::student::{Student, StudentJoined};
-use crate::types::{Operation, TableRef};
-use crate::user::User;
+use std::mem;
+
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
-use std::mem;
+
+use crate::diesel::prelude::*;
+use crate::log::Log;
+use crate::schema::*;
+use crate::tenure::Tenure;
+use crate::types::{Operation, TableRef};
 
 type Connection = diesel_async::AsyncPgConnection;
 
@@ -26,11 +25,10 @@ type Connection = diesel_async::AsyncPgConnection;
     Associations,
     Selectable,
 )]
-#[diesel(table_name=journal, primary_key(id), belongs_to(Company, foreign_key=company_id) , belongs_to(Student, foreign_key=student_id))]
+#[diesel(table_name=journal, primary_key(id), belongs_to(Tenure, foreign_key=tenure_id))]
 pub struct Journal {
     pub id: i32,
-    pub student_id: i32,
-    pub company_id: i32,
+    pub tenure_id: i32,
     pub division: String,
     pub entry_date: chrono::NaiveDate,
     pub start_time: chrono::NaiveTime,
@@ -45,8 +43,8 @@ pub struct Journal {
 #[derive(Debug, Serialize, Clone)]
 pub struct JournalJoined {
     pub id: i32,
-    pub student: StudentJoined,
-    pub company: Company,
+    pub student: String,
+    pub company: String,
     pub division: String,
     pub entry_date: chrono::NaiveDate,
     pub start_time: chrono::NaiveTime,
@@ -61,8 +59,7 @@ pub struct JournalJoined {
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=journal)]
 pub struct CreateJournal {
-    pub student_id: i32,
-    pub company_id: i32,
+    pub tenure_id: i32,
     pub division: String,
     pub entry_date: chrono::NaiveDate,
     pub start_time: chrono::NaiveTime,
@@ -125,30 +122,23 @@ impl Journal {
         db: &mut Connection,
         param_id: i32,
     ) -> QueryResult<Option<JournalJoined>> {
-        use crate::schema::class;
         use crate::schema::company;
-        use crate::schema::department;
         use crate::schema::journal::dsl::*;
+        use crate::schema::letters;
         use crate::schema::student;
-        use crate::schema::user;
+        use crate::schema::tenure;
 
         let res = journal
             .filter(id.eq(param_id))
             .inner_join(
-                student::table
-                    .inner_join(class::table.inner_join(department::table))
-                    .inner_join(user::table),
+                tenure::table
+                    .inner_join(student::table)
+                    .inner_join(letters::table.inner_join(company::table)),
             )
-            .inner_join(company::table)
             .select((
                 id,
-                student::id,
                 student::name,
-                class::id,
-                class::grade,
-                class::number,
-                department::name,
-                student::nis,
+                company::name,
                 division,
                 entry_date,
                 start_time,
@@ -158,15 +148,8 @@ impl Journal {
                 extra,
                 created_at,
                 updated_at,
-                company::all_columns,
-                user::all_columns,
             ))
             .first::<(
-                i32,
-                i32,
-                String,
-                i32,
-                i32,
                 i32,
                 String,
                 String,
@@ -179,22 +162,15 @@ impl Journal {
                 Option<String>,
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
-                Company,
-                User,
             )>(db)
             .await
             .optional()?;
 
         let Some((
             j_id,
-            s_id,
             mut s_name,
-            c_id,
-            c_grade,
-            c_num,
-            d_name,
-            mut s_nis,
-            mut d_string,
+            mut c_name,
+            mut j_division,
             e_date,
             s_time,
             e_time,
@@ -203,8 +179,6 @@ impl Journal {
             extra_info,
             c_ts,
             u_ts,
-            company,
-            mut user,
         )) = res
         else {
             return Ok(None);
@@ -212,20 +186,9 @@ impl Journal {
 
         Ok(Some(JournalJoined {
             id: j_id,
-            student: StudentJoined {
-                id: s_id,
-                name: mem::take(&mut s_name),
-                class: ClassJoined {
-                    id: c_id,
-                    grade: c_grade,
-                    number: c_num,
-                    department: d_name,
-                },
-                nis: mem::take(&mut s_nis),
-                user: user.public(),
-            },
-            company: company,
-            division: mem::take(&mut d_string),
+            student: mem::take(&mut s_name),
+            company: mem::take(&mut c_name),
+            division: mem::take(&mut j_division),
             entry_date: e_date,
             start_time: s_time,
             end_time: e_time,
