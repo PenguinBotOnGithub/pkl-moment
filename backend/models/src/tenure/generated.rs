@@ -7,6 +7,7 @@ use crate::student::{Student, StudentJoined};
 use crate::types::UserRole;
 use crate::types::{Operation, TableRef};
 use crate::user::{User, UserPublic};
+use anyhow::anyhow;
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -93,7 +94,31 @@ impl Tenure {
         db: &mut Connection,
         item: &CreateTenure,
         param_user_id: i32,
-    ) -> QueryResult<Option<Self>> {
+    ) -> QueryResult<Self> {
+        use crate::schema::tenure::dsl::*;
+
+        let res = diesel::insert_into(tenure)
+            .values(item)
+            .get_result::<Tenure>(db)
+            .await?;
+
+        Log::log(
+            db,
+            Operation::Create,
+            TableRef::Tenure,
+            param_user_id,
+            None::<u8>,
+        )
+        .await;
+
+        Ok(res)
+    }
+
+    pub async fn create_checked(
+        db: &mut Connection,
+        item: &CreateTenure,
+        param_user_id: i32,
+    ) -> anyhow::Result<Tenure> {
         use crate::schema::letters;
         use crate::schema::tenure::dsl::*;
         use crate::schema::user;
@@ -107,9 +132,9 @@ impl Tenure {
                 .optional()?;
 
             match role {
-                None => return Err(diesel::result::Error::NotFound),
+                None => return Err(anyhow!("advisor user not found")),
                 Some(UserRole::AdvisorSchool) => {}
-                _ => return Ok(None),
+                _ => return Err(anyhow!("advisor user does not have the required role")),
             }
         }
 
@@ -122,9 +147,9 @@ impl Tenure {
                 .optional()?;
 
             match role {
-                None => return Err(diesel::result::Error::NotFound),
-                Some(UserRole::AdvisorSchool) => {}
-                _ => return Ok(None),
+                None => return Err(anyhow!("advisor user not found")),
+                Some(UserRole::AdvisorDudi) => {}
+                _ => return Err(anyhow!("advisor user does not have the required role")),
             }
         }
 
@@ -135,10 +160,10 @@ impl Tenure {
             .await
             .optional()?;
         match letters_verified {
-            None => return Err(diesel::result::Error::NotFound),
+            None => return Err(anyhow!("letters data not found")),
             Some(v) => {
                 if !v {
-                    return Ok(None);
+                    return Err(anyhow!("letters data is not verified"));
                 }
             }
         }
@@ -146,23 +171,18 @@ impl Tenure {
         let res = diesel::insert_into(tenure)
             .values(item)
             .get_result::<Self>(db)
-            .await;
+            .await?;
 
-        if let Ok(_) = res {
-            Log::log(
-                db,
-                Operation::Create,
-                TableRef::Tenure,
-                param_user_id,
-                None::<u8>,
-            )
-            .await;
-        }
+        Log::log(
+            db,
+            Operation::Create,
+            TableRef::Tenure,
+            param_user_id,
+            None::<u8>,
+        )
+        .await;
 
-        match res {
-            Ok(v) => Ok(Some(v)),
-            Err(e) => Err(e),
-        }
+        Ok(res)
     }
 
     pub async fn read(db: &mut Connection, param_id: i32) -> QueryResult<Option<Tenure>> {

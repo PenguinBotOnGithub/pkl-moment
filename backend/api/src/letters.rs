@@ -639,14 +639,7 @@ async fn verify_letters(
         .scope_boxed()
     })
     .await
-    .map_err(|e| {
-        if let diesel::result::Error::NotFound = e {
-            return reject::custom(ClientError::InvalidInput(
-                "advisor not found or letters data not found".to_owned(),
-            ));
-        }
-        reject::custom(InternalError::DatabaseError(e.to_string()))
-    })?;
+    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
     Ok(reply::json(&ApiResponse::ok(
         "success".to_owned(),
