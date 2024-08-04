@@ -315,6 +315,7 @@ impl Journal {
         let items = journal
             .limit(page_size)
             .offset(page * page_size)
+            .order(created_at.desc())
             .load::<Self>(db)
             .await?;
 
