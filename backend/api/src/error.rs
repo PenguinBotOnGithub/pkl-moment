@@ -58,9 +58,12 @@ pub fn handle_fk_not_exists_unique_violation(e: diesel::result::Error) -> Reject
                 )))
             }
             diesel::result::DatabaseErrorKind::UniqueViolation => {
-                reject::custom(ClientError::Conflict(
-                    "the student is already related to the letters data".to_owned(),
-                ))
+                reject::custom(ClientError::Conflict(format!(
+                    "a row with the same unique keys already exists; constraint: {}",
+                    v2.constraint_name().unwrap_or(
+                        "none found; please contact administrator or developer for further info"
+                    )
+                )))
             }
             _ => reject::custom(InternalError::DatabaseError(e.to_string())),
         };
@@ -86,9 +89,9 @@ pub fn handle_fk_depended_data_delete(e: diesel::result::Error) -> Rejection {
     if let diesel::result::Error::DatabaseError(v1, v2) = &e {
         if let diesel::result::DatabaseErrorKind::ForeignKeyViolation = v1 {
             return reject::custom(ClientError::Conflict(
-                format!("there are data that depends on the data you are trying to delete; fk: {:?}; table: {:?}", 
+                format!("there are data that depends on the data you are trying to delete; fk: {:?}; table: {:?}",
                         v2.constraint_name()
-                            .unwrap_or("none found; please contact administrator or developer for further info"), 
+                            .unwrap_or("none found; please contact administrator or developer for further info"),
                         v2.table_name()
                             .unwrap_or("none found; please contact administrator or developer for further info")
                 ))
