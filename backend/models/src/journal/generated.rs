@@ -91,6 +91,38 @@ pub struct PaginationResult<T> {
     pub num_pages: i64,
 }
 
+impl JournalJoined {
+    pub fn new(
+        j_id: i32,
+        mut s_name: String,
+        mut c_name: String,
+        mut j_div: String,
+        e_date: chrono::NaiveDate,
+        s_time: chrono::NaiveTime,
+        e_time: chrono::NaiveTime,
+        mut j_act: String,
+        mut j_img: String,
+        j_extra: Option<String>,
+        j_cat: chrono::DateTime<chrono::Utc>,
+        j_uat: chrono::DateTime<chrono::Utc>,
+    ) -> Self {
+        JournalJoined {
+            id: j_id,
+            student: mem::take(&mut s_name),
+            company: mem::take(&mut c_name),
+            division: mem::take(&mut j_div),
+            entry_date: e_date,
+            start_time: s_time,
+            end_time: e_time,
+            activity: mem::take(&mut j_act),
+            img_url: mem::take(&mut j_img),
+            extra: j_extra,
+            created_at: j_cat,
+            updated_at: j_uat,
+        }
+    }
+}
+
 impl Journal {
     pub async fn get_owner_id(db: &mut Connection, param_id: i32) -> QueryResult<Option<i32>> {
         use crate::schema::journal::dsl::*;
@@ -268,38 +300,11 @@ impl Journal {
             .await
             .optional()?;
 
-        let Some((
-            j_id,
-            mut s_name,
-            mut c_name,
-            mut j_division,
-            e_date,
-            s_time,
-            e_time,
-            mut a_string,
-            mut i_url,
-            extra_info,
-            c_ts,
-            u_ts,
-        )) = res
-        else {
+        let Some((a, b, c, d, e, f, g, h, i, j, k, l)) = res else {
             return Ok(None);
         };
 
-        Ok(Some(JournalJoined {
-            id: j_id,
-            student: mem::take(&mut s_name),
-            company: mem::take(&mut c_name),
-            division: mem::take(&mut j_division),
-            entry_date: e_date,
-            start_time: s_time,
-            end_time: e_time,
-            activity: mem::take(&mut a_string),
-            img_url: mem::take(&mut i_url),
-            extra: extra_info,
-            created_at: c_ts,
-            updated_at: u_ts,
-        }))
+        Ok(Some(JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)))
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -307,8 +312,12 @@ impl Journal {
         db: &mut Connection,
         page: i64,
         page_size: i64,
-    ) -> QueryResult<PaginationResult<Self>> {
+    ) -> QueryResult<PaginationResult<JournalJoined>> {
+        use crate::schema::company;
         use crate::schema::journal::dsl::*;
+        use crate::schema::letters;
+        use crate::schema::student;
+        use crate::schema::tenure;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = journal.count().get_result(db).await?;
@@ -316,8 +325,45 @@ impl Journal {
             .limit(page_size)
             .offset(page * page_size)
             .order(created_at.desc())
-            .load::<Self>(db)
-            .await?;
+            .inner_join(
+                tenure::table
+                    .inner_join(student::table)
+                    .inner_join(letters::table.inner_join(company::table)),
+            )
+            .select((
+                id,
+                student::name,
+                company::name,
+                division,
+                entry_date,
+                start_time,
+                end_time,
+                activity,
+                img_url,
+                extra,
+                created_at,
+                updated_at,
+            ))
+            .load::<(
+                i32,
+                String,
+                String,
+                String,
+                chrono::NaiveDate,
+                chrono::NaiveTime,
+                chrono::NaiveTime,
+                String,
+                String,
+                Option<String>,
+                chrono::DateTime<chrono::Utc>,
+                chrono::DateTime<chrono::Utc>,
+            )>(db)
+            .await?
+            .into_iter()
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            })
+            .collect();
 
         Ok(PaginationResult {
             items,
