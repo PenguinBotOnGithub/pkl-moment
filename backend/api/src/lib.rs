@@ -12,12 +12,14 @@ pub mod class;
 pub mod company;
 pub mod department;
 pub mod error;
+pub mod journal;
 pub mod letters;
 pub mod log;
 pub mod pdf;
 pub mod routes;
 pub mod signature;
 pub mod student;
+pub mod tenure;
 pub mod user;
 pub mod wave;
 

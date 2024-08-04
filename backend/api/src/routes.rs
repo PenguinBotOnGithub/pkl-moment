@@ -9,10 +9,12 @@ use crate::auth::auth_routes;
 use crate::class::classes_routes;
 use crate::company::companies_routes;
 use crate::department::departments_routes;
+use crate::journal::journals_routes;
 use crate::letters::letters_routes;
 use crate::log::logs_routes;
 use crate::signature::signatures_routes;
 use crate::student::students_routes;
+use crate::tenure::tenures_routes;
 use crate::user::users_routes;
 use crate::wave::waves_routes;
 
@@ -37,4 +39,6 @@ pub fn routes(
         .or(api.and(signatures_routes(jwt_key.clone(), db.clone())))
         .or(api.and(users_routes(jwt_key.clone(), db.clone())))
         .or(api.and(logs_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(tenures_routes(jwt_key.clone(), db.clone())))
+        .or(api.and(journals_routes(jwt_key.clone(), db.clone())))
 }

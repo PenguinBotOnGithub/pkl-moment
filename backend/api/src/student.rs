@@ -1,20 +1,40 @@
-use std::{collections::HashMap, num::ParseIntError, sync::Arc};
-
-use diesel_async::AsyncPgConnection;
-use models::student::{CreateStudent, Student, UpdateStudent};
-use parking_lot::Mutex;
-use warp::{
-    reject::{self, Rejection},
-    reply::{self, Reply},
-    Filter,
-};
-
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
 };
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
+use chrono::Datelike;
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::{AsyncConnection, AsyncPgConnection};
+use models::student::{CreateStudent, Student, UpdateStudent};
+use models::types::UserRole;
+use models::user::{CreateUser, User};
+use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use warp::{
+    reject::{self, Rejection},
+    reply::{self, Reply},
+    Filter,
+};
+
+#[derive(Debug, Clone, Deserialize)]
+struct CreateStudentPayload {
+    pub name: String,
+    pub class_id: i32,
+    pub nis: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct CreateStudentResponse {
+    student: Student,
+    username: String,
+    password: String,
+}
 
 pub fn students_routes(
     jwt_key: String,
@@ -115,15 +135,63 @@ async fn get_students(
 
 async fn create_student(
     claims: JwtClaims,
-    payload: CreateStudent,
+    payload: CreateStudentPayload,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut db = db.lock();
-    let result = Student::create(&mut db, &payload, claims.id)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let year = chrono::Local::now().year();
+    let mut username = payload.name.trim().to_string();
+    username.retain(|c| !c.is_whitespace());
+    let mut username = username.to_lowercase();
+    username = format!("{}{}", year, username);
+    let c_name = username.clone();
 
-    Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+    let salt = SaltString::generate(&mut OsRng);
+    let hash = Argon2::default()
+        .hash_password(&username.as_bytes(), &salt)
+        .map_err(|e| reject::custom(InternalError::ArgonError(e.to_string())))?
+        .to_string();
+
+    let create_user = CreateUser {
+        username: username,
+        password: hash,
+        role: UserRole::Student,
+    };
+
+    let mut db = db.lock();
+    let result = db
+        .transaction(|conn| {
+            async move {
+                let user = User::create(conn, &create_user, *&claims.id).await?;
+
+                let result = Student::create(
+                    conn,
+                    &CreateStudent {
+                        name: payload.name.trim().to_owned(),
+                        class_id: payload.class_id,
+                        nis: payload.nis.trim().to_owned(),
+                        user_id: user.id,
+                    },
+                    claims.id,
+                )
+                .await?;
+
+                Ok(result)
+            }
+            .scope_boxed()
+        })
+        .await
+        .map_err(|e: diesel::result::Error| {
+            reject::custom(InternalError::DatabaseError(e.to_string()))
+        })?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "success".to_owned(),
+        CreateStudentResponse {
+            student: result,
+            username: c_name.clone(),
+            password: c_name.clone(),
+        },
+    )))
 }
 
 async fn read_student(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
