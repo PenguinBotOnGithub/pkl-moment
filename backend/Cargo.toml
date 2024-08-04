@@ -5,21 +5,22 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.86"
 api = { path = "api" }
 argon2 = "0.5.3"
 diesel = { version = "2.1.6", features = ["chrono"] }
 diesel-async = { version = "0.4.1", features = ["postgres"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel_async_migrations = { version = "0.12.0" }
-parking_lot = { version = "0.12.2", features = ["send_guard"] }
-shuttle-runtime = "0.46.0"
-shuttle-shared-db = { version = "0.46.0", features = [
+parking_lot = { version = "0.12.3", features = ["send_guard"] }
+shuttle-runtime = "0.47.0"
+shuttle-shared-db = { version = "0.47.0", features = [
     "postgres",
     "diesel-async",
 ] }
-shuttle-warp = "0.46.0"
-thiserror = "1.0.60"
-tokio = "1.26.0"
+shuttle-warp = "0.47.0"
+thiserror = "1.0.63"
+tokio = "1.39"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 warp = "0.3.7"

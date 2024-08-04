@@ -4,6 +4,7 @@ use crate::diesel::prelude::*;
 use crate::log::Log;
 use crate::schema::*;
 use crate::types::{Operation, TableRef};
+use crate::user::{User, UserPublic};
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,7 @@ pub struct Student {
     pub name: String,
     pub class_id: i32,
     pub nis: String,
+    pub user_id: i32,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -37,6 +39,7 @@ pub struct StudentJoined {
     pub name: String,
     pub class: ClassJoined,
     pub nis: String,
+    pub user: UserPublic,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -45,6 +48,7 @@ pub struct CreateStudent {
     pub name: String,
     pub class_id: i32,
     pub nis: String,
+    pub user_id: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
@@ -53,6 +57,7 @@ pub struct UpdateStudent {
     pub name: Option<String>,
     pub class_id: Option<i32>,
     pub nis: Option<String>,
+    pub user_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,7 +74,7 @@ impl Student {
     pub async fn create(
         db: &mut Connection,
         item: &CreateStudent,
-        user_id: i32,
+        param_user_id: i32,
     ) -> QueryResult<Self> {
         use crate::schema::student::dsl::*;
 
@@ -83,7 +88,7 @@ impl Student {
                 db,
                 Operation::Create,
                 TableRef::Student,
-                user_id,
+                param_user_id,
                 None::<u8>,
             )
             .await;
@@ -96,10 +101,12 @@ impl Student {
         use crate::schema::class;
         use crate::schema::department;
         use crate::schema::student::dsl::*;
+        use crate::schema::user;
 
         let res = student
             .filter(id.eq(param_id))
             .inner_join(class::table.inner_join(department::table))
+            .inner_join(user::table)
             .select((
                 id,
                 name,
@@ -108,8 +115,9 @@ impl Student {
                 class::number,
                 department::name,
                 nis,
+                user::all_columns,
             ))
-            .first::<(i32, String, i32, i32, i32, String, String)>(db)
+            .first::<(i32, String, i32, i32, i32, String, String, User)>(db)
             .await
             .optional()?;
         let Some(mut res) = res else { return Ok(None) };
@@ -124,6 +132,7 @@ impl Student {
                 department: mem::take(&mut res.5),
             },
             nis: mem::take(&mut res.6),
+            user: res.7.public(),
         }))
     }
 
@@ -136,12 +145,14 @@ impl Student {
         use crate::schema::class;
         use crate::schema::department;
         use crate::schema::student::dsl::*;
+        use crate::schema::user;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
         let total_items = student.count().get_result(db).await?;
         let items = student
             .limit(page_size)
             .inner_join(class::table.inner_join(department::table))
+            .inner_join(user::table)
             .select((
                 id,
                 name,
@@ -150,13 +161,14 @@ impl Student {
                 class::number,
                 department::name,
                 nis,
+                user::all_columns,
             ))
             .offset(page * page_size)
-            .load::<(i32, String, i32, i32, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String, User)>(db)
             .await?
             .iter_mut()
             .map(
-                |(s_id, s_name, c_id, grade, num, d_name, s_nis)| StudentJoined {
+                |(s_id, s_name, c_id, grade, num, d_name, s_nis, user)| StudentJoined {
                     id: *s_id,
                     name: mem::take(s_name),
                     class: ClassJoined {
@@ -166,6 +178,7 @@ impl Student {
                         department: mem::take(d_name),
                     },
                     nis: mem::take(s_nis),
+                    user: user.public(),
                 },
             )
             .collect();
@@ -184,7 +197,7 @@ impl Student {
         db: &mut Connection,
         param_id: i32,
         item: &UpdateStudent,
-        user_id: i32,
+        param_user_id: i32,
     ) -> QueryResult<Option<Self>> {
         use crate::schema::student::dsl::*;
 
@@ -204,7 +217,7 @@ impl Student {
                 db,
                 Operation::Update,
                 TableRef::Student,
-                user_id,
+                param_user_id,
                 Some(previous),
             )
             .await;
@@ -213,7 +226,11 @@ impl Student {
         res
     }
 
-    pub async fn delete(db: &mut Connection, param_id: i32, user_id: i32) -> QueryResult<usize> {
+    pub async fn delete(
+        db: &mut Connection,
+        param_id: i32,
+        param_user_id: i32,
+    ) -> QueryResult<usize> {
         use crate::schema::student::dsl::*;
 
         let previous = Student::read(db, param_id).await?;
@@ -235,7 +252,7 @@ impl Student {
                     db,
                     Operation::Delete,
                     TableRef::Student,
-                    user_id,
+                    param_user_id,
                     Some(previous),
                 )
                 .await;

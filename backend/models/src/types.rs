@@ -14,6 +14,8 @@ pub enum TableRef {
     LettersStudent,
     Class,
     Department,
+    Journal,
+    Tenure,
 }
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -32,6 +34,9 @@ pub enum Operation {
 pub enum UserRole {
     Secretary,
     Coordinator,
+    AdvisorSchool,
+    AdvisorDudi,
+    Student,
 }
 
 impl Serialize for UserRole {
@@ -44,6 +49,13 @@ impl Serialize for UserRole {
             UserRole::Coordinator => {
                 serializer.serialize_unit_variant("UserRole", 0, "coordinator")
             }
+            UserRole::AdvisorSchool => {
+                serializer.serialize_unit_variant("UserRole", 0, "advisor_school")
+            }
+            UserRole::AdvisorDudi => {
+                serializer.serialize_unit_variant("UserRole", 0, "advisor_dudi")
+            }
+            UserRole::Student => serializer.serialize_unit_variant("UserRole", 0, "student"),
         }
     }
 }
@@ -69,6 +81,9 @@ impl<'de> Deserialize<'de> for UserRole {
                 match v {
                     "secretary" => Ok(UserRole::Secretary),
                     "coordinator" => Ok(UserRole::Coordinator),
+                    "advisor_school" => Ok(UserRole::AdvisorSchool),
+                    "advisor_dudi" => Ok(UserRole::AdvisorDudi),
+                    "student" => Ok(UserRole::Student),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }
@@ -80,6 +95,9 @@ impl<'de> Deserialize<'de> for UserRole {
                 match v {
                     "secretary" => Ok(UserRole::Secretary),
                     "coordinator" => Ok(UserRole::Coordinator),
+                    "advisor_school" => Ok(UserRole::AdvisorSchool),
+                    "advisor_dudi" => Ok(UserRole::AdvisorDudi),
+                    "student" => Ok(UserRole::Student),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }
@@ -91,6 +109,9 @@ impl<'de> Deserialize<'de> for UserRole {
                 match &v[..] {
                     "secretary" => Ok(UserRole::Secretary),
                     "coordinator" => Ok(UserRole::Coordinator),
+                    "advisor_school" => Ok(UserRole::AdvisorSchool),
+                    "advisor_dudi" => Ok(UserRole::AdvisorDudi),
+                    "student" => Ok(UserRole::Student),
                     _ => Err(E::custom(format!("unknown variant: {v}"))),
                 }
             }

@@ -173,7 +173,11 @@ impl Letter {
         };
 
         let students = LettersStudent::belonging_to(&item)
-            .inner_join(student::table.inner_join(class::table.inner_join(department::table)))
+            .inner_join(
+                student::table
+                    .inner_join(class::table.inner_join(department::table))
+                    .inner_join(user::table),
+            )
             .select((
                 student::id,
                 student::name,
@@ -182,12 +186,13 @@ impl Letter {
                 class::number,
                 department::name,
                 student::nis,
+                user::all_columns,
             ))
-            .load::<(i32, String, i32, i32, i32, String, String)>(db)
+            .load::<(i32, String, i32, i32, i32, String, String, User)>(db)
             .await?
             .iter_mut()
             .map(
-                |(s_id, s_name, c_id, grade, num, d_name, s_nis)| StudentJoined {
+                |(s_id, s_name, c_id, grade, num, d_name, s_nis, user)| StudentJoined {
                     id: *s_id,
                     name: mem::take(s_name),
                     class: ClassJoined {
@@ -197,6 +202,7 @@ impl Letter {
                         department: mem::take(d_name),
                     },
                     nis: mem::take(s_nis),
+                    user: user.public(),
                 },
             )
             .collect();

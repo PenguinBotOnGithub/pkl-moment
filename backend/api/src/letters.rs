@@ -1,8 +1,17 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
-use diesel_async::AsyncPgConnection;
+use crate::auth::{with_auth_with_claims, JwtClaims};
+use crate::error::{handle_fk_data_not_exists, handle_fk_not_exists_unique_violation};
+use crate::pdf::{gen_penarikan_chromium, gen_pengantaran_chromium, gen_permohonan_chromium};
+use crate::{
+    error::{ClientError, InternalError},
+    wave, with_db, with_json, AddStudentRequest, ApiResponse,
+};
+use diesel_async::scoped_futures::ScopedFutureExt;
+use diesel_async::{AsyncConnection, AsyncPgConnection};
 use models::letters::{CreateLetter, Letter, UpdateLetter};
 use models::letters_student::{CreateLettersStudent, LettersStudent};
+use models::tenure::{CreateTenure, Tenure};
 use models::types::UserRole;
 use parking_lot::Mutex;
 use tokio::fs;
@@ -11,14 +20,6 @@ use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
     Filter,
-};
-
-use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::{handle_fk_data_not_exists, handle_fk_not_exists_unique_violation};
-use crate::pdf::{gen_penarikan_chromium, gen_pengantaran_chromium, gen_permohonan_chromium};
-use crate::{
-    error::{ClientError, InternalError},
-    wave, with_db, with_json, AddStudentRequest, ApiResponse,
 };
 
 pub fn letters_routes(
@@ -197,6 +198,9 @@ async fn get_letters(
 
             Ok(reply::json(&ApiResponse::ok("success".to_owned(), letters)))
         }
+        _ => Err(reject::custom(ClientError::Authorization(
+            "user not authorized to administrate letters".to_owned(),
+        ))),
     }
 }
 
@@ -227,6 +231,11 @@ async fn create_letters(
 
             payload.verified = Some(false);
             payload.verified_at = None;
+        }
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user not authorized to administrate letters".to_owned(),
+            )))
         }
     }
 
@@ -265,6 +274,11 @@ async fn read_letters(
                 }
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+            }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
             }
         }
     } else {
@@ -377,6 +391,11 @@ async fn delete_letters(
                     )));
                 }
             }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
+            }
         }
     } else {
         return Err(reject::custom(ClientError::NotFound(
@@ -416,22 +435,22 @@ async fn get_letters_students(
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
 
-    match result {
-        Some(v) => match &claims.role {
-            UserRole::Secretary => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
-            UserRole::Coordinator => {
-                if owner != claims.id {
-                    return Err(reject::custom(ClientError::Authorization(
-                        "insufficient privilege to view others data".to_owned(),
-                    )));
-                }
-
-                Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)))
+    match &claims.role {
+        UserRole::Secretary => Ok(reply::json(&ApiResponse::ok("success".to_owned(), result))),
+        UserRole::Coordinator => {
+            if owner != claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "insufficient privilege to view others data".to_owned(),
+                )));
             }
-        },
-        None => Err(reject::custom(ClientError::NotFound(
-            "letters not found".to_string(),
-        ))),
+
+            Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
+        }
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user not authorized to administrate letters".to_owned(),
+            )))
+        }
     }
 }
 
@@ -442,6 +461,16 @@ async fn add_letters_student(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let verified = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(verified) = verified else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters data not found".to_owned(),
+        )));
+    };
+
     let letter_owner = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -469,6 +498,13 @@ async fn add_letters_student(
                     )));
                 }
 
+                if verified {
+                    return Err(reject::custom(ClientError::Authorization(
+                        "user do not have permission to manipulate verified letters data"
+                            .to_owned(),
+                    )));
+                }
+
                 let res = LettersStudent::create(
                     &mut db,
                     &CreateLettersStudent {
@@ -481,6 +517,11 @@ async fn add_letters_student(
                 .map_err(handle_fk_not_exists_unique_violation)?;
 
                 Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+            }
+            _ => {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to administrate letters".to_owned(),
+                )))
             }
         }
     } else {
@@ -497,6 +538,16 @@ async fn remove_letters_student(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let verified = Letter::get_verification_status(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(verified) = verified else {
+        return Err(reject::custom(ClientError::NotFound(
+            "letters data not found".to_owned(),
+        )));
+    };
+
     let Some(n) = Letter::get_owner_id(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
@@ -528,6 +579,12 @@ async fn remove_letters_student(
                 )));
             }
 
+            if verified {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user do not have permission to manipulate verified letters data".to_owned(),
+                )));
+            }
+
             let res =
                 LettersStudent::delete_by_student_letter_id(&mut db, student_id, id, claims.id)
                     .await
@@ -541,6 +598,11 @@ async fn remove_letters_student(
                 )))
             }
         }
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user not authorized to administrate letters".to_owned(),
+            )))
+        }
     }
 }
 
@@ -550,17 +612,39 @@ async fn verify_letters(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
-    let res = Letter::verify_letter(&mut db, id, claims.id)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    db.transaction(|conn| {
+        async move {
+            let letter = Letter::verify_letter(conn, id, claims.id).await?;
+            if letter == 0 {
+                return Err(diesel::result::Error::NotFound);
+            }
 
-    if res > 0 {
-        Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
-    } else {
-        Err(reject::custom(ClientError::NotFound(
-            "letters not found".to_owned(),
-        )))
-    }
+            let students = LettersStudent::filter_by_letter(conn, id).await?;
+            for student in students {
+                let _ = Tenure::create(
+                    conn,
+                    &CreateTenure {
+                        student_id: student.id,
+                        advsch_id: None,
+                        advdudi_id: None,
+                        letters_id: id,
+                    },
+                    *&claims.id,
+                )
+                .await?;
+            }
+
+            Ok(())
+        }
+        .scope_boxed()
+    })
+    .await
+    .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "success".to_owned(),
+        None::<u8>,
+    )))
 }
 
 async fn gen_letters_pdf(

@@ -14,9 +14,9 @@ function Sidebar({ index = -1 }) {
     setIsExpanded(!isExpanded);
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     console.log(role);
-  },[]);
+  }, []);
 
   return (
     <div className="flex-none p-2">
@@ -29,34 +29,36 @@ function Sidebar({ index = -1 }) {
           menu
         </span>
       </label>
-      <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4`}>
-        {/* <li>
-          <NavLink
-            to="/admin/dashboard"
-            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
-          >
-            <span className="material-symbols-rounded">dashboard</span>
-            {isExpanded && t("Dashboard")}
-          </NavLink>
-        </li> */}
+      <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
         <li>
           <NavLink
-            to="/admin/entries/0"
+            to="/admin/entries"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
             <span className="material-symbols-rounded">description</span>
             {isExpanded && t("Entries & Document")}
           </NavLink>
         </li>
-        {role != "advisor" && <li>
+        <li>
           <NavLink
-            to="/admin/users/0"
+            to="/admin/journal"
             className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
           >
-            <span className="material-symbols-rounded">manage_accounts</span>
-            {isExpanded && t("All Users")}
+            <span className="material-symbols-rounded">book_2</span>
+            {isExpanded && t("Journal")}
           </NavLink>
-        </li>}
+        </li>
+        {role == "admin" && (
+          <li>
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+            >
+              <span className="material-symbols-rounded">people</span>
+              {isExpanded && t("All Users")}
+            </NavLink>
+          </li>
+        )}
         <li>
           <NavLink
             to="/admin/settings"

@@ -1,6 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Cookies from "universal-cookie";
+import ThemeController from "../components/ThemeController";
+import PKLMomentIconSimple from "../assets/drawable/PKLMomentIconSimple";
 
 function Settings({ cookies }) {
   const { t } = useTranslation();
@@ -9,7 +11,7 @@ function Settings({ cookies }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex gap-2 w-full max-w-xl">
-        <div className="bg-base-100 text-white p-4 rounded-lg flex flex-col items-start flex-1">
+        <div className="bg-base-100 p-4 rounded-btn flex flex-col items-start flex-1">
           <div className="flex items-center mb-4">
             <span className="material-symbols-rounded icon-size-24">
               person
@@ -17,7 +19,7 @@ function Settings({ cookies }) {
             <span className="ml-2 text-lg font-bold">Pengguna</span>
           </div>
           <div className="w-full">
-            <div className="flex items-center rounded-md border-2 border-neutral">
+            <div className="flex items-center rounded-box border-2 border-neutral">
               <div className="p-2 flex-1 border-r-2 border-neutral">
                 Username
               </div>
@@ -28,16 +30,20 @@ function Settings({ cookies }) {
       </div>
 
       <div className="flex justify-between gap-2 w-full max-w-xl">
-        <div className="bg-base-100 text-white p-4 rounded-lg flex flex-col items-start flex-1">
+        <div className="bg-base-100 p-4 rounded-btn flex flex-col items-start flex-1">
           <div className="flex items-center">
-            <span className="material-symbols-rounded icon-size-24">brush</span>
-            <span className="ml-2 text-lg font-bold">Tampilan (In Progress)</span>
+            <PKLMomentIconSimple size={24}/>
+            <span className="ml-2 text-lg font-bold">Tampilan (Coming Soon)</span>
+          </div>
+          <div className="flex items-center justify-between mt-4 w-full">
+            <span>Tema</span>
+            <ThemeController cookies={cookies}/>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
             <span>Bahasa</span>
             <select
               defaultValue="ind"
-              className="select bg-neutral ml-auto w-full max-w-xs"
+              className="select bg-neutral ml-auto w-full max-w-xs text-neutral-content"
             >
               <option value="ind">Indonesia</option>
               <option value="eng">English</option>
@@ -48,23 +54,34 @@ function Settings({ cookies }) {
       </div>
 
       <div className="flex justify-between gap-2 w-full max-w-xl">
-        <div className="bg-base-100 text-white p-4 rounded-lg flex flex-col items-start flex-1">
+        <div className="bg-base-100 p-4 rounded-btn flex flex-col items-start flex-1">
           <div className="flex items-center">
             <span className="material-symbols-rounded icon-size-24">
               description
             </span>
             <span className="ml-2 text-lg font-bold">
-              Konfigurasi Tabel (In Progress)
+              Konfigurasi Tabel (Coming Soon)
             </span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
-            <span>Max item di tabel</span>
+            <span>Max item di tabel entri</span>
             <label className="bg-base-200 input flex-none w-12 flex items-center gap-2">
               <input
                 type="number"
                 className="grow w-8 placeholder:text-neutral-content placeholder:opacity-50"
                 defaultValue={cookies.get("max-item")}
                 onChange={(event) => cookies.set("max-item",event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="flex items-center justify-between mt-4 w-full">
+            <span>Max item di tabel user</span>
+            <label className="bg-base-200 input flex-none w-12 flex items-center gap-2">
+              <input
+                type="number"
+                className="grow w-8 placeholder:text-neutral-content placeholder:opacity-50"
+                defaultValue={cookies.get("max-item-users")}
+                onChange={(event) => cookies.set("max-item-users",event.target.value)}
               />
             </label>
           </div>
@@ -77,7 +94,7 @@ function Settings({ cookies }) {
 
       <div className="flex justify-between gap-2 w-full max-w-xl">
         <button
-          className="btn btn-lg bg-base-100 text-error p-4 rounded-lg flex flex-row items-center flex-1"
+          className="btn btn-lg bg-base-100 text-error p-4 rounded-btn flex flex-row items-center flex-1"
           onClick={() => document.getElementById("logout_confirmation_modal").showModal()}
         >
           <span className="material-symbols-rounded icon-size-24 text-error">
@@ -85,6 +102,7 @@ function Settings({ cookies }) {
           </span>
           <span className="text-lg font-bold text-error">Logout</span>
         </button>
+
         <dialog id="logout_confirmation_modal" className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg text-error">Warning!</h3>
@@ -113,6 +131,7 @@ function Settings({ cookies }) {
           </div>
         </dialog>
       </div>
+
     </div>
   );
 }
