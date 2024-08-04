@@ -643,4 +643,25 @@ impl Tenure {
 
         Ok(res)
     }
+
+    pub async fn return_student_user(
+        db: &mut Connection,
+        t: &Tenure,
+    ) -> QueryResult<Option<UserPublic>> {
+        use crate::schema::student::dsl::*;
+        use crate::schema::user;
+
+        let res = student
+            .filter(id.eq(t.student_id))
+            .inner_join(user::table)
+            .select(user::all_columns)
+            .first::<User>(db)
+            .await
+            .optional()?;
+
+        match res {
+            None => Ok(None),
+            Some(mut v) => Ok(Some(v.public())),
+        }
+    }
 }

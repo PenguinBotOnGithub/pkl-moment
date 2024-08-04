@@ -1,12 +1,12 @@
 use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::handle_fk_depended_data_delete;
 use crate::{
-    auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
 };
 use diesel_async::AsyncPgConnection;
 use models::journal::{CreateJournal, Journal, UpdateJournal};
+use models::tenure::Tenure;
 use models::types::UserRole;
 use parking_lot::Mutex;
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
@@ -25,8 +25,7 @@ pub fn journals_routes(
     let get_journals_route = journal
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(warp::query::query::<HashMap<String, String>>())
         .and(with_db(db.clone()))
         .and_then(get_journals);
@@ -44,7 +43,7 @@ pub fn journals_routes(
         .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(warp::get())
-        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_db(db.clone()))
         .and_then(read_journal);
 
@@ -75,6 +74,7 @@ pub fn journals_routes(
 }
 
 async fn get_journals(
+    claims: JwtClaims,
     queries: HashMap<String, String>,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
@@ -103,9 +103,24 @@ async fn get_journals(
     };
 
     let mut db = db.lock();
-    let result = Journal::paginate(&mut db, page, page_size)
-        .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let result = match *&claims.role {
+        UserRole::Secretary => Journal::paginate(&mut db, page, page_size)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+        UserRole::Coordinator => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to view journal entries".to_owned(),
+            )));
+        }
+        UserRole::AdvisorSchool | UserRole::AdvisorDudi => {
+            Journal::paginate_by_advisor(&mut db, page, page_size, *&claims.id)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?
+        }
+        UserRole::Student => Journal::paginate_by_student(&mut db, page, page_size, *&claims.id)
+            .await
+            .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?,
+    };
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
@@ -126,8 +141,77 @@ async fn create_journal(
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
 
-async fn read_journal(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl Reply, Rejection> {
+async fn read_journal(
+    id: i32,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+
+    let tenure = Journal::return_tenure(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some(tenure) = tenure else {
+        return Err(reject::custom(InternalError::DatabaseError(
+            "data not found".to_owned(),
+        )));
+    };
+
+    match *&claims.role {
+        UserRole::Coordinator => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not allowed to view journal entries".to_owned(),
+            )));
+        }
+        UserRole::AdvisorSchool => {
+            let Some(adv) = tenure.advsch_id else {
+                return Err(reject::custom(ClientError::Authorization(
+                    "advisors can only view journal entries from student assigned to them"
+                        .to_owned(),
+                )));
+            };
+
+            if adv != *&claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "advisors can only view journal entries from student assigned to them"
+                        .to_owned(),
+                )));
+            }
+        }
+        UserRole::AdvisorDudi => {
+            let Some(adv) = tenure.advdudi_id else {
+                return Err(reject::custom(ClientError::Authorization(
+                    "advisors can only view journal entries from student assigned to them"
+                        .to_owned(),
+                )));
+            };
+
+            if adv != *&claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "advisors can only view journal entries from student assigned to them"
+                        .to_owned(),
+                )));
+            }
+        }
+        UserRole::Student => {
+            let user = Tenure::return_student_user(&mut db, &tenure)
+                .await
+                .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+            let Some(user) = user else {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to view others data".to_owned(),
+                )));
+            };
+
+            if user.id != *&claims.id {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user not authorized to view others data".to_owned(),
+                )));
+            }
+        }
+        _ => {}
+    }
+
     let result = Journal::read_joined(&mut db, id)
         .await
         .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;

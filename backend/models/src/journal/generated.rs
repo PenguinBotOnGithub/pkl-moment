@@ -375,6 +375,149 @@ impl Journal {
         })
     }
 
+    pub async fn paginate_by_student(
+        db: &mut Connection,
+        page: i64,
+        page_size: i64,
+        param_user_id: i32,
+    ) -> QueryResult<PaginationResult<JournalJoined>> {
+        use crate::schema::company;
+        use crate::schema::journal::dsl::*;
+        use crate::schema::letters;
+        use crate::schema::student;
+        use crate::schema::tenure;
+        use crate::schema::user;
+
+        let page_size = if page_size < 1 { 1 } else { page_size };
+        let total_items = journal.count().get_result(db).await?;
+        let items = journal
+            .limit(page_size)
+            .offset(page * page_size)
+            .order(created_at.desc())
+            .inner_join(
+                tenure::table
+                    .inner_join(student::table.inner_join(user::table))
+                    .inner_join(letters::table.inner_join(company::table)),
+            )
+            .filter(user::id.eq(param_user_id))
+            .select((
+                id,
+                student::name,
+                company::name,
+                division,
+                entry_date,
+                start_time,
+                end_time,
+                activity,
+                img_url,
+                extra,
+                created_at,
+                updated_at,
+            ))
+            .load::<(
+                i32,
+                String,
+                String,
+                String,
+                chrono::NaiveDate,
+                chrono::NaiveTime,
+                chrono::NaiveTime,
+                String,
+                String,
+                Option<String>,
+                chrono::DateTime<chrono::Utc>,
+                chrono::DateTime<chrono::Utc>,
+            )>(db)
+            .await?
+            .into_iter()
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            })
+            .collect();
+
+        Ok(PaginationResult {
+            items,
+            total_items,
+            page,
+            page_size,
+            /* ceiling division of integers */
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
+        })
+    }
+
+    pub async fn paginate_by_advisor(
+        db: &mut Connection,
+        page: i64,
+        page_size: i64,
+        param_user_id: i32,
+    ) -> QueryResult<PaginationResult<JournalJoined>> {
+        use crate::schema::company;
+        use crate::schema::journal::dsl::*;
+        use crate::schema::letters;
+        use crate::schema::student;
+        use crate::schema::tenure;
+
+        let page_size = if page_size < 1 { 1 } else { page_size };
+        let total_items = journal.count().get_result(db).await?;
+        let items = journal
+            .limit(page_size)
+            .offset(page * page_size)
+            .order(created_at.desc())
+            .inner_join(
+                tenure::table
+                    .inner_join(student::table)
+                    .inner_join(letters::table.inner_join(company::table)),
+            )
+            .filter(
+                tenure::advsch_id
+                    .eq(param_user_id)
+                    .or(tenure::advdudi_id.eq(param_user_id)),
+            )
+            .select((
+                id,
+                student::name,
+                company::name,
+                division,
+                entry_date,
+                start_time,
+                end_time,
+                activity,
+                img_url,
+                extra,
+                created_at,
+                updated_at,
+            ))
+            .load::<(
+                i32,
+                String,
+                String,
+                String,
+                chrono::NaiveDate,
+                chrono::NaiveTime,
+                chrono::NaiveTime,
+                String,
+                String,
+                Option<String>,
+                chrono::DateTime<chrono::Utc>,
+                chrono::DateTime<chrono::Utc>,
+            )>(db)
+            .await?
+            .into_iter()
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            })
+            .collect();
+
+        Ok(PaginationResult {
+            items,
+            total_items,
+            page,
+            page_size,
+            /* ceiling division of integers */
+            num_pages: total_items / page_size + i64::from(total_items % page_size != 0),
+        })
+    }
+
     pub async fn update(
         db: &mut Connection,
         param_id: i32,
@@ -446,5 +589,18 @@ impl Journal {
         }
 
         res
+    }
+
+    pub async fn return_tenure(db: &mut Connection, param_id: i32) -> QueryResult<Option<Tenure>> {
+        use crate::schema::journal::dsl::*;
+        use crate::schema::tenure;
+
+        journal
+            .filter(id.eq(param_id))
+            .inner_join(tenure::table)
+            .select(tenure::all_columns)
+            .first::<Tenure>(db)
+            .await
+            .optional()
     }
 }
