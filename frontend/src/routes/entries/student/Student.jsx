@@ -3,6 +3,7 @@ import Cookies from "universal-cookie";
 import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate } from "react-router-dom";
+import StatisticStudent from "../../../components/count/StatisticStudent";
 
 function Student() {
   const cookies = new Cookies(null, { path: "/" });
@@ -110,6 +111,8 @@ function Student() {
   return (
     <>
       <Search addOnClick={onAddHandle} />
+      <StatisticStudent entryCount={data.total_items}/>
+      
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
           <thead className="bg-base-300">
