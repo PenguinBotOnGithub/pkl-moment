@@ -10,6 +10,7 @@ use models::tenure::Tenure;
 use models::types::UserRole;
 use parking_lot::Mutex;
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use tracing::error;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},

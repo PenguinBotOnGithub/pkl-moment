@@ -200,7 +200,11 @@ impl Journal {
                 letters::end_date,
             ))
             .first::<(Tenure, bool, chrono::NaiveDate, chrono::NaiveDate)>(db)
-            .await?;
+            .await
+            .optional()?;
+        let Some(res) = res else {
+            return Err(anyhow!("tenure data not found"));
+        };
         let (tenure, verified, s_date, e_date) = res;
 
         if let None = tenure.advsch_id {
