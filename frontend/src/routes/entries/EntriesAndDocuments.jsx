@@ -41,21 +41,13 @@ function EntriesAndDocument() {
     fetchDataForEntry();
   }, [page]);
 
-  function onAddHandle() {
-    navigate(`/admin/entries/add`);
-  }
-
-  const onExport = async (id) => {
-    exportEntry(id);
-  };
-
   function handlePageChange(index) {
     navigate(`/admin/entries/${index}`);
   }
 
   return (
     <>
-      <Search addOnClick={onAddHandle} />
+      <Search addOnClick={() => navigate(`/admin/entries/add`)} />
       <Statistic entryCount={pageData && pageData.total_items} />
       <div className="flex flex-col gap-2">
         {loading ? (
@@ -93,20 +85,12 @@ function EntriesAndDocument() {
                       className="btn btn-info btn-xs"
                       onClick={() => {
                         navigate(
-                          `/admin/entries/${entryValue[currentEntry]}/${row.id}`
+                          `/admin/entries/detail/${row.id}`
                         );
                       }}
                     >
                       Detail
                     </button>
-                    {row.verified && (
-                      <button
-                        className="btn btn-warning btn-xs"
-                        onClick={() => onExport(row.id)}
-                      >
-                        Export
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}
