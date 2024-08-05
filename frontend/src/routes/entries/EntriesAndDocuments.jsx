@@ -41,21 +41,13 @@ function EntriesAndDocument() {
     fetchDataForEntry();
   }, [page]);
 
-  function onAddHandle() {
-    navigate(`/admin/entries/add`);
-  }
-
-  const onExport = async (id) => {
-    exportEntry(id);
-  };
-
   function handlePageChange(index) {
     navigate(`/admin/entries/${index}`);
   }
 
   return (
     <>
-      <Search addOnClick={onAddHandle} />
+      <Search addOnClick={() => navigate(`/admin/entries/add`)} />
       <Statistic entryCount={pageData && pageData.total_items} />
       <div className="flex flex-col gap-2">
 <<<<<<< HEAD
@@ -212,12 +204,13 @@ function EntriesAndDocument() {
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
                       onClick={() => {
                         navigate(
-                          `/admin/entries/${entryValue[currentEntry]}/${row.id}`
+                          `/admin/entries/detail/${row.id}`
                         );
                       }}
                     >
                       Detail
                     </button>
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -238,6 +231,8 @@ function EntriesAndDocument() {
                         Export
                       </button>
                     )}
+=======
+>>>>>>> 4e1c186 (frontend/feat: [AS] app change from entry type to simply detail, statistic student adjustment, settings theme removed, entries and document simpler code, entry fix export, entry add simpler code, student class edit (buggy) and pagination, simpler student service code, deleted unused codes)
                   </td>
                 </tr>
               ))}

@@ -24,6 +24,8 @@ function Entry() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [isOpen, setIsOpen] = useState(false);
+
   const onExport = async (index) => {
     exportEntry(index);
   };
@@ -125,10 +127,6 @@ function Entry() {
     }
   };
 
-  function titleCase(str) {
-    return str.toLowerCase().replace(/(^|\s)\S/g, (L) => L.toUpperCase());
-  }
-
   useEffect(() => {
     fetchDataForEntry();
     fetchDataForEntryStudents();
@@ -167,18 +165,6 @@ function Entry() {
       );
 
       try {
-        // Update entry data
-        // if (updatedEntryData) {
-        //   await fetch(`${host}/api/letters/${id}/update`, {
-        //     method: "PATCH",
-        //     headers: {
-        //       "Content-Type": "application/json",
-        //       Authorization: token,
-        //     },
-        //     body: JSON.stringify(updatedEntryData),
-        //   });
-        // }
-
         // Add new students
         for (const student of studentsToAdd) {
           await fetch(`${host}/api/letters/${id}/student/add`, {
@@ -237,7 +223,6 @@ function Entry() {
         <thead className="bg-base-300">
           <tr className="border-0">
             <th>Pembimbing</th>
-            <th>Jenis Entri</th>
             <th>Tanggal Permintaan</th>
             <th>Verifikasi</th>
             <th>Aksi</th>
@@ -246,7 +231,6 @@ function Entry() {
         <tbody className="box-content">
           <tr>
             <td>{data?.user?.username || "N/A"}</td>
-            <td>{titleCase(entry)}</td>
             <td>{data?.created_at}</td>
             <td>
               {verifikasi ? (
@@ -257,7 +241,7 @@ function Entry() {
             </td>
             <td className="gap-2 flex flex-row">
               <button
-                className="btn btn-error btn-xs"
+                className="btn btn-error btn-xs mr-10"
                 onClick={() =>
                   document
                     .getElementById("delete_confirmation_modal")
@@ -267,19 +251,45 @@ function Entry() {
                 Delete
               </button>
               {verifikasi && (
-                <button
-                  className="btn btn-warning btn-xs"
-                  onClick={() => onExport(id)}
-                >
-                  Export
-                </button>
+                <div className="dropdown dropdown-end fixed ml-14">
+                  <button
+                    className="btn btn-warning btn-xs"
+                    onClick={() => {
+                      isOpen ? setIsOpen(false) : setIsOpen(true);
+                    }}
+                  >
+                    Export
+                  </button>
+                  {isOpen && (
+                    <div className="dropdown-content flex flex-row bg-base-300 rounded-box z-[100] p-2 shadow-2xl overflow-y-auto">
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportEntry(id, "permohonan")}
+                      >
+                        Permohonan
+                      </div>
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportEntry(id, "pengantaran")}
+                      >
+                        Pengantaran
+                      </div>
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportEntry(id, "penjemputan")}
+                      >
+                        Penjemputan
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </td>
           </tr>
         </tbody>
       </table>
       <h2>Perusahaan</h2>
-      <table className="table bg-base-100 border-0 overflow-hidden rounded-box ">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-box z-[1]">
         <thead className="bg-base-300">
           <tr className="border-0">
             <th>Nama Perusahaan</th>

@@ -4,19 +4,39 @@ import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate } from "react-router-dom";
 import StatisticStudent from "../../../components/count/StatisticStudent";
+import { fetchData } from "../../../services";
+import Dropdown from "../../../components/Dropdown";
+import { updateStudent } from "../../../services/functions/students";
 
 function Student() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const [data, setData] = useState([]);
+  const [classData, setClassData] = useState([]);
   const [isDataEdited, setIsDataEdited] = useState([]);
   const navigate = useNavigate();
+  const [pageData, setPageData] = useState();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+      try {
+        const data = await fetchData(url);
+        setter(transform(data.data.items));
+      } catch (err) {
+        alert(err);
+        setter([]);
+      }
+    };
+
+    fetchDataWrapper(`/api/class`, setClassData);
+  }, []);
+
   const fetchDataForStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0`, {
+      const response = await fetch(`${host}/api/student?page=0&size=1`, {
         headers: {
           Authorization: token,
         },
@@ -25,6 +45,7 @@ function Student() {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
       let studentsData = await response.json();
+      setPageData(studentsData.data);
       setData(studentsData.data.items);
       setIsDataEdited(studentsData.data.items.map(() => false));
       setError(null);
@@ -70,28 +91,21 @@ function Student() {
   };
 
   const saveChanges = async (index, id) => {
-    // Implement the logic to save the changes to the server
     console.log("Form data submitted:", data[index]);
-    await fetch(`${host}/api/student/${id}/update`, {
+    await fetchData(`/api/student/${id}/update`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         name: data[index].name,
-        class: data[index].class,
         nis: data[index].nis,
       }),
     })
-      .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
           fetchDataForStudents();
         }
       })
-      .catch(() => {
-        alert("Something went wrong");
+      .catch((err) => {
+        alert("Something went wrong: "+err);
         fetchDataForStudents();
       });
 
@@ -100,19 +114,10 @@ function Student() {
     setIsDataEdited(newIsDataEdited);
   };
 
-  const cancelChanges = () => {
-    fetchDataForStudents();
-  };
-
-  function onAddHandle () {
-    navigate("/admin/entries/student/add")
-  }
-
   return (
     <>
-      <Search addOnClick={onAddHandle} />
-      <StatisticStudent entryCount={data.total_items}/>
-      
+      <Search addOnClick={() => {navigate("/admin/entries/student/add")}} />
+      <StatisticStudent entryCount={data.total_items}/>      
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
           <thead className="bg-base-300">
@@ -144,19 +149,15 @@ function Student() {
                   />
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    value={row.class.grade + " " + row.class.department + " " + row.class.number }
-                    className="w-full"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "none",
-                      outline: "none",
-                    }}
-                    onChange={(e) =>
-                      handleInputChange(index, "class", e.target.value)
-                    }
-                  />
+                <Dropdown
+                  size="sm"
+                  items={classData}
+                  displayFields={["grade", "department", "number"]}
+                  searchField="department"
+                  setSelectedValue={(selectedValue) =>
+                    updateStudent(index+1, {class_id: selectedValue})
+                  }
+                />
                 </td>
                 <td>
                   <input
@@ -184,7 +185,7 @@ function Student() {
                       </button>
                       <button
                         className="btn btn-warning btn-xs rounded-lg mr-2"
-                        onClick={() => cancelChanges()}
+                        onClick={() => {fetchDataForStudents()}}
                       >
                         Cancel
                       </button>
@@ -201,25 +202,43 @@ function Student() {
             ))}
           </tbody>
         </table>
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button className="flex-none btn bg-base-100">
-            <span className="material-symbols-rounded icon-size-20">
-              arrow_back
-            </span>
-          </button>
-          <div className="join flex gap-2">
-            <button className="join-item btn">1</button>
-            <button className="join-item btn">2</button>
-            <button className="join-item btn opacity-50">...</button>
-            <button className="join-item btn">99</button>
-            <button className="join-item btn">100</button>
+        {pageData && (
+          <div className="flex justify-center items-center gap-2 mt-2">
+            <button
+              className="flex-none btn bg-base-100"
+              onClick={() => handlePageChange(pageData.page - 1)}
+              disabled={pageData.page === 0}
+            >
+              <span className="material-symbols-rounded icon-size-20">
+                arrow_back
+              </span>
+            </button>
+            <div className="join flex">
+              {[...Array(pageData.num_pages)].map((_, index) => (
+                <button
+                  key={index}
+                  className={`join-item btn ${
+                    pageData.page === index
+                      ? "bg-primary text-primary-content"
+                      : "bg-base-100"
+                  }`}
+                  onClick={() => handlePageChange(index)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              className="flex-none btn bg-base-100"
+              onClick={() => handlePageChange(pageData.page + 1)}
+              disabled={pageData.page === pageData.num_pages - 1}
+            >
+              <span className="material-symbols-rounded icon-size-20">
+                arrow_forward
+              </span>
+            </button>
           </div>
-          <button className="flex-none btn bg-base-100">
-            <span className="material-symbols-rounded icon-size-20">
-              arrow_forward
-            </span>
-          </button>
-        </div>
+        )}
       </div>
     </>
   );

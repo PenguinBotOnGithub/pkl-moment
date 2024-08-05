@@ -9,7 +9,6 @@ import { assignStudentToLetter } from "../../services/functions/students";
 
 function EntryAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
-  const token = cookies.get("access-token");
   const userId = cookies.get("user-id");
   const { entry } = useParams();
   const labelStyle = "max-w-36 min-w-36 overflow-hidden";
@@ -80,10 +79,9 @@ function EntryAdd({ role }) {
       const body = {
         student_id: row.id,
       };
-  
+
       const result = await assignStudentToLetter(entryId, body);
-  
-      // Optional: Handle errors or do something with the result
+
       if (!result || result.status !== "success") {
         console.error(`Failed to add student with ID ${row.id}`);
       }
@@ -106,18 +104,13 @@ function EntryAdd({ role }) {
     };
 
     try {
-      const response = await fetch(`${host}/api/letters/create`, {
+      const response = await fetchData(`/api/letters/create`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
         body: JSON.stringify(body),
       });
 
-      const result = await response.json();
-      if (result.status === "success") {
-        await addStudentsToEntry(result.data.id);
+      if (response.status === "success") {
+        await addStudentsToEntry(response.data.id);
         navigate("/admin/entries/0");
       } else {
         alert("Submission failed");
@@ -127,7 +120,7 @@ function EntryAdd({ role }) {
     }
   };
 
-  const handleEntryClick = (index) => {
+  const handleDateClick = (index) => {
     if (startDate) {
       const newEndDate = new Date(startDate);
       newEndDate.setMonth(newEndDate.getMonth() + (index === 0 ? 6 : 12));
@@ -181,7 +174,7 @@ function EntryAdd({ role }) {
             <button
               key={index}
               role="tab"
-              onClick={() => handleEntryClick(index)}
+              onClick={() => handleDateClick(index)}
               className={`tab hover:bg-base-300 ease-in-out duration-150 ${
                 currentEndDate === index ? "tab-active" : ""
               }`}

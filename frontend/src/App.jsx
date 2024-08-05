@@ -108,7 +108,7 @@ function App() {
         {
           path: "entries",
           children: [
-            { path: ":entry/:id", element: <Entry /> },
+            { path: "detail/:id", element: <Entry /> },
             { path: "add", element: <EntryAdd role={cookies.get("role")} /> },
             { path: "company", element: <Company /> },
             { path: "company/add", element: <CompanyAdd /> },
