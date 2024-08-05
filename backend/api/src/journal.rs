@@ -130,6 +130,15 @@ async fn create_journal(
     payload: CreateJournal,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    match *&claims.role {
+        UserRole::AdvisorSchool | UserRole::AdvisorDudi | UserRole::Coordinator => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to create journal entry".to_owned(),
+            )));
+        }
+        _ => {}
+    }
+
     let mut db = db.lock();
     let result = Journal::create_checked(&mut db, &payload, claims.id)
         .await
