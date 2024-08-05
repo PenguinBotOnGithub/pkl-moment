@@ -612,6 +612,16 @@ async fn verify_letters(
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
     let mut db = db.lock();
+    let student_count = LettersStudent::get_students_count_from_letter(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    if student_count < 1 {
+        return Err(reject::custom(ClientError::InvalidInput(
+            "can not verify letters with no students relations".to_owned(),
+        )));
+    }
+
     db.transaction(|conn| {
         async move {
             let letter = Letter::verify_letter(conn, id, claims.id).await?;

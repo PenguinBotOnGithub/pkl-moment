@@ -39,6 +39,12 @@ pub struct ClassJoined {
     pub department: String,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub struct ClassBrief {
+    pub id: i32,
+    pub class: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=class)]
 pub struct CreateClass {
@@ -127,7 +133,7 @@ impl Class {
         db: &mut Connection,
         page: i64,
         page_size: i64,
-    ) -> QueryResult<PaginationResult<ClassJoined>> {
+    ) -> QueryResult<PaginationResult<ClassBrief>> {
         use crate::schema::class::dsl::*;
 
         let page_size = if page_size < 1 { 1 } else { page_size };
@@ -140,11 +146,9 @@ impl Class {
             .load::<(i32, i32, i32, String)>(db)
             .await?
             .iter_mut()
-            .map(|v| ClassJoined {
+            .map(|v| ClassBrief {
                 id: v.0,
-                grade: v.1,
-                number: v.2,
-                department: mem::take(&mut v.3),
+                class: format!("{} {}-{}", v.1, v.3, v.2),
             })
             .collect();
 
