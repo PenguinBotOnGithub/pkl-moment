@@ -6,9 +6,10 @@ function Dropdown({
   searchField,
   setSelectedValue,
   size = "xl",
+  defaultValue,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState(defaultValue || "");
   const [visibleItems, setVisibleItems] = useState([]);
   const inputRef = useRef(null);
 

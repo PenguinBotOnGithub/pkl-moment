@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import Statistic from "../../components/count/Statistic";
-import { exportEntry, fetchLetters } from "../../services/functions/letters";
+import { fetchLetters } from "../../services/functions/letters";
 import Search from "../../components/Search";
 
 function EntriesAndDocument() {

@@ -73,7 +73,7 @@ function StatisticStudent({ entryCount }) {
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
         // onClick={() => navigate("/admin/entries/company")}
       >
-        <span className="z-10">Total Kelas </span>
+        <span className="z-10">Total Kelas</span>
         <span className="z-10 text-4xl font-bold">
           {companyData.total_items}
         </span>
@@ -85,12 +85,12 @@ function StatisticStudent({ entryCount }) {
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
         // onClick={() => navigate("/admin/entries/student")}
       >
-        <span className="z-10">Total Department </span>
+        <span className="z-10">Total Department</span>
         <span className="z-10 text-4xl font-bold">
           {studentData.total_items}
         </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
-          settings
+          manufacturing
         </span>
       </button>
       <button className="bg-base-100 p-4 rounded-box flex flex-col justify-center items-center flex-0">
