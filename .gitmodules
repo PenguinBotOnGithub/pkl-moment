@@ -1,0 +1,4 @@
+[submodule "simple_pdf_generator"]
+	path = submodules/simple_pdf_generator
+	url = https://github.com/PenguinBotOnGithub/simple_pdf_generator
+	branch = main

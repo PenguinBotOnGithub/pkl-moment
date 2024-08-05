@@ -1,0 +1,12 @@
+-- Your SQL goes here
+CREATE OR REPLACE FUNCTION change_updated_at_row()
+  RETURNS TRIGGER 
+  LANGUAGE PLPGSQL
+  AS
+$$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+
+	RETURN NEW;
+END;
+$$
