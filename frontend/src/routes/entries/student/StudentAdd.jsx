@@ -122,8 +122,8 @@ function StudentAdd() {
                 <Dropdown
                   size="sm"
                   items={classData}
-                  displayFields={["grade", "department", "number"]}
-                  searchField="department"
+                  displayFields={["class"]}
+                  searchField="class"
                   setSelectedValue={(selectedValue) =>
                     handleDropdownChange(index, selectedValue)
                   }

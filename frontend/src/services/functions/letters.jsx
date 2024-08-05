@@ -10,7 +10,7 @@ export const deleteEntry = async (id) => {
   });
 };
 
-export const exportEntry = async (id, lettertype) => {
+export const exportLetter = async (id, lettertype) => {
   try {
     const response = fetchData(`/api/letters/${id}/pdf/${lettertype}`);
     let bin = [];
@@ -24,4 +24,4 @@ export const exportEntry = async (id, lettertype) => {
   }
 };
 
-export default { fetchLetters, deleteEntry, exportEntry };
+export default { fetchLetters, deleteEntry, exportLetter };

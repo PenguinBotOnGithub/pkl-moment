@@ -5,7 +5,7 @@ import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAd
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host"; // Import the host URL
 import { matchSorter } from "match-sorter";
-import { exportEntry } from "../../services/functions/letters";
+import { exportLetter } from "../../services/functions/letters";
 
 function Entry() {
   let { id, entry } = useParams();
@@ -27,7 +27,7 @@ function Entry() {
   const [isOpen, setIsOpen] = useState(false);
 
   const onExport = async (index) => {
-    exportEntry(index);
+    exportLetter(index);
   };
 
   const fetchDataForEntry = async () => {
@@ -264,19 +264,19 @@ function Entry() {
                     <div className="dropdown-content flex flex-row bg-base-300 rounded-box z-[100] p-2 shadow-2xl overflow-y-auto">
                       <div
                         className="cursor-pointer btn btn-sm btn-ghost"
-                        onMouseDown={() => exportEntry(id, "permohonan")}
+                        onMouseDown={() => exportLetter(id, "permohonan")}
                       >
                         Permohonan
                       </div>
                       <div
                         className="cursor-pointer btn btn-sm btn-ghost"
-                        onMouseDown={() => exportEntry(id, "pengantaran")}
+                        onMouseDown={() => exportLetter(id, "pengantaran")}
                       >
                         Pengantaran
                       </div>
                       <div
                         className="cursor-pointer btn btn-sm btn-ghost"
-                        onMouseDown={() => exportEntry(id, "penjemputan")}
+                        onMouseDown={() => exportLetter(id, "penjemputan")}
                       >
                         Penjemputan
                       </div>

@@ -152,11 +152,12 @@ function Student() {
                 <Dropdown
                   size="sm"
                   items={classData}
-                  displayFields={["grade", "department", "number"]}
-                  searchField="department"
+                  displayFields={["class"]}
+                  searchField="class"
                   setSelectedValue={(selectedValue) =>
                     updateStudent(index+1, {class_id: selectedValue})
                   }
+                  defaultValue={row.class.grade + " " + row.class.department + "-" + row.class.number}
                 />
                 </td>
                 <td>
