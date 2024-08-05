@@ -257,4 +257,17 @@ impl LettersStudent {
             Err(_) => res,
         }
     }
+
+    pub async fn get_students_count_from_letter(
+        db: &mut Connection,
+        param_letter_id: i32,
+    ) -> QueryResult<i64> {
+        use crate::schema::letters_student::dsl::*;
+
+        letters_student
+            .filter(letters_id.eq(param_letter_id))
+            .count()
+            .get_result(db)
+            .await
+    }
 }

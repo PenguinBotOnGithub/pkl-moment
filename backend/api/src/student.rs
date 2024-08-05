@@ -1,4 +1,5 @@
 use crate::auth::{with_auth_with_claims, JwtClaims};
+use crate::error::handle_fk_not_exists_unique_violation;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
@@ -180,9 +181,7 @@ async fn create_student(
             .scope_boxed()
         })
         .await
-        .map_err(|e: diesel::result::Error| {
-            reject::custom(InternalError::DatabaseError(e.to_string()))
-        })?;
+        .map_err(handle_fk_not_exists_unique_violation)?;
 
     Ok(reply::json(&ApiResponse::ok(
         "success".to_owned(),
