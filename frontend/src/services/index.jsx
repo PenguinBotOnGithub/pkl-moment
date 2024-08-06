@@ -25,6 +25,16 @@ export const fetchData = async (url, options = {}) => {
   }
 };
 
+export const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+  try {
+    const data = await fetchData(url);
+    setter(transform(data.data.items));
+  } catch (err) {
+    alert(err);
+    setter([]);
+  }
+};
+
 export const login = async (credentials) => {
   return await fetchData("/api/auth/login", {
     method: "POST",
@@ -32,4 +42,4 @@ export const login = async (credentials) => {
   });
 };
 
-export default { fetchData, login };
+export default { fetchData, login, fetchDataWrapper };

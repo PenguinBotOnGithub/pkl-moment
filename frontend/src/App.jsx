@@ -40,7 +40,14 @@ import Journal from "./routes/journal/Journal";
 =======
 import Tenure from "./routes/journal/tenure/Tenure";
 import JournalAdd from "./routes/journal/JournalAdd";
+<<<<<<< HEAD
 >>>>>>> c05d912 (frontend/feat: [AS] dropdown selectfield, StatisticJournal, remove debugging, entryadd advisor -> coordinator, student clean code, journal read and detail, add journal (10%), tenure (read only), user add role dropdown, tenure service)
+=======
+import Classes from "./routes/entries/student/Classes";
+import Department from "./routes/entries/student/Department";
+import ClassesAdd from "./routes/entries/student/ClassesAdd";
+
+>>>>>>> db9858f (frontend/feat: [MH] class and department CRUD)
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -132,6 +139,14 @@ function App() {
             { path: "student", element: <Navigate to="0" /> },
             { path: "student/:page", element: <Student /> },
             { path: "student/add", element: <StudentAdd /> },
+            {
+              path: "student",
+              children: [
+                { path: "classes", element: < Classes/> },
+                { path: "classes/add", element: <ClassesAdd /> },
+                { path: "department", element: < Department/> },
+              ],
+            },
           ],
         },
 <<<<<<< HEAD
