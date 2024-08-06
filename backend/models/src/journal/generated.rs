@@ -234,7 +234,7 @@ impl Journal {
         }
 
         let today = chrono::Local::now().date_naive();
-        if today > s_date {
+        if s_date > today {
             return Err(anyhow!("user's tenure has not started yet"));
         }
 
