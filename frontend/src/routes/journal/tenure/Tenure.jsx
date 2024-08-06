@@ -12,7 +12,7 @@ import {
 } from "../../../services/functions/students";
 import { fetchTenure } from "../../../services/functions/tenure";
 
-function Student() {
+function Tenure() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const [data, setData] = useState([]);
@@ -195,4 +195,4 @@ function Student() {
   );
 }
 
-export default Student;
+export default Tenure;

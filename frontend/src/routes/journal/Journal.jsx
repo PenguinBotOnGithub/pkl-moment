@@ -161,7 +161,7 @@ function Journal() {
                       {data[selectedJournal].activity}
                     </span>
                   </div>
-                  <div class="grid grid-cols-2 w-full rounded-box overflow-hidden">
+                  <div className="grid grid-cols-2 w-full rounded-box overflow-hidden">
                     <div className="p-2 bg-base-200">Siswa</div>
                     <div className="p-2 bg-base-300">
                       {data[selectedJournal].student}
