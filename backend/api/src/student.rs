@@ -88,11 +88,22 @@ pub fn students_routes(
         .and(with_db(db.clone()))
         .and_then(delete_student);
 
+    let search_students_route = student
+        .and(warp::path("search"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(warp::query::query::<HashMap<String, String>>())
+        .and(with_db(db.clone()))
+        .and_then(search_byname);
+
     get_students_route
         .or(create_student_route)
         .or(read_student_route)
         .or(update_student_route)
         .or(delete_student_route)
+        .or(search_students_route)
 }
 
 async fn get_students(
@@ -245,4 +256,25 @@ async fn delete_student(
             "student not found".to_owned(),
         )))
     }
+}
+
+async fn search_byname(
+    queries: HashMap<String, String>,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let Some(name) = queries.get("name") else {
+        let v: Vec<u8> = vec![];
+        return Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)));
+    };
+    let name = format!("%{name}%");
+
+    let mut db = db.lock();
+    let students = Student::filter_by_name(&mut db, name)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "success".to_owned(),
+        students,
+    )))
 }
