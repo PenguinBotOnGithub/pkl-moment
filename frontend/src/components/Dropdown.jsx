@@ -20,18 +20,23 @@ function Dropdown({
 
   function handleSearchChange(value) {
     setSearchValue(value);
-    const searchTerm = value.toLowerCase();
+    const searchTerm = value.toLowerCase().trim();
 
-    const updatedItems = items.map((item) => {
-      const text = item[searchField].toLowerCase();
-      return {
-        ...item,
-        visible: text.includes(searchTerm),
-      };
-    });
+    if (searchTerm === "") {
+      setVisibleItems(items);
+      setIsOpen(false);
+    } else {
+      const updatedItems = items.map((item) => {
+        const text = item[searchField].toLowerCase();
+        return {
+          ...item,
+          visible: text.includes(searchTerm),
+        };
+      });
 
-    setVisibleItems(updatedItems);
-    setIsOpen(true);
+      setVisibleItems(updatedItems);
+      setIsOpen(true);
+    }
   }
 
   function selectItem(item) {
@@ -63,7 +68,6 @@ function Dropdown({
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
           onFocus={() => {
-            setIsOpen(true);
             setVisibleItems(items.map((item) => ({ ...item, visible: true })));
           }}
         />

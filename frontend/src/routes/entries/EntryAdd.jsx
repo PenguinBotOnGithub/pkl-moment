@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
-import host from "../../assets/strings/host";
 import Cookies from "universal-cookie";
 import Dropdown from "../../components/Dropdown";
 import { fetchData } from "../../services";
@@ -198,13 +197,6 @@ function EntryAdd({ role }) {
         onClick={handleOnSubmit}
       >
         Send
-      </button>
-      <button
-        onClick={() => {
-          console.log(students);
-        }}
-      >
-        Debug
       </button>
     </div>
   );
