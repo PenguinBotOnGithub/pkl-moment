@@ -42,6 +42,13 @@ pub struct StudentJoined {
     pub user: UserPublic,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub struct StudentJoinedMini {
+    pub id: i32,
+    pub name: String,
+    pub class: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name=student)]
 pub struct CreateStudent {
@@ -261,5 +268,28 @@ impl Student {
             }
             Err(_) => res,
         }
+    }
+
+    pub async fn filter_by_name(
+        db: &mut Connection,
+        param_name: String,
+    ) -> QueryResult<Vec<StudentJoinedMini>> {
+        use crate::schema::class;
+        use crate::schema::department;
+        use crate::schema::student::dsl::*;
+
+        Ok(student
+            .filter(name.ilike(param_name))
+            .inner_join(class::table.inner_join(department::table))
+            .select((id, name, class::number, class::grade, department::name))
+            .load::<(i32, String, i32, i32, String)>(db)
+            .await?
+            .into_iter()
+            .map(|(s_id, s_name, c_num, c_grade, d_name)| StudentJoinedMini {
+                id: s_id,
+                name: s_name,
+                class: format!("{c_grade} {d_name}-{c_num}"),
+            })
+            .collect())
     }
 }
