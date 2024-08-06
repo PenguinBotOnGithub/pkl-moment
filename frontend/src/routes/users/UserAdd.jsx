@@ -2,9 +2,16 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host";
+import Dropdown from "../../components/Dropdown";
 
 function UserAdd() {
   const [rows, setRows] = useState([{ username: "", password: "", role: "" }]);
+  const roleValue = [
+    { role: "coordinator" },
+    { role: "advisor_school" },
+    { role: "advisor_dudi" },
+    { role: "student" },
+  ];
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const navigate = useNavigate();
@@ -43,7 +50,12 @@ function UserAdd() {
       ) {
         alert("Please fill every data before submitting");
       } else {
-        const value = ["coordinator"];
+        const value = [
+          "coordinator",
+          "advisor_school",
+          "advisor_dudi",
+          "student",
+        ];
         if (value.includes(row.role.trim())) {
           handleSubmit(row);
         } else {
@@ -52,6 +64,12 @@ function UserAdd() {
       }
     });
   }
+
+  const handleRoleChange = (index, selectedRole) => {
+    const newRows = [...rows];
+    newRows[index].role = selectedRole;
+    setRows(newRows);
+  };
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -115,7 +133,7 @@ function UserAdd() {
                 />
               </td>
               <td>
-                <input
+                {/* <input
                   type="text"
                   name="role"
                   value={row.role}
@@ -126,6 +144,14 @@ function UserAdd() {
                     border: "none",
                     outline: "none",
                   }}
+                /> */}
+                <Dropdown
+                  items={roleValue}
+                  displayFields={["role"]}
+                  searchField={"role"}
+                  selectField={"role"}
+                  setSelectedValue={(selectedRole) => handleRoleChange(index, selectedRole)}
+                  size="sm"
                 />
               </td>
               <td>

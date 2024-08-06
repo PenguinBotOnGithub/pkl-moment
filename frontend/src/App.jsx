@@ -1,5 +1,9 @@
 import React from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/users/AllUsers";
 import Settings from "./routes/Settings";
@@ -30,8 +34,13 @@ import Mentor from "./routes/journal/mentor/Mentor";
 >>>>>>> 5340312 (frontend/feat: [AS] fix login redirect, add theme controller to navbar, move journal button 1 step down in sidebar, theme controller add dropdown style, login form wider, delete unused code)
 =======
 import Journal from "./routes/journal/Journal";
+<<<<<<< HEAD
 >>>>>>> 249d054 (frontend/feat: [AS] Dropdown overhaul, search add UI fix, change user add table required from advisor to coordinator, entries and document cleaner code, entry add cleaner code, move journal to journal folder, index service export fetchData)
 
+=======
+import Tenure from "./routes/journal/tenure/Tenure";
+import JournalAdd from "./routes/journal/JournalAdd";
+>>>>>>> c05d912 (frontend/feat: [AS] dropdown selectfield, StatisticJournal, remove debugging, entryadd advisor -> coordinator, student clean code, journal read and detail, add journal (10%), tenure (read only), user add role dropdown, tenure service)
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -86,8 +95,16 @@ function App() {
     },
     {
       path: "admin",
+<<<<<<< HEAD
       element: isLoggedIn ? <Root cookies={cookies} /> : <Navigate to="/login" />,
 >>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
+=======
+      element: isLoggedIn ? (
+        <Root cookies={cookies} />
+      ) : (
+        <Navigate to="/login" />
+      ),
+>>>>>>> c05d912 (frontend/feat: [AS] dropdown selectfield, StatisticJournal, remove debugging, entryadd advisor -> coordinator, student clean code, journal read and detail, add journal (10%), tenure (read only), user add role dropdown, tenure service)
       children: [
         { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
@@ -112,10 +129,12 @@ function App() {
             { path: "add", element: <EntryAdd role={cookies.get("role")} /> },
             { path: "company", element: <Company /> },
             { path: "company/add", element: <CompanyAdd /> },
-            { path: "student", element: <Student /> },
+            { path: "student", element: <Navigate to="0" /> },
+            { path: "student/:page", element: <Student /> },
             { path: "student/add", element: <StudentAdd /> },
           ],
         },
+<<<<<<< HEAD
         
 <<<<<<< HEAD
 =======
@@ -144,6 +163,16 @@ function App() {
 >>>>>>> 291a5c7 (frontend/feat: [AS] themes, breadcrumb, simple pkl icon, UI fix, move company add table to company add)
 =======
 >>>>>>> dd6f3fa (frontend/feat: [MH] Statistic Journal, Tes Mentor dan Student Journal)
+=======
+        {
+          path: "journal",
+          children: [
+            { path: "add", element: <JournalAdd role={cookies.get("role")} /> },
+            { path: "tenure", element: <Navigate to="0" /> },
+            { path: "tenure/:page", element: <Tenure /> },
+          ],
+        },
+>>>>>>> c05d912 (frontend/feat: [AS] dropdown selectfield, StatisticJournal, remove debugging, entryadd advisor -> coordinator, student clean code, journal read and detail, add journal (10%), tenure (read only), user add role dropdown, tenure service)
       ],
     },
   ]);
