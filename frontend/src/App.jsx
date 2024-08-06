@@ -1,5 +1,9 @@
 import React from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/users/AllUsers";
 import Settings from "./routes/Settings";
@@ -16,7 +20,8 @@ import Entry from "./routes/entries/Entry";
 import EntryAdd from "./routes/entries/EntryAdd";
 import UserAdd from "./routes/users/UserAdd";
 import Journal from "./routes/journal/Journal";
-
+import Tenure from "./routes/journal/tenure/Tenure";
+import JournalAdd from "./routes/journal/JournalAdd";
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -34,7 +39,11 @@ function App() {
     },
     {
       path: "admin",
-      element: isLoggedIn ? <Root cookies={cookies} /> : <Navigate to="/login" />,
+      element: isLoggedIn ? (
+        <Root cookies={cookies} />
+      ) : (
+        <Navigate to="/login" />
+      ),
       children: [
         { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
@@ -51,11 +60,19 @@ function App() {
             { path: "add", element: <EntryAdd role={cookies.get("role")} /> },
             { path: "company", element: <Company /> },
             { path: "company/add", element: <CompanyAdd /> },
-            { path: "student", element: <Student /> },
+            { path: "student", element: <Navigate to="0" /> },
+            { path: "student/:page", element: <Student /> },
             { path: "student/add", element: <StudentAdd /> },
           ],
         },
-        
+        {
+          path: "journal",
+          children: [
+            { path: "add", element: <JournalAdd role={cookies.get("role")} /> },
+            { path: "tenure", element: <Navigate to="0" /> },
+            { path: "tenure/:page", element: <Tenure /> },
+          ],
+        },
       ],
     },
   ]);

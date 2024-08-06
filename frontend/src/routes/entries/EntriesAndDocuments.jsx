@@ -37,7 +37,6 @@ function EntriesAndDocument() {
   };
 
   useEffect(() => {
-    console.log(data);
     fetchDataForEntry();
   }, [page]);
 

@@ -4,6 +4,7 @@ function Dropdown({
   items = [],
   displayFields,
   searchField,
+  selectField,
   setSelectedValue,
   size = "xl",
   defaultValue,
@@ -35,7 +36,7 @@ function Dropdown({
 
   function selectItem(item) {
     setSearchValue(item[searchField]);
-    setSelectedValue(item.id);
+    selectField ? setSelectedValue(item[selectField]) : setSelectedValue(item.id)
     setIsOpen(false);
   }
 
