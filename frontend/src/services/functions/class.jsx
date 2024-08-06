@@ -5,7 +5,6 @@ export const classTo = async (entryId, body) => {
     const response = await fetchData(`/api/class/create`, {
       body: JSON.stringify(body),
       method: "POST",
-      
     });
 
     if (response.status !== "success") {

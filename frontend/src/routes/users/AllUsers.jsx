@@ -15,6 +15,7 @@ function AllUsers() {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   function handlePageChange(index) {
@@ -62,6 +63,10 @@ function AllUsers() {
   };
 
   const onChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
     try {
       const response = await fetch(
         `${host}/api/user/${selectedUser}/change-password`,
@@ -78,6 +83,7 @@ function AllUsers() {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
       setNewPassword("");
+      setConfirmPassword("");
       setSelectedUser(null);
       fetchDataForUsers();
     } catch (err) {
@@ -196,8 +202,8 @@ function AllUsers() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Confirm Password"
                 className="input input-bordered w-full my-2"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
               <div className="flex items-center">
