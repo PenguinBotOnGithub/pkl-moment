@@ -649,4 +649,60 @@ impl Journal {
             .await
             .optional()
     }
+
+    pub async fn verify_journal(
+        db: &mut Connection,
+        param_id: i32,
+        param_verify: (bool, bool),
+        param_user_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::journal::dsl::*;
+
+        let mut update = UpdateJournal {
+            division: None,
+            entry_date: None,
+            start_time: None,
+            end_time: None,
+            activity: None,
+            img_url: None,
+            extra: None,
+            verified_sch: None,
+            verified_dudi: None,
+        };
+
+        if param_verify.0 {
+            update.verified_sch = Some(true);
+        }
+
+        if param_verify.1 {
+            update.verified_dudi = Some(true);
+        }
+
+        let previous = journal
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(0);
+        };
+
+        let res = diesel::update(journal.filter(id.eq(param_id)))
+            .set(update)
+            .execute(db)
+            .await?;
+
+        if res > 0 {
+            Log::log(
+                db,
+                Operation::Verify,
+                TableRef::Journal,
+                param_user_id,
+                Some(previous),
+            )
+            .await;
+        }
+
+        Ok(res)
+    }
 }
