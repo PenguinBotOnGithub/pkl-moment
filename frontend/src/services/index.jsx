@@ -1,11 +1,12 @@
 import Cookies from "universal-cookie";
+import host from "../assets/strings/host";
 
 const cookies = new Cookies();
 const token = cookies.get("access-token");
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = host;
 
-const fetchData = async (url, options = {}) => {
+export const fetchData = async (url, options = {}) => {
   try {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
@@ -25,44 +26,21 @@ const fetchData = async (url, options = {}) => {
   }
 };
 
-export const login = async (formData) => {
-  return await fetchData('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(formData),
-  });
-};
-
-export const fetchEntries = async (entryType, page, size) => {
-  return await fetchData(`/api/${entryType}?page=${page}&size=${size}`);
-};
-
-export const deleteEntry = async (entryType, id) => {
-  return await fetchData(`/api/${entryType}/${id}/delete`, {
-    method: 'DELETE',
-  });
-};
-
-export const exportEntry = async (entryType, index) => {
+export const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
   try {
-    const response = await fetch(
-      `${host}/api/${entryType}/${index}/pdf`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        method: "GET",
-      }
-    );
-    let bin = [];
-    for await (const chunk of response.body) {
-      bin.push(chunk);
-    }
-    let blob = new Blob(bin, { type: "application/pdf" });
-    downloadBlob(blob, "pkl.pdf");
+    const data = await fetchData(url);
+    setter(transform(data.data.items));
   } catch (err) {
-    console.log(err);
+    alert(err);
+    setter([]);
   }
 };
 
-export default { login, fetchEntries, deleteEntry, exportEntry };
+export const login = async (credentials) => {
+  return await fetchData("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+};
+
+export default { fetchData, login, fetchDataWrapper };

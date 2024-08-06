@@ -4,9 +4,13 @@ import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate, useParams } from "react-router-dom";
 import StatisticStudent from "../../../components/count/StatisticStudent";
-import { fetchData, fetchDataWrapper } from "../../../services";
+import { fetchData } from "../../../services";
 import Dropdown from "../../../components/Dropdown";
-import { fetchStudents, updateStudent } from "../../../services/functions/students";
+import {
+  fetchStudents,
+  updateStudent,
+} from "../../../services/functions/students";
+import { fetchTenure } from "../../../services/functions/tenure";
 
 function Student() {
   const cookies = new Cookies(null, { path: "/" });
@@ -21,17 +25,23 @@ function Student() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+    try {
+      const data = await fetchData(url);
+      setter(transform(data.data.items));
+    } catch (err) {
+      alert(err);
+      setter([]);
+    }
+  };
+
   useEffect(() => {
     fetchDataWrapper(`/api/class`, setClassData);
   }, []);
 
-  useEffect(() => {
-    fetchDataForStudents();
-  }, [page]);
-
-  const fetchDataForStudents = async () => {
+  const fetchDataForTenure = async () => {
     try {
-      const response = await fetchStudents(page, 10);
+      const response = await fetchTenure(page, 10);
       if (response.status != "success") {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
@@ -47,6 +57,11 @@ function Student() {
     }
   };
 
+  useEffect(() => {
+    fetchDataForTenure();
+    console.log(data);
+  }, [page]);
+
   const deleteStudent = async (index) => {
     try {
       const response = await fetch(`${host}/api/student/${index}/delete`, {
@@ -60,7 +75,7 @@ function Student() {
       }
       await response.json();
       setError(null);
-      fetchDataForStudents();
+      fetchDataForTenure();
     } catch (err) {
       setError(err.message);
     }
@@ -87,12 +102,12 @@ function Student() {
     })
       .then((result) => {
         if (result.status === "success") {
-          fetchDataForStudents();
+          fetchDataForTenure();
         }
       })
       .catch((err) => {
-        alert("Something went wrong: "+err);
-        fetchDataForStudents();
+        alert("Something went wrong: " + err);
+        fetchDataForTenure();
       });
 
     const newIsDataEdited = [...isDataEdited];
@@ -106,88 +121,33 @@ function Student() {
 
   return (
     <>
-      <Search addOnClick={() => {navigate("/admin/entries/student/add")}} />
-      <StatisticStudent entryCount={data.total_items}/>      
+      <Search
+        addOnClick={() => {
+          navigate("/admin/entries/student/add");
+        }}
+      />
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
           <thead className="bg-base-300">
             <tr className="border-0">
-              <th>No</th>
+              <th className="pl-3 pb-2 pr-0 w-0">No</th>
               <th>Nama Siswa</th>
-              <th>Kelas</th>
-              <th>NIS</th>
-              <th>Aksi</th>
+              <th>Pembimbing Sekolah</th>
+              <th>Pembimbing Perusahaan</th>
             </tr>
           </thead>
           <tbody className="box-content">
             {data.map((row, index) => (
               <tr key={row.id} className="border-t-2 border-base-300">
-                <td>{index + 1}</td>
+                <td className="p-3 pb-2">{index + 1}</td>
                 <td>
-                  <input
-                    type="text"
-                    value={row.name}
-                    className="w-full"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "none",
-                      outline: "none",
-                    }}
-                    onChange={(e) =>
-                      handleInputChange(index, "name", e.target.value)
-                    }
-                  />
+                  <span>{row.student}</span>
                 </td>
                 <td>
-                <Dropdown
-                  size="sm"
-                  items={classData}
-                  displayFields={["class"]}
-                  searchField="class"
-                  setSelectedValue={(selectedValue) =>
-                    updateStudent(row.id, {class_id: selectedValue})
-                  }
-                  defaultValue={row.class.grade + " " + row.class.department + "-" + row.class.number}
-                />
+                  <span>{row.advisor_sch ? row.advisor_sch : <span className="opacity-50">null</span>}</span>
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    value={row.nis}
-                    className="w-full"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "none",
-                      outline: "none",
-                    }}
-                    onChange={(e) =>
-                      handleInputChange(index, "nis", e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  {isDataEdited[index] && (
-                    <>
-                      <button
-                        className="btn btn-success btn-xs rounded-lg mr-2"
-                        onClick={() => saveChanges(index, row.id)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="btn btn-warning btn-xs rounded-lg mr-2"
-                        onClick={() => {fetchDataForStudents()}}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                  <button
-                    className="btn btn-error btn-xs rounded-lg"
-                    onClick={() => deleteStudent(row.id)}
-                  >
-                    Delete
-                  </button>
+                  <span>{row.advisor_dudi ? row.advisor_dudi : <span className="opacity-50">null</span>}</span>
                 </td>
               </tr>
             ))}

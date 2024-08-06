@@ -7,7 +7,7 @@ import Dropdown from "../../components/Dropdown";
 import { fetchData } from "../../services";
 import { assignStudentToLetter } from "../../services/functions/students";
 
-function EntryAdd({ role }) {
+function JournalAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
   const userId = cookies.get("user-id");
   const { entry } = useParams();
@@ -51,7 +51,7 @@ function EntryAdd({ role }) {
 
     fetchDataWrapper(`/api/company?page=0&size=1000`, setCompany);
     fetchDataWrapper(`/api/student?page=0&size=1000`, setStudents, flattenStudentData);
-    if (role !== "coordinator") {
+    if (role !== "advisor") {
       fetchDataWrapper(`/api/user`, setAdvisers, (items) =>
         items.filter((user) => user.role === "coordinator")
       );
@@ -210,4 +210,4 @@ function EntryAdd({ role }) {
   );
 }
 
-export default EntryAdd;
+export default JournalAdd;

@@ -6,6 +6,7 @@ function StudentEntryAddTable({
   onDeleteRow,
   onSearchStudent,
   isMaxWidth,
+  items,
 }) {
   const [searchStudentValue, setSearchStudentValue] = useState("");
   const [isOpenStudent, setIsOpenStudent] = useState(false);
@@ -13,9 +14,11 @@ function StudentEntryAddTable({
 
   function handleSearchChange(value) {
     setSearchStudentValue(value);
-    onSearchStudent(value, setVisibleStudents);
-    if (value.trim != "") {
-      setIsOpenStudent(true);
+    if (items && items.length > 0) {  // Only filter if items are available
+      onSearchStudent(value, setVisibleStudents, items);
+      if (value.trim() !== "") {
+        setIsOpenStudent(true);
+      }
     }
   }
 
@@ -28,6 +31,7 @@ function StudentEntryAddTable({
       <thead className="relative">
         <tr className="border-0 bg-base-300">
           <th className="w-0 z-20">No</th>
+          
           <th>Nama Siswa</th>
           <th>Kelas</th>
           <th>Aksi</th>
@@ -38,10 +42,7 @@ function StudentEntryAddTable({
           <tr key={index} className="border-t-2 border-base-300 ">
             <td>{index + 1}</td>
             <td>{row.name}</td>
-            <td>
-              {row.class}
-              {row.grade}
-            </td>
+            <td>{row.grade}</td>
             <td>
               <div
                 className="btn btn-error btn-xs mr-2"
@@ -66,7 +67,7 @@ function StudentEntryAddTable({
               value={searchStudentValue}
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => {
-                onSearchStudent("", setVisibleStudents);
+                onSearchStudent("", setVisibleStudents, items);
               }}
               onBlur={() => setTimeout(() => setIsOpenStudent(false), 200)}
               style={{
@@ -82,13 +83,13 @@ function StudentEntryAddTable({
                     key={student.id}
                     className="cursor-pointer flex flex-row justify-between"
                     onMouseDown={() => {
-                      onAddRow(student.id, student.name, student.class);
+                      onAddRow(student.id, student.name, student.grade);
                       setSearchStudentValue("");
                       setIsOpenStudent(false);
                     }}
                   >
                     <div>{student.name}</div>
-                    <div>{student.class}</div>
+                    <div>{student.grade}</div>
                   </div>
                 ))}
               </div>

@@ -48,7 +48,7 @@ function Sidebar({ index = -1 }) {
             {isExpanded && t("Journal")}
           </NavLink>
         </li>
-        {role == "admin" && (
+        {role == "secretary" && (
           <li>
             <NavLink
               to="/admin/users"

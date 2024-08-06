@@ -1,5 +1,9 @@
 import React from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/users/AllUsers";
 import Settings from "./routes/Settings";
@@ -14,13 +18,13 @@ import CompanyAdd from "./routes/entries/company/CompanyAdd";
 import StudentAdd from "./routes/entries/student/StudentAdd";
 import Entry from "./routes/entries/Entry";
 import EntryAdd from "./routes/entries/EntryAdd";
-import Wave from "./routes/entries/wave/Wave";
-import WaveAdd from "./routes/entries/wave/WaveAdd";
 import UserAdd from "./routes/users/UserAdd";
-import SearchEntry from "./routes/SearchEntry";
-import SearchEntryDummy from "./routes/search/SearchEntryDummy";
-import SearchEntrySiswa from "./routes/search/SearchEntrySiswa";
-import Journal from "./routes/entries/Journal";
+import Journal from "./routes/journal/Journal";
+import Tenure from "./routes/journal/tenure/Tenure";
+import JournalAdd from "./routes/journal/JournalAdd";
+import Classes from "./routes/entries/student/Classes";
+import Department from "./routes/entries/student/Department";
+import ClassesAdd from "./routes/entries/student/ClassesAdd";
 
 
 function App() {
@@ -39,7 +43,11 @@ function App() {
     },
     {
       path: "admin",
-      element: isLoggedIn ? <Root cookies={cookies} /> : <Navigate to="/login" />,
+      element: isLoggedIn ? (
+        <Root cookies={cookies} />
+      ) : (
+        <Navigate to="/login" />
+      ),
       children: [
         { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
@@ -52,17 +60,31 @@ function App() {
         {
           path: "entries",
           children: [
-            { path: ":entry/:id", element: <Entry /> },
-            { path: ":entry/add", element: <EntryAdd role={cookies.get("role")} /> },
-            { path: "wave/:page", element: <Wave /> },
-            { path: "wave/add", element: <WaveAdd /> },
+            { path: "detail/:id", element: <Entry /> },
+            { path: "add", element: <EntryAdd role={cookies.get("role")} /> },
             { path: "company", element: <Company /> },
             { path: "company/add", element: <CompanyAdd /> },
-            { path: "student", element: <Student /> },
+            { path: "student", element: <Navigate to="0" /> },
+            { path: "student/:page", element: <Student /> },
             { path: "student/add", element: <StudentAdd /> },
+            {
+              path: "student",
+              children: [
+                { path: "classes", element: < Classes/> },
+                { path: "classes/add", element: <ClassesAdd /> },
+                { path: "department", element: < Department/> },
+              ],
+            },
           ],
         },
-        
+        {
+          path: "journal",
+          children: [
+            { path: "add", element: <JournalAdd role={cookies.get("role")} /> },
+            { path: "tenure", element: <Navigate to="0" /> },
+            { path: "tenure/:page", element: <Tenure /> },
+          ],
+        },
       ],
     },
   ]);

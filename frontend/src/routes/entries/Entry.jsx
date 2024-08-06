@@ -5,6 +5,7 @@ import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAd
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host"; // Import the host URL
 import { matchSorter } from "match-sorter";
+import { exportLetter } from "../../services/functions/letters";
 
 function Entry() {
   let { id, entry } = useParams();
@@ -13,76 +14,25 @@ function Entry() {
   const [dataEntryStudent, setDataEntryStudent] = useState([]);
   const [dataAllStudent, setDataAllStudent] = useState([]);
   const [verifikasi, setVerifikasi] = useState(true);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
   const cookies = new Cookies();
   const role = cookies.get("role");
   const token = cookies.get("access-token");
   const [isStudentListChanged, setIsStudentListChanged] = useState(false);
-  const [isEntryChanged, setIsEntryChanged] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const navigate = useNavigate();
 
-  function downloadBlob(blob, name = "file") {
-    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
-    const blobUrl = URL.createObjectURL(blob);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    // Create a link element
-    const link = document.createElement("a");
-
-    // Set link's href to point to the Blob URL
-    link.href = blobUrl;
-    link.download = name;
-
-    // Append link to the body
-    document.body.appendChild(link);
-
-    // Dispatch click event on the link
-    // This is necessary as link.click() does not work on the latest firefox
-    link.dispatchEvent(
-      new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-    );
-
-    // Remove link from body
-    document.body.removeChild(link);
-  }
+  const [isOpen, setIsOpen] = useState(false);
 
   const onExport = async (index) => {
-    try {
-      const response = await fetch(`${host}/api/${entry}/${index}/pdf`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        method: "POST",
-        body: JSON.stringify({
-          signature_1_id: 1,
-          signature_2_id: 2,
-        }),
-      });
-      let bin = [];
-      for await (const chunk of response.body) {
-        console.log("dfdfd");
-        console.log(chunk);
-        bin.push(chunk);
-      }
-      let blob = new Blob(bin, { type: "application/pdf" });
-      console.log(await blob.arrayBuffer());
-      downloadBlob(blob, "pdfff.pdf");
-      setError(null);
-      fetchDataForEntry(entryValue[currentEntry]);
-    } catch (err) {
-      setError(err.message);
-    }
+    exportLetter(index);
   };
 
   const fetchDataForEntry = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}`, {
+      const response = await fetch(`${host}/api/letters/${id}`, {
         headers: {
           Authorization: token,
         },
@@ -104,7 +54,7 @@ function Entry() {
 
   const fetchDataForEntryStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}/student`, {
+      const response = await fetch(`${host}/api/letters/${id}/student`, {
         headers: {
           Authorization: token,
         },
@@ -142,7 +92,7 @@ function Entry() {
 
   const onVerify = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}/verify`, {
+      const response = await fetch(`${host}/api/letters/${id}/verify`, {
         headers: {
           Authorization: token,
         },
@@ -161,7 +111,7 @@ function Entry() {
 
   const onDelete = async () => {
     try {
-      const response = await fetch(`${host}/api/${entry}/${id}`, {
+      const response = await fetch(`${host}/api/letters/${id}/delete`, {
         headers: {
           Authorization: token,
         },
@@ -176,10 +126,6 @@ function Entry() {
       console.log("Error deleting data: " + err);
     }
   };
-
-  function titleCase(str) {
-    return str.toLowerCase().replace(/(^|\s)\S/g, (L) => L.toUpperCase());
-  }
 
   useEffect(() => {
     fetchDataForEntry();
@@ -219,21 +165,9 @@ function Entry() {
       );
 
       try {
-        // Update entry data
-        // if (updatedEntryData) {
-        //   await fetch(`${host}/api/${entry}/${id}/update`, {
-        //     method: "PATCH",
-        //     headers: {
-        //       "Content-Type": "application/json",
-        //       Authorization: token,
-        //     },
-        //     body: JSON.stringify(updatedEntryData),
-        //   });
-        // }
-
         // Add new students
         for (const student of studentsToAdd) {
-          await fetch(`${host}/api/${entry}/${id}/student/add`, {
+          await fetch(`${host}/api/letters/${id}/student/add`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -246,7 +180,7 @@ function Entry() {
         // Delete removed students
         for (const student of studentsToDelete) {
           await fetch(
-            `${host}/api/${entry}/${id}/student/${student.id}/remove`,
+            `${host}/api/letters/${id}/student/${student.id}/remove`,
             {
               method: "DELETE",
               headers: {
@@ -289,7 +223,6 @@ function Entry() {
         <thead className="bg-base-300">
           <tr className="border-0">
             <th>Pembimbing</th>
-            <th>Jenis Entri</th>
             <th>Tanggal Permintaan</th>
             <th>Verifikasi</th>
             <th>Aksi</th>
@@ -298,7 +231,6 @@ function Entry() {
         <tbody className="box-content">
           <tr>
             <td>{data?.user?.username || "N/A"}</td>
-            <td>{titleCase(entry)}</td>
             <td>{data?.created_at}</td>
             <td>
               {verifikasi ? (
@@ -309,7 +241,7 @@ function Entry() {
             </td>
             <td className="gap-2 flex flex-row">
               <button
-                className="btn btn-error btn-xs"
+                className="btn btn-error btn-xs mr-10"
                 onClick={() =>
                   document
                     .getElementById("delete_confirmation_modal")
@@ -319,19 +251,45 @@ function Entry() {
                 Delete
               </button>
               {verifikasi && (
-                <button
-                  className="btn btn-warning btn-xs"
-                  onClick={() => onExport(id)}
-                >
-                  Export
-                </button>
+                <div className="dropdown dropdown-end fixed ml-14">
+                  <button
+                    className="btn btn-warning btn-xs"
+                    onClick={() => {
+                      isOpen ? setIsOpen(false) : setIsOpen(true);
+                    }}
+                  >
+                    Export
+                  </button>
+                  {isOpen && (
+                    <div className="dropdown-content flex flex-row bg-base-300 rounded-box z-[100] p-2 shadow-2xl overflow-y-auto">
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportLetter(id, "permohonan")}
+                      >
+                        Permohonan
+                      </div>
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportLetter(id, "pengantaran")}
+                      >
+                        Pengantaran
+                      </div>
+                      <div
+                        className="cursor-pointer btn btn-sm btn-ghost"
+                        onMouseDown={() => exportLetter(id, "penjemputan")}
+                      >
+                        Penjemputan
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </td>
           </tr>
         </tbody>
       </table>
       <h2>Perusahaan</h2>
-      <table className="table bg-base-100 border-0 overflow-hidden rounded-box ">
+      <table className="table bg-base-100 border-0 overflow-hidden rounded-box z-[1]">
         <thead className="bg-base-300">
           <tr className="border-0">
             <th>Nama Perusahaan</th>

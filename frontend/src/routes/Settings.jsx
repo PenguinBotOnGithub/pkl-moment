@@ -33,11 +33,7 @@ function Settings({ cookies }) {
         <div className="bg-base-100 p-4 rounded-btn flex flex-col items-start flex-1">
           <div className="flex items-center">
             <PKLMomentIconSimple size={24}/>
-            <span className="ml-2 text-lg font-bold">Tampilan (Coming Soon)</span>
-          </div>
-          <div className="flex items-center justify-between mt-4 w-full">
-            <span>Tema</span>
-            <ThemeController cookies={cookies}/>
+            <span className="ml-2 text-lg font-bold">Tampilan</span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
             <span>Bahasa</span>
@@ -60,7 +56,7 @@ function Settings({ cookies }) {
               description
             </span>
             <span className="ml-2 text-lg font-bold">
-              Konfigurasi Tabel (Coming Soon)
+              Konfigurasi Tabel
             </span>
           </div>
           <div className="flex items-center justify-between mt-4 w-full">
