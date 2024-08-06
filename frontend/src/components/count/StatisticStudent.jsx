@@ -7,14 +7,14 @@ function StatisticStudent({ entryCount }) {
   const navigate = useNavigate();
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
-  const [companyData, setCompanyData] = useState([]);
-  const [studentData, setStudentData] = useState([]);
+  const [classData, setClassData] = useState([]);
+  const [departmentData, setDepartmentData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchDataForStudents = async () => {
+  const fetchDataForClasses = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0`, {
+      const response = await fetchData(`${host}/api/class?page=0`, {
         headers: {
           Authorization: token,
         },
@@ -22,21 +22,20 @@ function StatisticStudent({ entryCount }) {
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let studentsData = await response.json();
-      setStudentData(studentsData.data);
-      console.log(studentData.data);
+      let classesData = await response.json();
+      setClassData(classesData.data);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setStudentData([]);
+      setClassData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchDataForCompanies = async () => {
+  const fetchDataForDepartments = async () => {
     try {
-      const response = await fetch(`${host}/api/company?page=0`, {
+      const response = await fetch(`${host}/api/department?page=0`, {
         headers: {
           Authorization: token,
         },
@@ -44,20 +43,20 @@ function StatisticStudent({ entryCount }) {
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let companiesData = await response.json();
-      setCompanyData(companiesData.data);
+      let departmentsData = await response.json();
+      setDepartmentData(departmentsData.data);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setCompanyData([]);
+      setDepartmentData([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDataForCompanies();
-    fetchDataForStudents();
+    fetchDataForClasses();
+    fetchDataForDepartments();
   }, []);
 
   return (
@@ -71,11 +70,11 @@ function StatisticStudent({ entryCount }) {
       </div>
       <button
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
-        // onClick={() => navigate("/admin/entries/company")}
+        onClick={() => navigate("/admin/entries/student/classes")}
       >
         <span className="z-10 text-left">Total Kelas</span>
         <span className="z-10 text-4xl font-bold">
-          {companyData.total_items}
+          {classData.total_items}
         </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           school
@@ -83,11 +82,11 @@ function StatisticStudent({ entryCount }) {
       </button>
       <button
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
-        // onClick={() => navigate("/admin/entries/student")}
+        onClick={() => navigate("/admin/entries/student/department")}
       >
         <span className="z-10 text-left">Total Department</span>
         <span className="z-10 text-4xl font-bold">
-          {studentData.total_items}
+          {departmentData.total_items}
         </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           manufacturing

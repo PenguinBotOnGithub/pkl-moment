@@ -22,6 +22,10 @@ import UserAdd from "./routes/users/UserAdd";
 import Journal from "./routes/journal/Journal";
 import Tenure from "./routes/journal/tenure/Tenure";
 import JournalAdd from "./routes/journal/JournalAdd";
+import Classes from "./routes/entries/student/Classes";
+import Department from "./routes/entries/student/Department";
+import ClassesAdd from "./routes/entries/student/ClassesAdd";
+
 
 function App() {
   const cookies = new Cookies(null, { path: "/" });
@@ -63,6 +67,14 @@ function App() {
             { path: "student", element: <Navigate to="0" /> },
             { path: "student/:page", element: <Student /> },
             { path: "student/add", element: <StudentAdd /> },
+            {
+              path: "student",
+              children: [
+                { path: "classes", element: < Classes/> },
+                { path: "classes/add", element: <ClassesAdd /> },
+                { path: "department", element: < Department/> },
+              ],
+            },
           ],
         },
         {

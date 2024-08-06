@@ -1,10 +1,14 @@
 import { fetchData } from "..";
 
-export const department = async (body) => {
+export const addDepartment = async (body) => {
   fetchData(`/api/department/create`, {
     body: JSON.stringify(body),
     method: "POST",
   });
 };
 
-export default { department };
+export const fetchDepartment = async () => {
+  fetchData(`/api/department`);
+};
+
+export default { addDepartment, fetchDepartment };

@@ -36,7 +36,9 @@ function Dropdown({
 
   function selectItem(item) {
     setSearchValue(item[searchField]);
-    selectField ? setSelectedValue(item[selectField]) : setSelectedValue(item.id)
+    selectField
+      ? setSelectedValue(item[selectField])
+      : setSelectedValue(item.id);
     setIsOpen(false);
   }
 

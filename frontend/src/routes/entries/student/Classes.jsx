@@ -2,42 +2,34 @@ import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
 import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
-import { useNavigate, useParams } from "react-router-dom";
-import StatisticStudent from "../../../components/count/StatisticStudent";
-import { fetchData, fetchDataWrapper } from "../../../services";
-import Dropdown from "../../../components/Dropdown";
-import { fetchStudents, updateStudent } from "../../../services/functions/students";
+import { useNavigate } from "react-router-dom";
+import { fetchData } from "../../../services";
 
-function Student() {
+function Classes() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const [data, setData] = useState([]);
-  const [classData, setClassData] = useState([]);
   const [isDataEdited, setIsDataEdited] = useState([]);
   const navigate = useNavigate();
   const [pageData, setPageData] = useState();
-  const { page } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchDataWrapper(`/api/class`, setClassData);
-  }, []);
-
-  useEffect(() => {
-    fetchDataForStudents();
-  }, [page]);
-
-  const fetchDataForStudents = async () => {
+  const fetchDataForClasses = async () => {
     try {
-      const response = await fetchStudents(page, 10);
-      if (response.status != "success") {
+      const response = await fetch(`${host}/api/class?page=0&size=10`, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      setPageData(response.data);
-      setData(response.data.items);
-      setIsDataEdited(response.data.items.map(() => false));
+      let classesData = await response.json();
+      setPageData(classesData.data);
+      setData(classesData.data.items);
+      setIsDataEdited(classesData.data.items.map(() => false));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -47,9 +39,13 @@ function Student() {
     }
   };
 
-  const deleteStudent = async (index) => {
+  useEffect(() => {
+    fetchDataForClasses();
+  }, []);
+
+  const deleteClass = async (id) => {
     try {
-      const response = await fetch(`${host}/api/student/${index}/delete`, {
+      const response = await fetch(`${host}/api/class/${id}`, {
         headers: {
           Authorization: token,
         },
@@ -60,7 +56,7 @@ function Student() {
       }
       await response.json();
       setError(null);
-      fetchDataForStudents();
+      fetchDataForClasses();
     } catch (err) {
       setError(err.message);
     }
@@ -77,46 +73,57 @@ function Student() {
   };
 
   const saveChanges = async (index, id) => {
-    console.log("Form data submitted:", data[index]);
-    await fetchData(`/api/student/${id}/update`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        name: data[index].name,
-        nis: data[index].nis,
-      }),
-    })
-      .then((result) => {
-        if (result.status === "success") {
-          fetchDataForStudents();
-        }
-      })
-      .catch((err) => {
-        alert("Something went wrong: "+err);
-        fetchDataForStudents();
+    try {
+      const response = await fetch(`${host}/api/class/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          grade: data[index].grade,
+          department: data[index].department,
+          number: data[index].number,
+        }),
       });
 
-    const newIsDataEdited = [...isDataEdited];
-    newIsDataEdited[index] = false;
-    setIsDataEdited(newIsDataEdited);
+      if (!response.ok) {
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+
+      let result = await response.json();
+
+      if (result.status === "success") {
+        fetchDataForClasses();
+      } else {
+        alert("Failed to save changes");
+      }
+    } catch (err) {
+      alert(`Something went wrong: ${err.message}`);
+    } finally {
+      const newIsDataEdited = [...isDataEdited];
+      newIsDataEdited[index] = false;
+      setIsDataEdited(newIsDataEdited);
+    }
   };
 
-  function handlePageChange(index) {
-    navigate(`/admin/entries/student/${index}`);
-  }
+  const handlePageChange = (page) => {
+    // Implement the page change logic
+  };
 
   return (
     <>
-      <Search addOnClick={() => {navigate("/admin/entries/student/add")}} />
-      <StatisticStudent entryCount={data.total_items}/>      
+      <Search addOnClick={() => navigate("/admin/entries/student/classes/add")} />
+
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
           <thead className="bg-base-300">
             <tr className="border-0">
               <th>No</th>
-              <th>Nama Siswa</th>
-              <th>Kelas</th>
-              <th>NIS</th>
-              <th>Aksi</th>
+              <th>Grade</th>
+              <th>Department</th>
+              <th>Number</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody className="box-content">
@@ -126,7 +133,7 @@ function Student() {
                 <td>
                   <input
                     type="text"
-                    value={row.name}
+                    value={row.grade}
                     className="w-full"
                     style={{
                       backgroundColor: "transparent",
@@ -134,26 +141,14 @@ function Student() {
                       outline: "none",
                     }}
                     onChange={(e) =>
-                      handleInputChange(index, "name", e.target.value)
+                      handleInputChange(index, "grade", e.target.value)
                     }
                   />
                 </td>
                 <td>
-                <Dropdown
-                  size="sm"
-                  items={classData}
-                  displayFields={["class"]}
-                  searchField="class"
-                  setSelectedValue={(selectedValue) =>
-                    updateStudent(row.id, {class_id: selectedValue})
-                  }
-                  defaultValue={row.class.grade + " " + row.class.department + "-" + row.class.number}
-                />
-                </td>
-                <td>
                   <input
                     type="text"
-                    value={row.nis}
+                    value={row.department}
                     className="w-full"
                     style={{
                       backgroundColor: "transparent",
@@ -161,7 +156,22 @@ function Student() {
                       outline: "none",
                     }}
                     onChange={(e) =>
-                      handleInputChange(index, "nis", e.target.value)
+                      handleInputChange(index, "department", e.target.value)
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    value={row.number}
+                    className="w-full"
+                    style={{
+                      backgroundColor: "transparent",
+                      border: "none",
+                      outline: "none",
+                    }}
+                    onChange={(e) =>
+                      handleInputChange(index, "number", e.target.value)
                     }
                   />
                 </td>
@@ -176,7 +186,7 @@ function Student() {
                       </button>
                       <button
                         className="btn btn-warning btn-xs rounded-lg mr-2"
-                        onClick={() => {fetchDataForStudents()}}
+                        onClick={() => fetchDataForClasses()}
                       >
                         Cancel
                       </button>
@@ -184,7 +194,7 @@ function Student() {
                   )}
                   <button
                     className="btn btn-error btn-xs rounded-lg"
-                    onClick={() => deleteStudent(row.id)}
+                    onClick={() => deleteClass(row.id)}
                   >
                     Delete
                   </button>
@@ -235,4 +245,4 @@ function Student() {
   );
 }
 
-export default Student;
+export default Classes;
