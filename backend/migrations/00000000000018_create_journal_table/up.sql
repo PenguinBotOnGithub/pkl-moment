@@ -16,3 +16,6 @@ CREATE TABLE "journal" (
     CONSTRAINT fk_tenure FOREIGN KEY ("tenure_id") REFERENCES "tenure" ("id"),
     UNIQUE(tenure_id, entry_date)
 );
+
+CREATE TRIGGER updated_at_trigger BEFORE
+UPDATE ON "journal" FOR EACH ROW EXECUTE FUNCTION change_updated_at_row ();
