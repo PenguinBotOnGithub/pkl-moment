@@ -91,7 +91,7 @@ function Dropdown({
         <div className="dropdown-content bg-base-300 rounded-box z-[100] w-52 p-2 shadow-2xl overflow-y-auto max-h-[50vh] fixed">
           {visibleItems
             .filter((item) => item.visible)
-            .map((item) => (
+            .map((item, index) => (
               <div
                 key={item.id}
                 className="cursor-pointer flex flex-row justify-between btn btn-sm btn-block btn-ghost"

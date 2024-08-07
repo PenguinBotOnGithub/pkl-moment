@@ -160,9 +160,20 @@ function Journal() {
                     <span className="ml-2 text-lg font-bold w-full">
                       {data[selectedJournal].activity}
                     </span>
-                    <span className="opacity-50">{new Date(
+                    <span className="opacity-50">
+                      {new Date(
                         data[selectedJournal].created_at
-                      ).toLocaleDateString()}</span>
+                      ).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex flex-row mb-4 w-full gap-2 items-center">
+                    <div className="p-2 bg-base-200 rounded-box w-full text-center">
+                      {data[selectedJournal].start_time}
+                    </div>
+                    -
+                    <div className="p-2 bg-base-200 rounded-box w-full text-center">
+                      {data[selectedJournal].end_time}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 w-full rounded-box overflow-hidden">
                     <div className="p-2 bg-base-200">Siswa</div>
@@ -177,20 +188,17 @@ function Journal() {
                     <div className="p-2 bg-base-300">
                       {data[selectedJournal].division}
                     </div>
-                    <div className="p-2 bg-base-300">Jam Mulai</div>
-                    <div className="p-2 bg-base-200">
-                      {data[selectedJournal].start_time}
-                    </div>
-                    <div className="p-2 bg-base-200">Jam Berakhir</div>
-                    <div className="p-2 bg-base-300">
-                      {data[selectedJournal].end_time}
-                    </div>
                   </div>
                 </div>
               </div>
-              <button type="submit" className="btn btn-success w-full">
-                Verify
-              </button>
+              <div className="flex flex-row gap-4">
+                <button type="submit" className="btn btn-success w-full flex-1">
+                  Verify for advisor_school
+                </button>
+                <button type="submit" className="btn btn-success w-full flex-1">
+                  Verify for advisor_dudi
+                </button>
+              </div>
             </div>
           </dialog>
         )}

@@ -4,28 +4,30 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Cookies from "universal-cookie";
 
-function Sidebar({ index = -1 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+function Sidebar({ }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
   const cookies = new Cookies(null, { path: "/" });
   const role = cookies.get("role");
+  const expanded = cookies.get("expanded");
 
   const handleExpandToggle = () => {
     setIsExpanded(!isExpanded);
+    cookies.set("expanded",!isExpanded)
   };
 
   useEffect(() => {
-    console.log(role);
+    setIsExpanded(expanded);
   }, []);
 
   return (
     <div className="flex-none p-2">
       <label className="btn btn-square btn-ghost swap swap-rotate">
         <input type="checkbox" onClick={handleExpandToggle} />
-        <span className="swap-off fill-current material-symbols-rounded">
+        <span className="swap-on fill-current material-symbols-rounded">
           arrow_back
         </span>
-        <span className="swap-on fill-current material-symbols-rounded">
+        <span className="swap-off fill-current material-symbols-rounded">
           menu
         </span>
       </label>

@@ -1,25 +1,15 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate, useParams } from "react-router-dom";
-import StatisticStudent from "../../../components/count/StatisticStudent";
-import { fetchData, fetchDataWrapper } from "../../../services";
+import { fetchDataWrapper } from "../../../services";
 import Dropdown from "../../../components/Dropdown";
-import {
-  fetchStudents,
-  updateStudent,
-} from "../../../services/functions/students";
 import { fetchTenure, updateTenure } from "../../../services/functions/tenure";
 
 function Tenure() {
-  const cookies = new Cookies(null, { path: "/" });
-  const token = cookies.get("access-token");
   const [data, setData] = useState([]);
-  const [userData, setUserData] = useState([]);
   const [advisorData, setAdvisorData] = useState([]);
   const [dudiData, setDudiData] = useState([]);
-  const [isDataEdited, setIsDataEdited] = useState([]);
   const navigate = useNavigate();
   const [pageData, setPageData] = useState();
   const { page } = useParams();
@@ -44,7 +34,6 @@ function Tenure() {
       }
       setPageData(response.data);
       setData(response.data.items);
-      setIsDataEdited(response.data.items.map(() => false));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -85,44 +74,36 @@ function Tenure() {
                 </td>
                 <td>
                   <span>
-                    {row.advisor_sch ? (
-                      <Dropdown
-                        size="sm"
-                        items={advisorData}
-                        displayFields={["username"]}
-                        searchField={"username"}
-                        setSelectedValue={(selectedValue) =>
-                          updateTenure(row.id, {
-                            advisor_type: "school",
-                            advisor_id: selectedValue,
-                          })
-                        }
-                        defaultValue={row.advisor_sch}
-                      />
-                    ) : (
-                      <span className="opacity-50">null</span>
-                    )}
+                    <Dropdown
+                      size="sm"
+                      items={advisorData}
+                      displayFields={["username"]}
+                      searchField={"username"}
+                      setSelectedValue={(selectedValue) =>
+                        updateTenure(row.id, {
+                          advisor_type: "school",
+                          advisor_id: selectedValue,
+                        })
+                      }
+                      defaultValue={row.advisor_sch}
+                    />
                   </span>
                 </td>
                 <td>
                   <span>
-                    {row.advisor_dudi ? (
-                      <Dropdown
-                        size="sm"
-                        items={dudiData}
-                        displayFields={["username"]}
-                        searchField={"username"}
-                        setSelectedValue={(selectedValue) =>
-                          updateTenure(row.id, {
-                            advisor_type: "dudi",
-                            advisor_id: selectedValue,
-                          })
-                        }
-                        defaultValue={row.advisor_dudi}
-                      />
-                    ) : (
-                      <span className="opacity-50">null</span>
-                    )}
+                    <Dropdown
+                      size="sm"
+                      items={dudiData}
+                      displayFields={["username"]}
+                      searchField={"username"}
+                      setSelectedValue={(selectedValue) =>
+                        updateTenure(row.id, {
+                          advisor_type: "dudi",
+                          advisor_id: selectedValue,
+                        })
+                      }
+                      defaultValue={row.advisor_dudi}
+                    />
                   </span>
                 </td>
               </tr>

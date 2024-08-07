@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import host from "../../assets/strings/host";
+import { fetchData } from "../../services";
 
 function Statistic({ entryCount }) {
   const navigate = useNavigate();
@@ -14,17 +15,11 @@ function Statistic({ entryCount }) {
 
   const fetchDataForStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
+      const response = await fetchData(`/api/student?page=0&size=0`);
+      if (response.status !== "success") {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let studentsData = await response.json();
-      setStudentData(studentsData.data);
-      console.log(studentData.data);
+      setStudentData(response.data);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -36,16 +31,11 @@ function Statistic({ entryCount }) {
 
   const fetchDataForCompanies = async () => {
     try {
-      const response = await fetch(`${host}/api/company?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
+      const response = await fetchData(`/api/company?page=0&size=0`);
+      if (response.status !== "success") {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-      let companiesData = await response.json();
-      setCompanyData(companiesData.data);
+      setCompanyData(response.data);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -55,10 +45,10 @@ function Statistic({ entryCount }) {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchDataForCompanies();
     fetchDataForStudents();
-  },[]);
+  }, []);
 
   return (
     <div className="flex gap-2">
@@ -74,7 +64,9 @@ function Statistic({ entryCount }) {
         onClick={() => navigate("/admin/entries/company")}
       >
         <span className="z-10 text-left">Total Perusahaan</span>
-        <span className="z-10 text-4xl font-bold">{companyData.total_items}</span>
+        <span className="z-10 text-4xl font-bold">
+          {companyData.total_items}
+        </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           apartment
         </span>
@@ -84,7 +76,9 @@ function Statistic({ entryCount }) {
         onClick={() => navigate("/admin/entries/student")}
       >
         <span className="z-10 text-left">Total Siswa</span>
-        <span className="z-10 text-4xl font-bold">{studentData.total_items}</span>
+        <span className="z-10 text-4xl font-bold">
+          {studentData.total_items}
+        </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           person
         </span>
