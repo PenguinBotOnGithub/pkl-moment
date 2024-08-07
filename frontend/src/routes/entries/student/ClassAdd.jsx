@@ -6,7 +6,7 @@ import Dropdown from "../../../components/Dropdown";
 import { fetchData } from "../../../services";
 import { fetchDepartment } from "../../../services/functions/department";
 
-function ClassesAdd() {
+function ClassAdd() {
   const [rows, setRows] = useState([{ grade: "", department: "", number: "" }]);
   const [departments, setDepartments] = useState([]);
   const cookies = new Cookies();
@@ -33,21 +33,16 @@ function ClassesAdd() {
 
   const handleSubmit = async (formData) => {
     try {
-      const response = await fetch(`${host}/api/class/create`, {
+      const response = await fetchData(`/api/class/create`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
-          grade: formData.grade,
-          department: formData.department,
-          number: formData.number,
+          grade: parseInt(formData.grade),
+          department_id: formData.department,
+          number: parseInt(formData.number),
         }),
       });
-      const result = await response.json();
-      if (result.status === "success") {
-        navigate("/admin/entries/class");
+      if (response.status === "success") {
+        navigate("/admin/entries/student/class");
       } else {
         alert("Submission failed");
       }
@@ -57,10 +52,11 @@ function ClassesAdd() {
   };
 
   const execBulkPost = async () => {
+    console.log(rows);
     for (const row of rows) {
       if (
         row.grade.trim() === "" ||
-        row.department.trim() === "" ||
+        row.department === undefined ||
         row.number.trim() === ""
       ) {
         alert("Please fill every data before submitting");
@@ -80,7 +76,7 @@ function ClassesAdd() {
 
   const handleDropdownChange = (index, selectedValue) => {
     const newRows = [...rows];
-    newRows[index].department = selectedValue.name; // Assuming selectedValue has a 'name' property
+    newRows[index].department = selectedValue;
     setRows(newRows);
   };
 
@@ -173,4 +169,4 @@ function ClassesAdd() {
   );
 }
 
-export default ClassesAdd;
+export default ClassAdd;

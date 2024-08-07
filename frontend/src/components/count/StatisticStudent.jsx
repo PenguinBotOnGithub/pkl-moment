@@ -70,7 +70,7 @@ function StatisticStudent({ entryCount }) {
       </div>
       <button
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
-        onClick={() => navigate("/admin/entries/student/classes")}
+        onClick={() => navigate("/admin/entries/student/class")}
       >
         <span className="z-10 text-left">Total Kelas</span>
         <span className="z-10 text-4xl font-bold">

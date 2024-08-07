@@ -3,33 +3,37 @@ import Cookies from "universal-cookie";
 import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate } from "react-router-dom";
-import { fetchData } from "../../../services";
+import { fetchData, fetchDataWrapper } from "../../../services";
+import Dropdown from "../../../components/Dropdown";
+import { updateDepartment } from "../../../services/functions/department";
 
-function Classes() {
+function Class() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
   const [data, setData] = useState([]);
+  const [departmentData, setDepartmentData] = useState([]); // Initialize as an empty array
   const [isDataEdited, setIsDataEdited] = useState([]);
   const navigate = useNavigate();
   const [pageData, setPageData] = useState();
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const parseClassString = (classString) => {
+    const [grade, departmentWithNumber] = classString.split(" ");
+    const [department, number] = departmentWithNumber.split("-");
+    return { grade, department, number };
+  };
+
   const fetchDataForClasses = async () => {
     try {
-      const response = await fetch(`${host}/api/class?page=0&size=10`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let classesData = await response.json();
-      setPageData(classesData.data);
-      setData(classesData.data.items);
-      setIsDataEdited(classesData.data.items.map(() => false));
+      const response = await fetchData(`/api/class?page=0&size=10`);
+      const items = response.data.items.map((item) => ({
+        id: item.id,
+        ...parseClassString(item.class),
+      }));
+      setPageData(response.data);
+      setData(items);
+      setIsDataEdited(items.map(() => false));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -41,13 +45,14 @@ function Classes() {
 
   useEffect(() => {
     fetchDataForClasses();
+    fetchDataWrapper(`/api/department`, setDepartmentData);
   }, []);
 
   const deleteClass = async (id) => {
     try {
-      const response = await fetch(`${host}/api/class/${id}`, {
+      const response = await fetch(`${host}/api/class/${id}/delete`, {
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         method: "DELETE",
       });
@@ -73,25 +78,27 @@ function Classes() {
   };
 
   const saveChanges = async (index, id) => {
+    console.log("Form data submitted:", data[index]);
     try {
-      const response = await fetch(`${host}/api/class/${id}`, {
+      const response = await fetch(`${host}/api/class/${id}/update`, {
         method: "PATCH",
         headers: {
-          Authorization: token,
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          grade: data[index].grade,
-          department: data[index].department,
-          number: data[index].number,
+          grade: parseInt(data[index].grade),
+          department_id: parseInt(data[index].department), // Convert department to integer
+          number: parseInt(data[index].number),
         }),
       });
+
+      const result = await response.json();
+      console.log(result); // Log the response for debugging
 
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
-
-      let result = await response.json();
 
       if (result.status === "success") {
         fetchDataForClasses();
@@ -113,7 +120,9 @@ function Classes() {
 
   return (
     <>
-      <Search addOnClick={() => navigate("/admin/entries/student/classes/add")} />
+      <Search
+        addOnClick={() => navigate("/admin/entries/student/class/add")}
+      />
 
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
@@ -146,18 +155,15 @@ function Classes() {
                   />
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    value={row.department}
-                    className="w-full"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "none",
-                      outline: "none",
-                    }}
-                    onChange={(e) =>
-                      handleInputChange(index, "department", e.target.value)
+                  <Dropdown
+                    size="sm"
+                    items={departmentData}
+                    displayFields={["name"]}
+                    searchField="name"
+                    setSelectedValue={(selectedValue) =>
+                      updateDepartment(row.id, {department_id: selectedValue})
                     }
+                    defaultValue={row.department}
                   />
                 </td>
                 <td>
@@ -241,8 +247,9 @@ function Classes() {
           </div>
         )}
       </div>
+      <button onClick={() => console.log(data)}>debug</button>
     </>
   );
 }
 
-export default Classes;
+export default Class;
