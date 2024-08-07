@@ -151,15 +151,18 @@ function Journal() {
               >
                 <span className="material-symbols-rounded">close</span>
               </button>
-              <div className="flex gap-2 w-full max-w-xl">
+              <div className="flex gap-2 w-full">
                 <div className="bg-base-100 py-4 rounded-btn flex flex-col items-start flex-1">
-                  <div className="flex flex-row items-center mb-4">
+                  <div className="flex flex-row items-center w-full mb-4">
                     <span className="material-symbols-rounded icon-size-24">
                       photo_camera
                     </span>
-                    <span className="ml-2 text-lg font-bold">
+                    <span className="ml-2 text-lg font-bold w-full">
                       {data[selectedJournal].activity}
                     </span>
+                    <span className="opacity-50">{new Date(
+                        data[selectedJournal].created_at
+                      ).toLocaleDateString()}</span>
                   </div>
                   <div className="grid grid-cols-2 w-full rounded-box overflow-hidden">
                     <div className="p-2 bg-base-200">Siswa</div>
@@ -181,12 +184,6 @@ function Journal() {
                     <div className="p-2 bg-base-200">Jam Berakhir</div>
                     <div className="p-2 bg-base-300">
                       {data[selectedJournal].end_time}
-                    </div>
-                    <div className="p-2 bg-base-300">Tanggal Dikirim</div>
-                    <div className="p-2 bg-base-200">
-                      {new Date(
-                        data[selectedJournal].created_at
-                      ).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

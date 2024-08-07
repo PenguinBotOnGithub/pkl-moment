@@ -1,117 +1,93 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
-import host from "../../assets/strings/host";
 import Cookies from "universal-cookie";
 import Dropdown from "../../components/Dropdown";
-import { fetchData } from "../../services";
+import { fetchData, fetchDataWrapper } from "../../services";
 import { assignStudentToLetter } from "../../services/functions/students";
 
 function JournalAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
   const userId = cookies.get("user-id");
-  const { entry } = useParams();
-  const labelStyle = "max-w-36 min-w-36 overflow-hidden";
+  const labelStyle = "w-28 flex-none overflow-hidden";
+  const [file, setFile] = useState();
 
-  const [rows, setRows] = useState([]);
-  const [company, setCompany] = useState([]);
-  const [advisers, setAdvisers] = useState([]);
-  const [students, setStudents] = useState([]);
   const navigate = useNavigate();
 
-  const [selectedCompany, setSelectedCompany] = useState();
-  const [selectedAdvisers, setSelectedAdvisers] = useState();
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [currentEndDate, setCurrentEndDate] = useState(0);
-  const endDateValue = ["6 Months", "1 Year"];
+  const [student, setStudent] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState();
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [activity, setActivity] = useState("");
+  const [division, setDivision] = useState("");
 
   useEffect(() => {
-    const fetchDataWrapper = async (
-      url,
-      setter,
-      transform = (data) => data
-    ) => {
-      try {
-        const data = await fetchData(url);
-        setter(transform(data.data.items));
-      } catch (err) {
-        alert(err);
-        setter([]);
-      }
-    };
-
-    const flattenStudentData = (students) => {
-      return students.map((student) => ({
-        id: student.id,
-        name: student.name,
-        grade: `${student.class.grade} ${student.class.department} ${student.class.number}`,
-      }));
-    };
-
-    fetchDataWrapper(`/api/company?page=0&size=1000`, setCompany);
-    fetchDataWrapper(`/api/student?page=0&size=1000`, setStudents, flattenStudentData);
-    if (role !== "advisor") {
-      fetchDataWrapper(`/api/user`, setAdvisers, (items) =>
-        items.filter((user) => user.role === "coordinator")
-      );
+    if (role == "secretary") {
+      fetchDataWrapper(`/api/tenure`, setStudent);
     }
   }, []);
 
-  const addRow = (id, name, grade) => {
-    setRows((prevRows) => [...prevRows, { id, name, grade }]);
-  };
-
-  const deleteRow = (index) => {
-    setRows((prevRows) => prevRows.filter((_, i) => i !== index));
-  };
-
-  const searchStudent = (value, setVisibleStudents, items) => {
-    const searchTerm = value.toLowerCase();
-    const filteredItems = items.filter((item) =>
-      item.name.toLowerCase().startsWith(searchTerm)
-    );
-    setVisibleStudents(filteredItems);
-  };
-
-  const addStudentsToEntry = async (entryId) => {
-    for (const row of rows) {
-      const body = {
-        student_id: row.id,
-      };
-
-      const result = await assignStudentToLetter(entryId, body);
-
-      if (!result || result.status !== "success") {
-        console.error(`Failed to add student with ID ${row.id}`);
-      }
-    }
-  };
-
   const handleOnSubmit = async () => {
-    const selectedWave = cookies.get("selected-wave");
-
-    if (role === "coordinator") {
-      setSelectedAdvisers(userId);
-    }
-
-    const body = {
-      user_id: selectedAdvisers,
-      company_id: selectedCompany,
-      wave_id: selectedWave,
-      end_date: endDate,
-      ...(entry !== "penarikan" && { start_date: startDate }),
-    };
-
     try {
-      const response = await fetchData(`/api/letters/create`, {
+      let tenureId;
+  
+      // Step 1: Determine the tenure ID
+      if (role === "secretary") {
+        // Use selectedStudent as tenure ID
+        if (!selectedStudent) {
+          alert("Please select a student.");
+          return;
+        }
+        tenureId = selectedStudent.tenure_id; // Adjust based on actual structure of selectedStudent
+      } else {
+        // Fetch tenure ID from API
+        const tenureResponse = await fetchData(`/api/tenure/my`);
+        if (!tenureResponse || !tenureResponse.tenure_id) {
+          alert("Failed to fetch tenure ID");
+          return;
+        }
+        tenureId = tenureResponse.tenure_id;
+      }
+  
+      // Step 2: Upload the photo if a file is selected
+      let img_url = "";
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+  
+        const photoResponse = await fetchData(`/api/journal/photo`, {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (photoResponse && photoResponse.status === "success") {
+          img_url = photoResponse.file_link; // Adjust based on actual response structure
+        } else {
+          alert("Failed to upload photo");
+          return;
+        }
+      }
+  
+      // Step 3: Prepare the journal entry data
+      const body = {
+        tenure_id: tenureId,
+        division: division,
+        entry_date: date,
+        start_time: startTime,
+        end_time: endTime,
+        activity: activity,
+        img_url: img_url || "", // Use the uploaded image URL or fallback to empty string
+      };
+  
+      // Step 4: Post the journal entry
+      const journalResponse = await fetchData(`/api/journal/create`, {
         method: "POST",
         body: JSON.stringify(body),
       });
-
-      if (response.status === "success") {
-        await addStudentsToEntry(response.data.id);
-        navigate("/admin/entries/0");
+  
+      if (journalResponse.status === "success") {
+        navigate("/admin/journal/0");
       } else {
         alert("Submission failed");
       }
@@ -119,80 +95,90 @@ function JournalAdd({ role }) {
       alert("Something went wrong: " + error.message);
     }
   };
-
-  const handleDateClick = (index) => {
-    if (startDate) {
-      const newEndDate = new Date(startDate);
-      newEndDate.setMonth(newEndDate.getMonth() + (index === 0 ? 6 : 12));
-      setEndDate(newEndDate.toISOString().split("T")[0]);
-      setCurrentEndDate(index);
-    } else {
-      setCurrentEndDate(index);
-    }
-  };
+  
+  
 
   return (
     <div className="flex-col flex gap-2 items-center">
-      {role !== "advisor" && (
+      {role == "secretary" && (
         <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-          <label className={labelStyle}>Pembimbing</label>
+          <label className={labelStyle}>Siswa</label>
           <Dropdown
-            items={advisers}
-            displayFields={["username"]}
-            searchField={"username"}
-            setSelectedValue={setSelectedAdvisers}
-          />
-        </div>
-      )}
-      <div className="w-full max-w-screen-sm relative flex-row flex gap-2 items-center">
-        <label className={labelStyle}>Perusahaan</label>
-        <Dropdown
-          items={company}
-          displayFields={["name", "address"]}
-          searchField={"name"}
-          setSelectedValue={setSelectedCompany}
-        />
-      </div>
-      {entry !== "penarikan" && (
-        <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-          <label className={labelStyle}>Tanggal Berangkat</label>
-          <input
-            type="date"
-            className="input w-full"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            items={student}
+            displayFields={["student"]}
+            searchField={"student"}
+            setSelectedValue={setSelectedStudent}
           />
         </div>
       )}
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-        <label className={labelStyle}>Tanggal Kembali</label>
-        <div
-          role="tablist"
-          className="tabs-boxed p-0 bg-base-100 gap-2 flex flex-row flex-nowrap"
-        >
-          {endDateValue.map((entry, index) => (
-            <button
-              key={index}
-              role="tab"
-              onClick={() => handleDateClick(index)}
-              className={`tab hover:bg-base-300 ease-in-out duration-150 ${
-                currentEndDate === index ? "tab-active" : ""
-              }`}
-            >
-              {entry}
-            </button>
-          ))}
-        </div>
-        <span>{endDate}</span>
+        <label className={labelStyle}>Foto Kegiatan</label>
+        <input
+          type="file"
+          className="file-input w-full"
+          onChange={(e) => {
+            setFile(URL.createObjectURL(e.target.files[0]));
+          }}
+        />
       </div>
-      <StudentEntryAddTable
-        rows={rows}
-        onAddRow={addRow}
-        onDeleteRow={deleteRow}
-        onSearchStudent={searchStudent}
-        isMaxWidth={true}
-        items={students}
-      />
+      {file && (
+        <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+          <label className={labelStyle}></label>
+          <img src={file} alt="" className="object-cover w-full rounded-btn" />
+        </div>
+      )}
+      <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+        <label className={labelStyle}>Tanggal Kegiatan</label>
+        <button
+          className="btn btn-neutral grow-[0.2] text-lg"
+          onClick={() => {
+            let currentDate = new Date().toJSON().slice(0, 10);
+            setDate(`${currentDate}`);
+          }}
+        >
+          Hari Ini
+        </button>
+        <input
+          type="date"
+          className="input text-center grow-[2]"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+      </div>
+      <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+        <label className={labelStyle}>Waktu Kegiatan</label>
+        <input
+          type="time"
+          className="input w-full text-center"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+        />
+        <span>--</span>
+        <input
+          type="time"
+          className="input w-full text-center"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+        />
+      </div>
+      <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
+        <label className={labelStyle}>Kegiatan</label>
+        <input
+          type="text"
+          className="input w-full"
+          value={activity}
+          onChange={(e) => setActivity(e.target.value)}
+        />
+      </div>
+      <div className="w-full max-w-screen-sm relative flex-row flex gap-2 items-center">
+        <label className={labelStyle}>Divisi</label>
+        <input
+          type="text"
+          className="input w-full"
+          value={division}
+          onChange={(e) => setDivision(e.target.value)}
+        />
+      </div>
       <button
         className="btn btn-primary max-w-screen-sm w-full"
         onClick={handleOnSubmit}
@@ -201,7 +187,7 @@ function JournalAdd({ role }) {
       </button>
       <button
         onClick={() => {
-          console.log(students);
+          console.log(date);
         }}
       >
         Debug
