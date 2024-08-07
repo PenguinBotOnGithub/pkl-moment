@@ -9,7 +9,7 @@ use warp::{
     Filter,
 };
 
-use crate::error::{handle_fk_data_not_exists, handle_fk_depended_data_delete};
+use crate::error::handle_fk_depended_data_delete;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
