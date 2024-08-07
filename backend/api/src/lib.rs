@@ -43,18 +43,17 @@ pub fn with_jwt_key(
     warp::any().map(move || jwt_key.clone())
 }
 
-pub fn with_image_upload() -> impl Filter<Extract = (impl Buf,), Error = Rejection> + Clone {
+pub fn with_image_upload() -> impl Filter<Extract = (String, impl Buf), Error = Rejection> + Clone {
     warp::header::header::<String>("Content-Type")
         .and_then(|v: String| async move {
             if v.starts_with("image") {
-                Ok(())
+                Ok(v.replace("image/", ""))
             } else {
                 Err(reject::custom(ClientError::InvalidInput(
                     "unsupported media type".to_owned(),
                 )))
             }
         })
-        .untuple_one()
         .and(warp::body::content_length_limit(1024 * 5000))
         .and(warp::body::aggregate())
 }

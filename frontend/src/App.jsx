@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  createBrowserRouter,
-  Navigate,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import "./i18n";
 import AllUsers from "./routes/users/AllUsers";
 import Settings from "./routes/Settings";

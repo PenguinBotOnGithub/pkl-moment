@@ -25,3 +25,4 @@ simple_pdf_generator_derive = { path = "../../submodules/simple_pdf_generator/si
 hijri_date = "0.5.1"
 tera = "1.20.0"
 anyhow = "1.0.86"
+rand = "0.8.5"

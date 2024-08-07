@@ -36,6 +36,8 @@ pub struct Journal {
     pub activity: String,
     pub img_url: String,
     pub extra: Option<String>,
+    pub verified_sch: bool,
+    pub verified_dudi: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -52,6 +54,8 @@ pub struct JournalJoined {
     pub activity: String,
     pub img_url: String,
     pub extra: Option<String>,
+    pub verified_sch: bool,
+    pub verified_dudi: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -79,6 +83,8 @@ pub struct UpdateJournal {
     pub activity: Option<String>,
     pub img_url: Option<String>,
     pub extra: Option<Option<String>>,
+    pub verified_sch: Option<bool>,
+    pub verified_dudi: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -103,6 +109,8 @@ impl JournalJoined {
         mut j_act: String,
         mut j_img: String,
         j_extra: Option<String>,
+        j_vsch: bool,
+        j_vdudi: bool,
         j_cat: chrono::DateTime<chrono::Utc>,
         j_uat: chrono::DateTime<chrono::Utc>,
     ) -> Self {
@@ -117,6 +125,8 @@ impl JournalJoined {
             activity: mem::take(&mut j_act),
             img_url: mem::take(&mut j_img),
             extra: j_extra,
+            verified_sch: j_vsch,
+            verified_dudi: j_vdudi,
             created_at: j_cat,
             updated_at: j_uat,
         }
@@ -284,6 +294,8 @@ impl Journal {
                 activity,
                 img_url,
                 extra,
+                verified_sch,
+                verified_dudi,
                 created_at,
                 updated_at,
             ))
@@ -298,17 +310,21 @@ impl Journal {
                 String,
                 String,
                 Option<String>,
+                bool,
+                bool,
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
             )>(db)
             .await
             .optional()?;
 
-        let Some((a, b, c, d, e, f, g, h, i, j, k, l)) = res else {
+        let Some((a, b, c, d, e, f, g, h, i, j, k, l, m, n)) = res else {
             return Ok(None);
         };
 
-        Ok(Some(JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)))
+        Ok(Some(JournalJoined::new(
+            a, b, c, d, e, f, g, h, i, j, k, l, m, n,
+        )))
     }
 
     /// Paginates through the table where page is a 0-based index (i.e. page 0 is the first page)
@@ -345,6 +361,8 @@ impl Journal {
                 activity,
                 img_url,
                 extra,
+                verified_sch,
+                verified_dudi,
                 created_at,
                 updated_at,
             ))
@@ -359,13 +377,15 @@ impl Journal {
                 String,
                 String,
                 Option<String>,
+                bool,
+                bool,
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
             )>(db)
             .await?
             .into_iter()
-            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
-                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l, m, n)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l, m, n)
             })
             .collect();
 
@@ -415,6 +435,8 @@ impl Journal {
                 activity,
                 img_url,
                 extra,
+                verified_sch,
+                verified_dudi,
                 created_at,
                 updated_at,
             ))
@@ -429,13 +451,15 @@ impl Journal {
                 String,
                 String,
                 Option<String>,
+                bool,
+                bool,
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
             )>(db)
             .await?
             .into_iter()
-            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
-                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l, m, n)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l, m, n)
             })
             .collect();
 
@@ -488,6 +512,8 @@ impl Journal {
                 activity,
                 img_url,
                 extra,
+                verified_sch,
+                verified_dudi,
                 created_at,
                 updated_at,
             ))
@@ -502,13 +528,15 @@ impl Journal {
                 String,
                 String,
                 Option<String>,
+                bool,
+                bool,
                 chrono::DateTime<chrono::Utc>,
                 chrono::DateTime<chrono::Utc>,
             )>(db)
             .await?
             .into_iter()
-            .map(|(a, b, c, d, e, f, g, h, i, j, k, l)| {
-                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l)
+            .map(|(a, b, c, d, e, f, g, h, i, j, k, l, m, n)| {
+                JournalJoined::new(a, b, c, d, e, f, g, h, i, j, k, l, m, n)
             })
             .collect();
 
@@ -606,5 +634,75 @@ impl Journal {
             .first::<Tenure>(db)
             .await
             .optional()
+    }
+
+    pub async fn get_verified_status(
+        db: &mut Connection,
+        param_id: i32,
+    ) -> QueryResult<Option<(bool, bool)>> {
+        use crate::schema::journal::dsl::*;
+
+        journal
+            .filter(id.eq(param_id))
+            .select((verified_sch, verified_dudi))
+            .first::<(bool, bool)>(db)
+            .await
+            .optional()
+    }
+
+    pub async fn verify_journal(
+        db: &mut Connection,
+        param_id: i32,
+        param_verify: (bool, bool),
+        param_user_id: i32,
+    ) -> QueryResult<usize> {
+        use crate::schema::journal::dsl::*;
+
+        let mut update = UpdateJournal {
+            division: None,
+            entry_date: None,
+            start_time: None,
+            end_time: None,
+            activity: None,
+            img_url: None,
+            extra: None,
+            verified_sch: None,
+            verified_dudi: None,
+        };
+
+        if param_verify.0 {
+            update.verified_sch = Some(true);
+        }
+
+        if param_verify.1 {
+            update.verified_dudi = Some(true);
+        }
+
+        let previous = journal
+            .filter(id.eq(param_id))
+            .first::<Self>(db)
+            .await
+            .optional()?;
+        let Some(previous) = previous else {
+            return Ok(0);
+        };
+
+        let res = diesel::update(journal.filter(id.eq(param_id)))
+            .set(update)
+            .execute(db)
+            .await?;
+
+        if res > 0 {
+            Log::log(
+                db,
+                Operation::Verify,
+                TableRef::Journal,
+                param_user_id,
+                Some(previous),
+            )
+            .await;
+        }
+
+        Ok(res)
     }
 }

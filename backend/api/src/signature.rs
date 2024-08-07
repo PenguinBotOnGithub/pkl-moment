@@ -133,6 +133,8 @@ async fn get_signatures(
 async fn upload_signature(
     id: i32,
     claims: JwtClaims,
+    // TODO: Use the filetype for image names
+    _: String,
     mut body: impl Buf,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {

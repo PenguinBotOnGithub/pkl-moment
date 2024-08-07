@@ -1,5 +1,6 @@
-use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_depended_data_delete;
+use crate::auth::{with_auth, with_auth_with_claims, JwtClaims};
+use crate::error::{handle_fk_depended_data_delete, handle_fk_not_exists_unique_violation};
+use crate::with_image_upload;
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
@@ -9,11 +10,15 @@ use models::journal::{CreateJournal, Journal, UpdateJournal};
 use models::tenure::Tenure;
 use models::types::UserRole;
 use parking_lot::Mutex;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
-    Filter,
+    Buf, Filter,
 };
 
 pub fn journals_routes(
@@ -66,11 +71,32 @@ pub fn journals_routes(
         .and(with_db(db.clone()))
         .and_then(delete_journal);
 
+    let verify_journal_route = journal
+        .and(warp::path::param::<i32>())
+        .and(warp::path("verify"))
+        .and(warp::path::param::<String>())
+        .and(warp::path::end())
+        .and(warp::patch())
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
+        .and(with_db(db.clone()))
+        .and_then(verify_journal);
+
+    let upload_photo_route = journal
+        .and(warp::path("photo"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(with_image_upload())
+        .and_then(upload_photo);
+
     get_journals_route
         .or(create_journal_route)
         .or(read_journal_route)
         .or(update_journal_route)
         .or(delete_journal_route)
+        .or(verify_journal_route)
+        .or(upload_photo_route)
 }
 
 async fn get_journals(
@@ -143,7 +169,7 @@ async fn create_journal(
     let result = Journal::create_checked(&mut db, &payload, claims.id)
         .await
         .map_err(|e| match e.downcast::<diesel::result::Error>() {
-            Ok(e) => reject::custom(InternalError::DatabaseError(e.to_string())),
+            Ok(e) => handle_fk_not_exists_unique_violation(e),
             Err(e) => reject::custom(ClientError::InvalidInput(e.to_string())),
         })?;
 
@@ -239,6 +265,18 @@ async fn update_journal(
     payload: UpdateJournal,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    if let Some(_) = *&payload.verified_sch {
+        return Err(reject::custom(ClientError::InvalidInput(
+            "verifying journal entries through this endpoint is prohibited".to_owned(),
+        )));
+    }
+
+    if let Some(_) = *&payload.verified_dudi {
+        return Err(reject::custom(ClientError::InvalidInput(
+            "verifying journal entries through this endpoint is prohibited".to_owned(),
+        )));
+    }
+
     let mut db = db.lock();
 
     let owner = Journal::get_owner_id(&mut db, id)
@@ -249,6 +287,16 @@ async fn update_journal(
             "journal not found".to_owned(),
         )));
     };
+
+    let verified = Journal::get_verified_status(&mut db, id)
+        .await
+        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+    let Some((v_sch, v_dudi)) = verified else {
+        return Err(reject::custom(ClientError::NotFound(
+            "journal entry not found".to_owned(),
+        )));
+    };
+
     match &claims.role {
         UserRole::Secretary => {}
         UserRole::Coordinator => {
@@ -257,6 +305,12 @@ async fn update_journal(
             )));
         }
         UserRole::AdvisorSchool => {
+            if v_sch && v_dudi {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user does not have permission to modify verified journal entries".to_owned(),
+                )));
+            }
+
             let adv = Journal::get_advisors(&mut db, id)
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -282,6 +336,12 @@ async fn update_journal(
             }
         }
         UserRole::AdvisorDudi => {
+            if v_sch && v_dudi {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user does not have permission to modify verified journal entries".to_owned(),
+                )));
+            }
+
             let adv = Journal::get_advisors(&mut db, id)
                 .await
                 .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
@@ -307,6 +367,12 @@ async fn update_journal(
             }
         }
         UserRole::Student => {
+            if v_sch && v_dudi {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user does not have permission to modify verified journal entries".to_owned(),
+                )));
+            }
+
             if owner != *&claims.id {
                 return Err(reject::custom(ClientError::Authorization(
                     "insufficient privilege to modify other users' data".to_owned(),
@@ -327,6 +393,108 @@ async fn update_journal(
     }
 }
 
+async fn verify_journal(
+    id: i32,
+    v_type: String,
+    claims: JwtClaims,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    enum VerificationType {
+        School,
+        Dudi,
+    }
+
+    let v_type = match &v_type[..] {
+        "school" => VerificationType::School,
+        "dudi" => VerificationType::Dudi,
+        _ => return Err(reject::not_found()),
+    };
+
+    let mut db = db.lock();
+
+    let owners = Journal::get_advisors(&mut db, id)
+        .await
+        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+    let Some((adv_sch, adv_dudi)) = owners else {
+        return Err(reject::custom(ClientError::NotFound(
+            "journal entry not found".to_owned(),
+        )));
+    };
+
+    let res = match *&claims.role {
+        UserRole::Secretary => match v_type {
+            VerificationType::School => {
+                Journal::verify_journal(&mut db, id, (true, false), *&claims.id)
+                    .await
+                    .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+            }
+            VerificationType::Dudi => {
+                Journal::verify_journal(&mut db, id, (false, true), *&claims.id)
+                    .await
+                    .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+            }
+        },
+        UserRole::Coordinator => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to manipulate journal entries".to_owned(),
+            )));
+        }
+        UserRole::AdvisorSchool => {
+            if let VerificationType::Dudi = v_type {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            }
+
+            let Some(adv) = adv_sch else {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            };
+
+            if *&claims.id != adv {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            }
+
+            Journal::verify_journal(&mut db, id, (true, false), *&claims.id)
+                .await
+                .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+        }
+        UserRole::AdvisorDudi => {
+            if let VerificationType::School = v_type {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            }
+
+            let Some(adv) = adv_dudi else {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            };
+
+            if *&claims.id != adv {
+                return Err(reject::custom(ClientError::Authorization(
+                    "user is not allowed to authenticate on behalf of other advisors".to_owned(),
+                )));
+            }
+
+            Journal::verify_journal(&mut db, id, (false, true), *&claims.id)
+                .await
+                .map_err(|e| InternalError::DatabaseError(e.to_string()))?
+        }
+        UserRole::Student => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to manipulate journal entries".to_owned(),
+            )));
+        }
+    };
+
+    Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
+}
+
 async fn delete_journal(
     id: i32,
     claims: JwtClaims,
@@ -344,4 +512,48 @@ async fn delete_journal(
             "journal not found".to_owned(),
         )))
     }
+}
+
+async fn upload_photo(filetype: String, mut body: impl Buf) -> Result<impl Reply, Rejection> {
+    let mut img: Vec<u8> = Vec::with_capacity(1024 * 5000);
+    while body.has_remaining() {
+        let chunk = body.chunk();
+        img.extend_from_slice(chunk);
+        let count = chunk.len();
+        body.advance(count);
+    }
+
+    let mut count = 0;
+    let mut file = loop {
+        let filename: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(15)
+            .map(char::from)
+            .collect();
+
+        let f = fs::File::create_new(format!("assets/photos/{filename}.{filetype}")).await;
+        match f {
+            Ok(f) => break Ok((f, filename)),
+            Err(e) => {
+                count += 1;
+                if count > 5 {
+                    break Err(reject::custom(InternalError::FilesystemError(
+                        e.to_string(),
+                    )));
+                } else {
+                    continue;
+                }
+            }
+        }
+    }?;
+
+    file.0
+        .write_all(&img)
+        .await
+        .map_err(|e| InternalError::FilesystemError(e.to_string()))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "success".to_owned(),
+        format!("/assets/photos/{}.{}", file.1, filetype),
+    )))
 }
