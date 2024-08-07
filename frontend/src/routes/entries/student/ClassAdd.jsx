@@ -4,16 +4,21 @@ import Cookies from "universal-cookie";
 import host from "../../../assets/strings/host";
 import Dropdown from "../../../components/Dropdown";
 import { fetchData } from "../../../services";
+import { fetchDepartment } from "../../../services/functions/department";
 
-function StudentAdd() {
-  const [rows, setRows] = useState([{ name: "", class_id: "", nis: "" }]);
-  const [classData, setClassData] = useState([]);
-  const cookies = new Cookies(null, { path: "/" });
+function ClassAdd() {
+  const [rows, setRows] = useState([{ grade: "", department: "", number: "" }]);
+  const [departments, setDepartments] = useState([]);
+  const cookies = new Cookies();
   const token = cookies.get("access-token");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDataWrapper = async (url, setter, transform = (data) => data) => {
+    const fetchDataWrapper = async (
+      url,
+      setter,
+      transform = (data) => data
+    ) => {
       try {
         const data = await fetchData(url);
         setter(transform(data.data.items));
@@ -23,48 +28,44 @@ function StudentAdd() {
       }
     };
 
-    fetchDataWrapper(`/api/class`, setClassData);
+    fetchDataWrapper(`/api/department?page=0&size=1000`, setDepartments);
   }, []);
 
   const handleSubmit = async (formData) => {
-    console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/student/create`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-      body: JSON.stringify({
-        name: formData.name,
-        class_id: formData.class_id,
-        nis: formData.nis,
-      }),
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "success") {
-          navigate("/admin/entries/student");
-        }
-      })
-      .catch(() => {
-        alert("Something went wrong");
+    try {
+      const response = await fetchData(`/api/class/create`, {
+        method: "POST",
+        body: JSON.stringify({
+          grade: parseInt(formData.grade),
+          department_id: formData.department,
+          number: parseInt(formData.number),
+        }),
       });
+      if (response.status === "success") {
+        navigate("/admin/entries/student/class");
+      } else {
+        alert("Submission failed");
+      }
+    } catch (error) {
+      alert("Something went wrong");
+    }
   };
 
-  function execBulkPost() {
+  const execBulkPost = async () => {
     console.log(rows);
-    rows.forEach((row) => {
+    for (const row of rows) {
       if (
-        row.name.trim() === "" ||
-        row.class_id === "" || // Make sure class_id is valid
-        row.nis.trim() === ""
+        row.grade.trim() === "" ||
+        row.department === undefined ||
+        row.number.trim() === ""
       ) {
         alert("Please fill every data before submitting");
+        return;
       } else {
-        handleSubmit(row);
+        await handleSubmit(row);
       }
-    });
-  }
+    }
+  };
 
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
@@ -75,12 +76,12 @@ function StudentAdd() {
 
   const handleDropdownChange = (index, selectedValue) => {
     const newRows = [...rows];
-    newRows[index].class_id = selectedValue; // Update the class_id in the row
+    newRows[index].department = selectedValue;
     setRows(newRows);
   };
 
   const addRow = () => {
-    setRows([...rows, { name: "", class_id: "", nis: "" }]);
+    setRows([...rows, { grade: "", department: "", number: "" }]);
   };
 
   const deleteRow = (index) => {
@@ -95,21 +96,21 @@ function StudentAdd() {
         <thead className="bg-base-300">
           <tr className="border-0">
             <th className="w-0">No</th>
-            <th>Nama Siswa</th>
-            <th>Kelas</th>
-            <th>NIS</th>
-            <th>Aksi</th>
+            <th>Grade</th>
+            <th>Department</th>
+            <th>Class Number</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody className="box-content">
           {rows.map((row, index) => (
-            <tr key={index} className="border-t-2 border-base-300 ">
+            <tr key={index} className="border-t-2 border-base-300">
               <td>{index + 1}</td>
               <td>
                 <input
                   type="text"
-                  name="name"
-                  value={row.name}
+                  name="grade"
+                  value={row.grade}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{
                     backgroundColor: "transparent",
@@ -121,9 +122,9 @@ function StudentAdd() {
               <td>
                 <Dropdown
                   size="sm"
-                  items={classData}
-                  displayFields={["class"]}
-                  searchField="class"
+                  items={departments}
+                  displayFields={["name"]}
+                  searchField="name"
                   setSelectedValue={(selectedValue) =>
                     handleDropdownChange(index, selectedValue)
                   }
@@ -132,8 +133,8 @@ function StudentAdd() {
               <td>
                 <input
                   type="text"
-                  name="nis"
-                  value={row.nis}
+                  name="number"
+                  value={row.number}
                   onChange={(event) => handleInputChange(index, event)}
                   style={{
                     backgroundColor: "transparent",
@@ -157,14 +158,15 @@ function StudentAdd() {
 
       <div className="flex justify-end mt-2 gap-2">
         <div className="btn btn-neutral btn-sm" onClick={addRow}>
-          Tambah Baris
+          Add Row
         </div>
         <div className="btn btn-success btn-sm" onClick={execBulkPost}>
-          Kirim
+          Submit
         </div>
       </div>
+      
     </div>
   );
 }
 
-export default StudentAdd;
+export default ClassAdd;

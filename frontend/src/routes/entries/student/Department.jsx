@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 function Department() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
+  const role = cookies.get("role");
   const [data, setData] = useState([]);
   const navigate = useNavigate();
   const [pageData, setPageData] = useState();
@@ -18,11 +19,14 @@ function Department() {
   const fetchDataForDepartments = async (page = 0) => {
     try {
       setLoading(true);
-      const response = await fetch(`${host}/api/department?page=${page}&size=10`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${host}/api/department?page=${page}&size=10`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
       }
@@ -81,7 +85,9 @@ function Department() {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP error: Status ${response.status}, Message: ${errorText}`);
+        throw new Error(
+          `HTTP error: Status ${response.status}, Message: ${errorText}`
+        );
       }
       const newDepartment = await response.json();
       setError(null);
@@ -89,14 +95,16 @@ function Department() {
       setNewDepartmentName("");
       setIsModalVisible(false);
     } catch (err) {
-      console.error(err.message);  // Log error to the console
+      console.error(err.message); // Log error to the console
       setError(err.message);
     }
   };
 
   return (
     <>
-      <Search addOnClick={() => setIsModalVisible(true)} />
+      <Search
+        addOnClick={role === "secretary" ? () => setIsModalVisible(true) : null}
+      />
 
       {isModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -135,7 +143,7 @@ function Department() {
                 <tr className="border-0">
                   <th>No</th>
                   <th>Jurusan</th>
-                  <th>Action</th>
+                  {role === "secretary" && <th>Action</th>}
                 </tr>
               </thead>
               <tbody className="box-content">
@@ -143,14 +151,16 @@ function Department() {
                   <tr key={row.id} className="border-t-2 border-base-300">
                     <td>{index + 1}</td>
                     <td>{row.name}</td>
-                    <td>
-                      <button
-                        className="btn btn-error btn-xs rounded-lg"
-                        onClick={() => deleteDepartment(row.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    {role === "secretary" && (
+                      <td>
+                        <button
+                          className="btn btn-error btn-xs rounded-lg"
+                          onClick={() => deleteDepartment(row.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -1,9 +1,10 @@
 import Cookies from "universal-cookie";
+import host from "../assets/strings/host";
 
 const cookies = new Cookies();
 const token = cookies.get("access-token");
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = host;
 
 export const fetchData = async (url, options = {}) => {
   try {
