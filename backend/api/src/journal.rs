@@ -414,7 +414,7 @@ async fn verify_journal(
                     .map_err(|e| InternalError::DatabaseError(e.to_string()))?
             }
             VerificationType::Dudi => {
-                Journal::verify_journal(&mut db, id, (true, false), *&claims.id)
+                Journal::verify_journal(&mut db, id, (false, true), *&claims.id)
                     .await
                     .map_err(|e| InternalError::DatabaseError(e.to_string()))?
             }
