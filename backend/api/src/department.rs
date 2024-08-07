@@ -9,12 +9,15 @@ use warp::{
     Filter,
 };
 
-use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_depended_data_delete;
+use crate::error::{handle_fk_depended_data_delete, handle_fk_not_exists_unique_violation};
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
+};
+use crate::{
+    auth::{with_auth_with_claims, JwtClaims},
+    error::handle_fk_data_not_exists,
 };
 
 pub fn departments_routes(
@@ -119,7 +122,7 @@ async fn create_department(
     let mut db = db.lock();
     let result = Department::create(&mut db, &payload, claims.id)
         .await
-        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+        .map_err(handle_fk_not_exists_unique_violation)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }

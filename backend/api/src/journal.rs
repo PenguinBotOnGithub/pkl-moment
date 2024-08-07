@@ -1,5 +1,5 @@
 use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::handle_fk_depended_data_delete;
+use crate::error::{handle_fk_depended_data_delete, handle_fk_not_exists_unique_violation};
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
@@ -154,7 +154,7 @@ async fn create_journal(
     let result = Journal::create_checked(&mut db, &payload, claims.id)
         .await
         .map_err(|e| match e.downcast::<diesel::result::Error>() {
-            Ok(e) => reject::custom(InternalError::DatabaseError(e.to_string())),
+            Ok(e) => handle_fk_not_exists_unique_violation(e),
             Err(e) => reject::custom(ClientError::InvalidInput(e.to_string())),
         })?;
 
