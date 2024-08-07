@@ -266,6 +266,10 @@ async fn search_byname(
         let v: Vec<u8> = vec![];
         return Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)));
     };
+    if name.is_empty() {
+        let v: Vec<u8> = vec![];
+        return Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)));
+    }
     let name = format!("%{name}%");
 
     let mut db = db.lock();
