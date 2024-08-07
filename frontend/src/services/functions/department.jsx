@@ -11,4 +11,11 @@ export const fetchDepartment = async () => {
   fetchData(`/api/department`);
 };
 
-export default { addDepartment, fetchDepartment };
+export const updateDepartment = async (departmentId, body) => {
+  fetchData(`/api/class/${departmentId}/update`, {
+    body: JSON.stringify(body),
+    method: "PATCH",
+  });
+};
+
+export default { addDepartment, fetchDepartment, updateDepartment };
