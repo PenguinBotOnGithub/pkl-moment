@@ -22,9 +22,9 @@ import UserAdd from "./routes/users/UserAdd";
 import Journal from "./routes/journal/Journal";
 import Tenure from "./routes/journal/tenure/Tenure";
 import JournalAdd from "./routes/journal/JournalAdd";
-import Classes from "./routes/entries/student/Classes";
+import Class from "./routes/entries/student/Class";
 import Department from "./routes/entries/student/Department";
-import ClassesAdd from "./routes/entries/student/ClassesAdd";
+import ClassAdd from "./routes/entries/student/ClassAdd";
 
 
 function App() {
@@ -70,8 +70,9 @@ function App() {
             {
               path: "student",
               children: [
-                { path: "classes", element: < Classes/> },
-                { path: "classes/add", element: <ClassesAdd /> },
+                { path: "class", element: <Navigate to="0"/> },
+                { path: "class/:page", element: < Class/> },
+                { path: "class/add", element: <ClassAdd /> },
                 { path: "department", element: < Department/> },
               ],
             },

@@ -59,6 +59,8 @@ diesel::table! {
         activity -> Varchar,
         img_url -> Varchar,
         extra -> Nullable<Varchar>,
+        verified_sch -> Bool,
+        verified_dudi -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

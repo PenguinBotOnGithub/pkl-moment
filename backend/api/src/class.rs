@@ -9,12 +9,15 @@ use warp::{
     Filter,
 };
 
-use crate::auth::{with_auth_with_claims, JwtClaims};
-use crate::error::{handle_fk_data_not_exists, handle_fk_depended_data_delete};
+use crate::error::handle_fk_depended_data_delete;
 use crate::{
     auth::with_auth,
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
+};
+use crate::{
+    auth::{with_auth_with_claims, JwtClaims},
+    error::handle_fk_not_exists_unique_violation,
 };
 
 pub fn classes_routes(
@@ -119,7 +122,7 @@ async fn create_class(
     let mut db = db.lock();
     let result = Class::create(&mut db, &payload, claims.id)
         .await
-        .map_err(handle_fk_data_not_exists)?;
+        .map_err(handle_fk_not_exists_unique_violation)?;
 
     Ok(reply::json(&ApiResponse::ok("success".to_owned(), result)))
 }
@@ -128,7 +131,7 @@ async fn read_class(id: i32, db: Arc<Mutex<AsyncPgConnection>>) -> Result<impl R
     let mut db = db.lock();
     let result = Class::read_joined(&mut db, id)
         .await
-        .map_err(|e| reject::custom(InternalError::DatabaseError(e.to_string())))?;
+        .map_err(handle_fk_not_exists_unique_violation)?;
 
     match result {
         Some(v) => Ok(reply::json(&ApiResponse::ok("success".to_owned(), v))),
