@@ -1,5 +1,6 @@
-use crate::auth::{with_auth_with_claims, JwtClaims};
+use crate::auth::{with_auth, with_auth_with_claims, JwtClaims};
 use crate::error::{handle_fk_depended_data_delete, handle_fk_not_exists_unique_violation};
+use crate::with_image_upload;
 use crate::{
     error::{ClientError, InternalError},
     with_db, with_json, ApiResponse,
@@ -9,11 +10,15 @@ use models::journal::{CreateJournal, Journal, UpdateJournal};
 use models::tenure::Tenure;
 use models::types::UserRole;
 use parking_lot::Mutex;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use warp::{
     reject::{self, Rejection},
     reply::{self, Reply},
-    Filter,
+    Buf, Filter,
 };
 
 pub fn journals_routes(
@@ -76,12 +81,22 @@ pub fn journals_routes(
         .and(with_db(db.clone()))
         .and_then(verify_journal);
 
+    let upload_photo_route = journal
+        .and(warp::path("photo"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(with_auth(false, jwt_key.clone(), db.clone()))
+        .untuple_one()
+        .and(with_image_upload())
+        .and_then(upload_photo);
+
     get_journals_route
         .or(create_journal_route)
         .or(read_journal_route)
         .or(update_journal_route)
         .or(delete_journal_route)
         .or(verify_journal_route)
+        .or(upload_photo_route)
 }
 
 async fn get_journals(
@@ -497,4 +512,48 @@ async fn delete_journal(
             "journal not found".to_owned(),
         )))
     }
+}
+
+async fn upload_photo(filetype: String, mut body: impl Buf) -> Result<impl Reply, Rejection> {
+    let mut img: Vec<u8> = Vec::with_capacity(1024 * 5000);
+    while body.has_remaining() {
+        let chunk = body.chunk();
+        img.extend_from_slice(chunk);
+        let count = chunk.len();
+        body.advance(count);
+    }
+
+    let mut count = 0;
+    let mut file = loop {
+        let filename: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(15)
+            .map(char::from)
+            .collect();
+
+        let f = fs::File::create_new(format!("assets/photos/{filename}.{filetype}")).await;
+        match f {
+            Ok(f) => break Ok((f, filename)),
+            Err(e) => {
+                count += 1;
+                if count > 5 {
+                    break Err(reject::custom(InternalError::FilesystemError(
+                        e.to_string(),
+                    )));
+                } else {
+                    continue;
+                }
+            }
+        }
+    }?;
+
+    file.0
+        .write_all(&img)
+        .await
+        .map_err(|e| InternalError::FilesystemError(e.to_string()))?;
+
+    Ok(reply::json(&ApiResponse::ok(
+        "success".to_owned(),
+        format!("/assets/photos/{}.{}", file.1, filetype),
+    )))
 }

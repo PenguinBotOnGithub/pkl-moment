@@ -81,6 +81,7 @@ dependencies = [
  "lopdf 0.32.0",
  "models",
  "parking_lot",
+ "rand",
  "serde",
  "serde_json",
  "simple_pdf_generator",
