@@ -10,8 +10,9 @@ import { updateDepartment } from "../../../services/functions/department";
 function Class() {
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
+  const role = cookies.get("role");
   const [data, setData] = useState([]);
-  const [departmentData, setDepartmentData] = useState([]); // Initialize as an empty array
+  const [departmentData, setDepartmentData] = useState([]);
   const [isDataEdited, setIsDataEdited] = useState([]);
   const navigate = useNavigate();
   const [pageData, setPageData] = useState();
@@ -88,13 +89,13 @@ function Class() {
         },
         body: JSON.stringify({
           grade: parseInt(data[index].grade),
-          department_id: parseInt(data[index].department), // Convert department to integer
+          department_id: parseInt(data[index].department),
           number: parseInt(data[index].number),
         }),
       });
 
       const result = await response.json();
-      console.log(result); // Log the response for debugging
+      console.log(result);
 
       if (!response.ok) {
         throw new Error(`HTTP error: Status ${response.status}`);
@@ -121,7 +122,7 @@ function Class() {
   return (
     <>
       <Search
-        addOnClick={() => navigate("/admin/entries/student/class/add")}
+        addOnClick={role === "secretary" ? () => navigate("/admin/entries/student/class/add") : null}
       />
 
       <div className="overflow-x-auto">
@@ -132,7 +133,7 @@ function Class() {
               <th>Grade</th>
               <th>Department</th>
               <th>Number</th>
-              <th>Action</th>
+              {role === "secretary" && <th>Action</th>}
             </tr>
           </thead>
           <tbody className="box-content">
@@ -152,19 +153,24 @@ function Class() {
                     onChange={(e) =>
                       handleInputChange(index, "grade", e.target.value)
                     }
+                    disabled={role !== "secretary"}
                   />
                 </td>
                 <td>
-                  <Dropdown
-                    size="sm"
-                    items={departmentData}
-                    displayFields={["name"]}
-                    searchField="name"
-                    setSelectedValue={(selectedValue) =>
-                      updateDepartment(row.id, {department_id: selectedValue})
-                    }
-                    defaultValue={row.department}
-                  />
+                  {role === "secretary" ? (
+                    <Dropdown
+                      size="sm"
+                      items={departmentData}
+                      displayFields={["name"]}
+                      searchField="name"
+                      setSelectedValue={(selectedValue) =>
+                        handleInputChange(index, "department", selectedValue)
+                      }
+                      defaultValue={row.department}
+                    />
+                  ) : (
+                    row.department
+                  )}
                 </td>
                 <td>
                   <input
@@ -179,32 +185,35 @@ function Class() {
                     onChange={(e) =>
                       handleInputChange(index, "number", e.target.value)
                     }
+                    disabled={role !== "secretary"}
                   />
                 </td>
-                <td>
-                  {isDataEdited[index] && (
-                    <>
-                      <button
-                        className="btn btn-success btn-xs rounded-lg mr-2"
-                        onClick={() => saveChanges(index, row.id)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="btn btn-warning btn-xs rounded-lg mr-2"
-                        onClick={() => fetchDataForClasses()}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                  <button
-                    className="btn btn-error btn-xs rounded-lg"
-                    onClick={() => deleteClass(row.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
+                {role === "secretary" && (
+                  <td>
+                    {isDataEdited[index] && (
+                      <>
+                        <button
+                          className="btn btn-success btn-xs rounded-lg mr-2"
+                          onClick={() => saveChanges(index, row.id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="btn btn-warning btn-xs rounded-lg mr-2"
+                          onClick={() => fetchDataForClasses()}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className="btn btn-error btn-xs rounded-lg"
+                      onClick={() => deleteClass(row.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
