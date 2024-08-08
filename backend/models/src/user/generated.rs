@@ -3,7 +3,7 @@
 use crate::diesel::prelude::*;
 use crate::log::Log;
 use crate::schema::*;
-use crate::types::{Operation, TableRef};
+use crate::types::{Operation, TableRef, UserRole};
 use diesel::QueryResult;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
@@ -196,5 +196,36 @@ impl User {
             }
             Err(_) => res,
         }
+    }
+
+    pub async fn find_by_username_role<'a>(
+        db: &mut Connection,
+        param_username: &str,
+        param_role: &String,
+    ) -> QueryResult<Vec<UserPublic>> {
+        use crate::schema::user::dsl::*;
+
+        let q = match &param_role[..] {
+            "secretary" => user.filter(role.eq(UserRole::Secretary)).into_boxed(),
+            "coordinator" => user.filter(role.eq(UserRole::Coordinator)).into_boxed(),
+            "advisor" => user
+                .filter(
+                    role.eq(UserRole::AdvisorDudi)
+                        .or(role.eq(UserRole::AdvisorSchool)),
+                )
+                .into_boxed(),
+            "student" => user.filter(role.eq(UserRole::Student)).into_boxed(),
+            _ => user.into_boxed(),
+        };
+
+        let res: Vec<UserPublic> = q
+            .filter(username.ilike(format!("%{param_username}%")))
+            .load::<Self>(db)
+            .await?
+            .into_iter()
+            .map(|mut v| v.public())
+            .collect();
+
+        Ok(res)
     }
 }
