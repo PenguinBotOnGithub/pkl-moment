@@ -249,6 +249,10 @@ impl Journal {
             ));
         }
 
+        if item.entry_date > today {
+            return Err(anyhow!("can not submit journal entries for future dates"));
+        }
+
         let res = diesel::insert_into(journal)
             .values(item)
             .get_result::<Self>(db)

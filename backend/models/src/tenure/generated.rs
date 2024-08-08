@@ -134,7 +134,7 @@ impl Tenure {
 
             match role {
                 None => return Err(anyhow!("advisor user not found")),
-                Some(UserRole::AdvisorSchool) => {}
+                Some(UserRole::AdvisorSchool) | Some(UserRole::Coordinator) => {}
                 _ => return Err(anyhow!("advisor user does not have the required role")),
             }
         }
@@ -451,7 +451,7 @@ impl Tenure {
         };
 
         match adv {
-            UserRole::AdvisorSchool => {}
+            UserRole::AdvisorSchool | UserRole::Coordinator => {}
             _ => return Ok(-1),
         }
 
