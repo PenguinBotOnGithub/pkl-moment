@@ -6,7 +6,7 @@ import { fetchDataWrapper } from "../../../services";
 import Dropdown from "../../../components/Dropdown";
 import { fetchTenure, updateTenure } from "../../../services/functions/tenure";
 
-function Tenure() {
+function Tenure({role}) {
   const [data, setData] = useState([]);
   const [advisorData, setAdvisorData] = useState([]);
   const [dudiData, setDudiData] = useState([]);
@@ -74,7 +74,7 @@ function Tenure() {
                 </td>
                 <td>
                   <span>
-                    <Dropdown
+                    {role == "secretary" || role == "coordinator" ? <Dropdown
                       size="sm"
                       items={advisorData}
                       displayFields={["username"]}
@@ -86,12 +86,12 @@ function Tenure() {
                         })
                       }
                       defaultValue={row.advisor_sch}
-                    />
+                    />:<span>{row.advisor_sch}</span>}
                   </span>
                 </td>
                 <td>
                   <span>
-                    <Dropdown
+                    {role == "secretary" || role == "coordinator" ? <Dropdown
                       size="sm"
                       items={dudiData}
                       displayFields={["username"]}
@@ -103,7 +103,7 @@ function Tenure() {
                         })
                       }
                       defaultValue={row.advisor_dudi}
-                    />
+                    />:<span>{row.advisor_dudi}</span>}
                   </span>
                 </td>
               </tr>

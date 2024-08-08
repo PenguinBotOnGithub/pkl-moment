@@ -3,9 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "universal-cookie";
 import StatisticJournal from "../../components/count/StatisticJournal";
 import Search from "../../components/Search";
-import { fetchJournal } from "../../services/functions/journal";
+import { fetchJournal, verifyJournal } from "../../services/functions/journal";
 
-function Journal() {
+function Journal({ role }) {
   const navigate = useNavigate();
   const cookies = new Cookies();
   const max_item = cookies.get("max-item");
@@ -26,6 +26,7 @@ function Journal() {
       setIsDataEdited(entryData.data.items.map(() => false));
       setPageData(entryData.data);
       setError(null);
+      console.log(entryData);
     } catch (err) {
       console.log("Error fetching data: " + err);
       setError(err.message);
@@ -33,6 +34,11 @@ function Journal() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerify = async (role) => {
+    await verifyJournal(data[selectedJournal].id, role);
+    fetchDataForEntry();
   };
 
   useEffect(() => {
@@ -73,13 +79,20 @@ function Journal() {
                   <td>{row.student}</td>
                   <td>{row.company}</td>
                   <td>{row.division}</td>
-                  <td>{new Date(row.created_at).toLocaleDateString()}</td>
+                  <td>{row.entry_date}</td>
                   <td>
-                    {row.verified ? (
-                      <span className="opacity-60">Terverifikasi</span>
-                    ) : (
-                      <span>Belum Terversifikasi</span>
-                    )}
+                    <div className="flex flex-row gap-1 items-center">
+                      {!row.verified_sch ? (
+                        <div className="box-border w-5 h-5 rounded-btn border-2 border-primary"></div>
+                      ) : (
+                        <div className="box-border w-5 h-5 rounded-btn border-2 border-primary bg-primary"></div>
+                      )}
+                      {!row.verified_dudi ? (
+                        <div className="box-border w-5 h-5 rounded-btn border-2 border-primary"></div>
+                      ) : (
+                        <div className="box-border w-5 h-5 rounded-btn border-2 border-primary bg-primary"></div>
+                      )}
+                    </div>
                   </td>
                   <td className="flex flex-row flex-nowrap gap-2">
                     <button
@@ -141,7 +154,7 @@ function Journal() {
             <div className="modal-box">
               <img
                 src={data[selectedJournal].img_url}
-                className="w-full object-cover rounded-box"
+                className="w-full object-cover rounded-box rounded-tr-none"
                 alt=""
               />
               <button
@@ -192,12 +205,41 @@ function Journal() {
                 </div>
               </div>
               <div className="flex flex-row gap-4">
-                <button type="submit" className="btn btn-success w-full flex-1">
-                  Verify for advisor_school
-                </button>
-                <button type="submit" className="btn btn-success w-full flex-1">
-                  Verify for advisor_dudi
-                </button>
+                {!data[selectedJournal].verified_sch &&
+                role !== "student" &&
+                role !== "advisor_school" ? (
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                    onClick={() => {
+                      handleVerify("school");
+                    }}
+                  >
+                    Verify for school advisor
+                  </button>
+                ) : (
+                  <div className="rounded-btn border-2 border-base-content flex-1 flex items-center justify-center text-center px-4 text-sm h-12 opacity-50">
+                    {!data[selectedJournal].verified_sch ? "Not v" : "V"}erified by school advisor
+                  </div>
+                )}
+
+                {!data[selectedJournal].verified_dudi &&
+                role !== "student" &&
+                role !== "advisor_dudi" ? (
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                    onClick={() => {
+                      handleVerify("dudi");
+                    }}
+                  >
+                    Verify for company advisor
+                  </button>
+                ) : (
+                  <div className="rounded-btn border-2 border-base-content flex-1 flex items-center justify-center text-center px-4 text-sm h-12 opacity-50">
+                    {!data[selectedJournal].verified_dudi ? "Not v" : "V"}erified by company advisor
+                  </div>
+                )}
               </div>
             </div>
           </dialog>

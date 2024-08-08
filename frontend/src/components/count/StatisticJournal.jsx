@@ -62,7 +62,7 @@ function Statistic({ entryCount }) {
   return (
     <div className="flex gap-2">
       <div className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1">
-        <span className="z-10 text-left">Total Jurnal</span>
+        <span className="z-10 text-left">Total jurnal</span>
         <span className="z-10 text-4xl font-bold">{entryCount}</span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           description
@@ -72,7 +72,7 @@ function Statistic({ entryCount }) {
         className="overflow-hidden relative bg-base-100 p-4 rounded-box flex flex-col items-start flex-1 hover:bg-base-300 ease-in-out duration-150"
         onClick={() => navigate("/admin/journal/tenure")}
       >
-        <span className="z-10 text-left">Total Siswa ber-Pembimbing</span>
+        <span className="z-10 text-left">Total siswa yang PKL</span>
         <span className="z-10 text-4xl font-bold">
           {companyData.total_items}
         </span>

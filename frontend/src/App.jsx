@@ -52,7 +52,7 @@ function App() {
         { path: "journal", element: <Navigate to="0" /> },
         { path: "entries", element: <Navigate to="0" /> },
         { path: "users", element: <Navigate to="0" /> },
-        { path: "journal/:page", element: <Journal /> },
+        { path: "journal/:page", element: <Journal role={cookies.get("role")}/> },
         { path: "entries/:page", element: <EntriesAndDocuments /> },
         { path: "users/:page", element: <AllUsers /> },
         { path: "users/add", element: <UserAdd /> },
@@ -83,7 +83,7 @@ function App() {
           children: [
             { path: "add", element: <JournalAdd role={cookies.get("role")} /> },
             { path: "tenure", element: <Navigate to="0" /> },
-            { path: "tenure/:page", element: <Tenure /> },
+            { path: "tenure/:page", element: <Tenure role={cookies.get("role")} /> },
           ],
         },
       ],

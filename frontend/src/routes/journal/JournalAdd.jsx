@@ -5,11 +5,13 @@ import Cookies from "universal-cookie";
 import Dropdown from "../../components/Dropdown";
 import { fetchData, fetchDataWrapper } from "../../services";
 import { assignStudentToLetter } from "../../services/functions/students";
+import host from "../../assets/strings/host";
 
 function JournalAdd({ role }) {
   const cookies = new Cookies(null, { path: "/" });
   const userId = cookies.get("user-id");
   const labelStyle = "w-28 flex-none overflow-hidden";
+  const [fileUrl, setFileUrl] = useState();
   const [file, setFile] = useState();
 
   const navigate = useNavigate();
@@ -31,44 +33,51 @@ function JournalAdd({ role }) {
   const handleOnSubmit = async () => {
     try {
       let tenureId;
-  
+
       // Step 1: Determine the tenure ID
-      if (role === "secretary") {
+      if (role == "secretary") {
         // Use selectedStudent as tenure ID
         if (!selectedStudent) {
           alert("Please select a student.");
           return;
         }
-        tenureId = selectedStudent.tenure_id; // Adjust based on actual structure of selectedStudent
+        tenureId = selectedStudent; // Adjust based on actual structure of selectedStudent
+        console.log(tenureId);
       } else {
         // Fetch tenure ID from API
         const tenureResponse = await fetchData(`/api/tenure/my`);
-        if (!tenureResponse || !tenureResponse.tenure_id) {
+        if (!tenureResponse || !tenureResponse.data) {
           alert("Failed to fetch tenure ID");
           return;
         }
-        tenureId = tenureResponse.tenure_id;
+        tenureId = tenureResponse.data[0].id;
+        console.log(tenureId);
       }
-  
+
       // Step 2: Upload the photo if a file is selected
       let img_url = "";
+      console.log(`woyyy ${file}`);
       if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-  
+        let bin = await file.arrayBuffer();
+        console.log(bin);
+
         const photoResponse = await fetchData(`/api/journal/photo`, {
+          headers: {
+            "Content-Type": "image/png",
+          },
           method: "POST",
-          body: formData,
+          body: file,
         });
-  
+        console.log(photoResponse);
+
         if (photoResponse && photoResponse.status === "success") {
-          img_url = photoResponse.file_link; // Adjust based on actual response structure
+          img_url = host + photoResponse.data; // Adjust based on actual response structure
         } else {
           alert("Failed to upload photo");
           return;
         }
       }
-  
+
       // Step 3: Prepare the journal entry data
       const body = {
         tenure_id: tenureId,
@@ -79,13 +88,13 @@ function JournalAdd({ role }) {
         activity: activity,
         img_url: img_url || "", // Use the uploaded image URL or fallback to empty string
       };
-  
+
       // Step 4: Post the journal entry
       const journalResponse = await fetchData(`/api/journal/create`, {
         method: "POST",
         body: JSON.stringify(body),
       });
-  
+
       if (journalResponse.status === "success") {
         navigate("/admin/journal/0");
       } else {
@@ -95,8 +104,6 @@ function JournalAdd({ role }) {
       alert("Something went wrong: " + error.message);
     }
   };
-  
-  
 
   return (
     <div className="flex-col flex gap-2 items-center">
@@ -117,14 +124,18 @@ function JournalAdd({ role }) {
           type="file"
           className="file-input w-full"
           onChange={(e) => {
-            setFile(URL.createObjectURL(e.target.files[0]));
+            setFileUrl(URL.createObjectURL(e.target.files[0]));
+            setFile(e.target.files[0]);
           }}
         />
       </div>
-      {file && (
+      {fileUrl && (
         <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
-          <label className={labelStyle}></label>
-          <img src={file} alt="" className="object-cover w-full rounded-btn" />
+          <img
+            src={fileUrl}
+            alt=""
+            className="object-cover flex-1 rounded-btn"
+          />
         </div>
       )}
       <div className="w-full max-w-screen-sm flex-row flex gap-2 items-center">
@@ -153,7 +164,7 @@ function JournalAdd({ role }) {
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
         />
-        <span>--</span>
+        <span>-</span>
         <input
           type="time"
           className="input w-full text-center"

@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Cookies from "universal-cookie";
 
-function Sidebar({ }) {
+function Sidebar({}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useTranslation();
   const cookies = new Cookies(null, { path: "/" });
@@ -13,7 +13,7 @@ function Sidebar({ }) {
 
   const handleExpandToggle = () => {
     setIsExpanded(!isExpanded);
-    cookies.set("expanded",!isExpanded)
+    cookies.set("expanded", !isExpanded);
   };
 
   useEffect(() => {
@@ -32,15 +32,17 @@ function Sidebar({ }) {
         </span>
       </label>
       <ul className={`menu ${isExpanded ? "w-56" : ""} px-0 pt-4 gap-2`}>
-        <li>
-          <NavLink
-            to="/admin/entries"
-            className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
-          >
-            <span className="material-symbols-rounded">description</span>
-            {isExpanded && t("Entries & Document")}
-          </NavLink>
-        </li>
+        {(role == "secretary" || role == "coordinator") && (
+          <li>
+            <NavLink
+              to="/admin/entries"
+              className={({ isActive }) => (isActive ? "active p-3" : "p-3")}
+            >
+              <span className="material-symbols-rounded">description</span>
+              {isExpanded && t("Entries & Document")}
+            </NavLink>
+          </li>
+        )}
         <li>
           <NavLink
             to="/admin/journal"

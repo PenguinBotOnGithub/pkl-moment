@@ -6,22 +6,19 @@ export const fetchJournal = async (page, size) => {
 
 export const deleteJournal = async (id) => {
   return await fetchData(`/api/journal/${id}/delete`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 };
 
-export const exportJournal = async (id, lettertype) => {
+export const verifyJournal = async (id, role) => {
   try {
-    const response = fetchData(`/api/journal/${id}/pdf/${lettertype}`);
-    let bin = [];
-    for await (const chunk of response) {
-      bin.push(chunk);
-    }
-    let blob = new Blob(bin, { type: "application/pdf" });
-    downloadBlob(blob, "pkl.pdf");
+    const response = fetchData(`/api/journal/${id}/verify/${role}`, {
+      method: "PATCH",
+    });
+    return response;
   } catch (err) {
     console.log(err);
   }
 };
 
-export default { fetchJournal, deleteJournal, exportJournal };
+export default { fetchJournal, deleteJournal, verifyJournal };

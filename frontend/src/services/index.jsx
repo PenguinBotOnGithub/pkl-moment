@@ -8,18 +8,23 @@ const BASE_URL = host;
 
 export const fetchData = async (url, options = {}) => {
   try {
+
+    const headers = {
+      "Content-Type": "application/json", // Default Content-Type
+      Authorization: token ? `Bearer ${token}` : "",
+      ...options.headers, // Merge additional headers
+    };
+
+    // If options.headers contains a Content-Type, override the default
+    if (options.headers && options.headers["Content-Type"]) {
+      headers["Content-Type"] = options.headers["Content-Type"];
+    }
+
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
-      headers: {
-        // If Content-Type is specified in options, use it; otherwise, default to JSON
-        "Content-Type":
-          options.headers && options.headers["Content-Type"]
-            ? options.headers["Content-Type"]
-            : "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-        ...options.headers, // Merge any additional headers
-      },
+      headers,
     });
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
