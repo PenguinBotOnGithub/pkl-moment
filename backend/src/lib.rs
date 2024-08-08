@@ -11,7 +11,11 @@ pub fn assets_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection>
         .and(warp::path("photos"))
         .and(warp::fs::dir("assets/photos"));
 
-    static_dir.or(signatures_dir).or(photos_dir)
+    let mou_dir = warp::path("assets")
+        .and(warp::path("mou"))
+        .and(warp::fs::dir("assets/mou"));
+
+    static_dir.or(signatures_dir).or(photos_dir).or(mou_dir)
 }
 
 pub fn with_cors() -> warp::cors::Cors {

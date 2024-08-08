@@ -1,6 +1,7 @@
 use std::{collections::HashMap, num::ParseIntError, sync::Arc};
 
 use diesel_async::AsyncPgConnection;
+use models::types::UserRole;
 use parking_lot::Mutex;
 use serde::Deserialize;
 use warp::reject;
@@ -145,6 +146,15 @@ async fn add_advisor(
     payload: AddAdvisorPayload,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    match *&claims.role {
+        UserRole::Secretary | UserRole::Coordinator => {}
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to assign advisors".to_string(),
+            )));
+        }
+    }
+
     let mut db = db.lock();
     let res = match &payload.advisor_type[..] {
         "school" => Tenure::add_advisor_sch(&mut db, id, payload.advisor_id, *&claims.id)
@@ -181,6 +191,15 @@ async fn remove_advisor(
     payload: RemoveAdvisorPayload,
     db: Arc<Mutex<AsyncPgConnection>>,
 ) -> Result<impl Reply, Rejection> {
+    match *&claims.role {
+        UserRole::Secretary | UserRole::Coordinator => {}
+        _ => {
+            return Err(reject::custom(ClientError::Authorization(
+                "user is not authorized to dismiss advisors".to_string(),
+            )));
+        }
+    }
+
     let mut db = db.lock();
     let res = match &payload.advisor_type[..] {
         "school" => Tenure::remove_advisor_sch(&mut db, id, *&claims.id)

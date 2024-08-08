@@ -46,6 +46,17 @@ pub struct PaginationResult<T> {
 }
 
 impl Company {
+    pub async fn check_existence(db: &mut Connection, param_id: i32) -> QueryResult<Option<i32>> {
+        use crate::schema::company::dsl::*;
+
+        company
+            .filter(id.eq(param_id))
+            .select(id)
+            .first::<i32>(db)
+            .await
+            .optional()
+    }
+
     pub async fn create(
         db: &mut Connection,
         item: &CreateCompany,

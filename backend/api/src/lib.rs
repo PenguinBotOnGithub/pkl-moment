@@ -58,6 +58,25 @@ pub fn with_image_upload() -> impl Filter<Extract = (String, impl Buf), Error = 
         .and(warp::body::aggregate())
 }
 
+pub fn with_doc_upload(
+) -> impl Filter<Extract = (&'static str, impl Buf), Error = Rejection> + Clone {
+    warp::header::header::<String>("Content-Type")
+        .and_then(|v: String| async move {
+            match &v[..] {
+                "application/msword" => Ok("doc"),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => {
+                    Ok("docx")
+                }
+                "application/pdf" => Ok("pdf"),
+                _ => Err(reject::custom(ClientError::InvalidInput(
+                    "unsupported media type".to_owned(),
+                ))),
+            }
+        })
+        .and(warp::body::content_length_limit(1024 * 5000))
+        .and(warp::body::aggregate())
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     status: &'static str,

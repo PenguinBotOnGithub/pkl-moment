@@ -60,10 +60,20 @@ pub fn users_routes(
         .and(with_db(db.clone()))
         .and_then(delete_user);
 
+    let search_user_route = user
+        .and(warp::path("search"))
+        .and(warp::query::<HashMap<String, String>>())
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(with_auth(false, jwt_key.clone(), db.clone()).untuple_one())
+        .and(with_db(db.clone()))
+        .and_then(search_user);
+
     get_users_route
         .or(read_user_route)
         .or(update_user_route)
         .or(delete_user_route)
+        .or(search_user_route)
 }
 
 async fn get_users(
@@ -164,4 +174,30 @@ async fn delete_user(
             "user not found".to_owned(),
         )))
     }
+}
+
+async fn search_user(
+    queries: HashMap<String, String>,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
+    let role = match queries.get("role") {
+        Some(v) => v,
+        None => &String::from(""),
+    };
+    let Some(name) = queries.get("username") else {
+        let v: Vec<u8> = Vec::new();
+        return Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)));
+    };
+
+    if name.is_empty() {
+        let v: Vec<u8> = Vec::new();
+        return Ok(reply::json(&ApiResponse::ok("success".to_owned(), v)));
+    }
+
+    let mut db = db.lock();
+    let res = User::find_by_username_role(&mut db, name, role)
+        .await
+        .map_err(|e| InternalError::DatabaseError(e.to_string()))?;
+
+    Ok(reply::json(&ApiResponse::ok("success".to_owned(), res)))
 }
