@@ -1,4 +1,4 @@
-use crate::auth::{with_auth, with_auth_with_claims, JwtClaims};
+use crate::auth::{with_auth_with_claims, JwtClaims};
 use crate::error::{handle_fk_depended_data_delete, handle_fk_not_exists_unique_violation};
 use crate::with_image_upload;
 use crate::{
@@ -7,8 +7,9 @@ use crate::{
 };
 use diesel_async::AsyncPgConnection;
 use models::journal::{CreateJournal, Journal, UpdateJournal};
+use models::log::Log;
 use models::tenure::Tenure;
-use models::types::UserRole;
+use models::types::{Operation, TableRef, UserRole};
 use parking_lot::Mutex;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -85,9 +86,9 @@ pub fn journals_routes(
         .and(warp::path("photo"))
         .and(warp::path::end())
         .and(warp::post())
-        .and(with_auth(false, jwt_key.clone(), db.clone()))
-        .untuple_one()
+        .and(with_auth_with_claims(false, jwt_key.clone(), db.clone()))
         .and(with_image_upload())
+        .and(with_db(db.clone()))
         .and_then(upload_photo);
 
     get_journals_route
@@ -494,7 +495,12 @@ async fn delete_journal(
     }
 }
 
-async fn upload_photo(filetype: String, mut body: impl Buf) -> Result<impl Reply, Rejection> {
+async fn upload_photo(
+    claims: JwtClaims,
+    filetype: String,
+    mut body: impl Buf,
+    db: Arc<Mutex<AsyncPgConnection>>,
+) -> Result<impl Reply, Rejection> {
     let mut img: Vec<u8> = Vec::with_capacity(1024 * 5000);
     while body.has_remaining() {
         let chunk = body.chunk();
@@ -531,6 +537,15 @@ async fn upload_photo(filetype: String, mut body: impl Buf) -> Result<impl Reply
         .write_all(&img)
         .await
         .map_err(|e| InternalError::FilesystemError(e.to_string()))?;
+    let mut db = db.lock();
+    Log::log(
+        &mut db,
+        Operation::Upload,
+        TableRef::Journal,
+        *&claims.id,
+        None::<u8>,
+    )
+    .await;
 
     Ok(reply::json(&ApiResponse::ok(
         "success".to_owned(),
