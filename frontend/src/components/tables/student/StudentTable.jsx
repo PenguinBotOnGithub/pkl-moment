@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
+import { fetchData } from "../../../services";
 
 function StudentTable() {
   const cookies = new Cookies(null, { path: "/" });
@@ -12,17 +12,9 @@ function StudentTable() {
 
   const fetchDataForStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let studentsData = await response.json();
-      setData(studentsData.data.items);
-      setIsDataEdited(studentsData.data.items.map(() => false));
+      const response = await fetchData(`/api/student?page=0`);
+      setData(response.data.items);
+      setIsDataEdited(response.data.items.map(() => false));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -38,16 +30,9 @@ function StudentTable() {
 
   const deleteStudent = async (index) => {
     try {
-      const response = await fetch(`${host}/api/student/${index}/delete`, {
-        headers: {
-          Authorization: token,
-        },
+      await fetchData(`/api/student/${index}/delete`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setError(null);
       fetchDataForStudents();
     } catch (err) {
@@ -68,19 +53,14 @@ function StudentTable() {
   const saveChanges = async (index, id) => {
     // Implement the logic to save the changes to the server
     console.log("Form data submitted:", data[index]);
-    await fetch(`${host}/api/student/${id}/update`, {
+    await fetchData(`/api/student/${id}/update`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         name: data[index].name,
         class: data[index].class,
         nis: data[index].nis,
       }),
     })
-      .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
           fetchDataForStudents();

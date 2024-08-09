@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 
 function CompanyAdd() {
   const [rows, setRows] = useState([{ name: "", address: "" }]);
@@ -11,12 +10,8 @@ function CompanyAdd() {
 
   const handleSubmit = async (formData) => {
     console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/company/create`, {
+    await fetchData(`/api/company/create`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         name: formData.name,
         address: formData.address,

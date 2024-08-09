@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Dropdown from "../../../components/Dropdown";
 import { fetchData } from "../../../services";
 
@@ -28,12 +27,8 @@ function StudentAdd() {
 
   const handleSubmit = async (formData) => {
     console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/student/create`, {
+    await fetchData(`/api/student/create`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         name: formData.name,
         class_id: formData.class_id,

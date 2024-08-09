@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Dropdown from "../../../components/Dropdown";
 import { fetchData } from "../../../services";
-import { fetchDepartment } from "../../../services/functions/department";
 
 function ClassAdd() {
   const [rows, setRows] = useState([{ grade: "", department: "", number: "" }]);

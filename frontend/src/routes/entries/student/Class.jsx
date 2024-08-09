@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate } from "react-router-dom";
 import { fetchData, fetchDataWrapper } from "../../../services";
 import Dropdown from "../../../components/Dropdown";
-import { updateDepartment } from "../../../services/functions/department";
 
 function Class() {
   const cookies = new Cookies(null, { path: "/" });
@@ -51,16 +49,9 @@ function Class() {
 
   const deleteClass = async (id) => {
     try {
-      const response = await fetch(`${host}/api/class/${id}/delete`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await fetchData(`/api/class/${id}/delete`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setError(null);
       fetchDataForClasses();
     } catch (err) {
@@ -81,12 +72,8 @@ function Class() {
   const saveChanges = async (index, id) => {
     console.log("Form data submitted:", data[index]);
     try {
-      const response = await fetch(`${host}/api/class/${id}/update`, {
+      const response = await fetchData(`/api/class/${id}/update`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           grade: parseInt(data[index].grade),
           department_id: parseInt(data[index].department),
@@ -94,14 +81,7 @@ function Class() {
         }),
       });
 
-      const result = await response.json();
-      console.log(result);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-
-      if (result.status === "success") {
+      if (response.status === "success") {
         fetchDataForClasses();
       } else {
         alert("Failed to save changes");

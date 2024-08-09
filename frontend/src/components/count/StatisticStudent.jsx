@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import { fetchData } from "../../services";
 
 function StatisticStudent({ entryCount }) {
   const navigate = useNavigate();
@@ -14,16 +14,8 @@ function StatisticStudent({ entryCount }) {
 
   const fetchDataForClasses = async () => {
     try {
-      const response = await fetchData(`${host}/api/class?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let classesData = await response.json();
-      setClassData(classesData.data);
+      const response = await fetchData(`/api/class?page=0&size=0`);
+      setClassData(response.data);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -35,16 +27,8 @@ function StatisticStudent({ entryCount }) {
 
   const fetchDataForDepartments = async () => {
     try {
-      const response = await fetch(`${host}/api/department?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let departmentsData = await response.json();
-      setDepartmentData(departmentsData.data);
+      const response = await fetchData(`/api/department?page=0&size=0`);
+      setDepartmentData(response.data);
       setError(null);
     } catch (err) {
       setError(err.message);

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate, useParams } from "react-router-dom";
 import StatisticStudent from "../../../components/count/StatisticStudent";
@@ -39,6 +38,7 @@ function Student() {
       setData(response.data.items);
       setIsDataEdited(response.data.items.map(() => false));
       setError(null);
+      console.log(pageData);
     } catch (err) {
       setError(err.message);
       setData([]);
@@ -49,16 +49,9 @@ function Student() {
 
   const deleteStudent = async (index) => {
     try {
-      const response = await fetch(`${host}/api/student/${index}/delete`, {
-        headers: {
-          Authorization: token,
-        },
+      await fetchData(`/api/student/${index}/delete`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setError(null);
       fetchDataForStudents();
     } catch (err) {
@@ -107,7 +100,7 @@ function Student() {
   return (
     <>
       <Search addOnClick={() => {navigate("/admin/entries/student/add")}} />
-      <StatisticStudent entryCount={data.total_items}/>      
+      <StatisticStudent entryCount={data.length}/>      
       <div className="overflow-x-auto">
         <table className="table bg-base-100 border-0 overflow-hidden rounded-lg">
           <thead className="bg-base-300">

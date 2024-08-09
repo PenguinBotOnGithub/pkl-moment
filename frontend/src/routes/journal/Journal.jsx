@@ -67,7 +67,7 @@ function Journal({ role }) {
                 <th>Siswa</th>
                 <th>Perusahaan</th>
                 <th>Divisi</th>
-                <th>Tanggal Dikirim</th>
+                <th>Tanggal Journal</th>
                 <th>Verifikasi</th>
                 <th>Aksi</th>
               </tr>
@@ -174,9 +174,7 @@ function Journal({ role }) {
                       {data[selectedJournal].activity}
                     </span>
                     <span className="opacity-50">
-                      {new Date(
-                        data[selectedJournal].created_at
-                      ).toLocaleDateString()}
+                      {data[selectedJournal].entry_date}
                     </span>
                   </div>
                   <div className="flex flex-row mb-4 w-full gap-2 items-center">

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import getCurrentDate from "../../assets/strings/getCurrentDate";
 import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host"; // Import the host URL
 import { matchSorter } from "match-sorter";
 import { exportLetter } from "../../services/functions/letters";
+import { fetchData } from "../../services";
 
 function Entry() {
   let { id, entry } = useParams();
@@ -16,7 +15,6 @@ function Entry() {
   const [verifikasi, setVerifikasi] = useState(true);
   const cookies = new Cookies();
   const role = cookies.get("role");
-  const token = cookies.get("access-token");
   const [isStudentListChanged, setIsStudentListChanged] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const navigate = useNavigate();
@@ -26,24 +24,12 @@ function Entry() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const onExport = async (index) => {
-    exportLetter(index);
-  };
-
   const fetchDataForEntry = async () => {
     try {
-      const response = await fetch(`${host}/api/letters/${id}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let entryData = await response.json();
-      setData(entryData.data);
-      setVerifikasi(entryData.data.verified);
-      console.log(entryData.data);
+      const response = await fetchData(`/api/letters/${id}`);
+      setData(response.data);
+      setVerifikasi(response.data.verified);
+      console.log(response.data);
     } catch (err) {
       console.log("Error fetching data: " + err);
       setData([]);
@@ -54,14 +40,7 @@ function Entry() {
 
   const fetchDataForEntryStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/letters/${id}/student`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
+      const response = await fetchData(`/api/letters/${id}/student`);
       let studentsData = await response.json();
       setDataEntryStudent(studentsData.data);
       setRows(studentsData.data);
@@ -74,16 +53,8 @@ function Entry() {
 
   const fetchAllStudents = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0&size=1000`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let allStudentsData = await response.json();
-      setDataAllStudent(allStudentsData.data.items);
+      const response = await fetchData(`/api/student?page=0&size=1000`);
+      setDataAllStudent(response.data.items);
     } catch (err) {
       console.log("Error fetching data: " + err);
       setDataAllStudent([]);
@@ -92,16 +63,9 @@ function Entry() {
 
   const onVerify = async () => {
     try {
-      const response = await fetch(`${host}/api/letters/${id}/verify`, {
-        headers: {
-          Authorization: token,
-        },
+      await fetchData(`/api/letters/${id}/verify`, {
         method: "PATCH",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setVerifikasi(true);
       fetchDataForEntry();
     } catch (err) {
@@ -111,19 +75,49 @@ function Entry() {
 
   const onDelete = async () => {
     try {
-      const response = await fetch(`${host}/api/letters/${id}/delete`, {
-        headers: {
-          Authorization: token,
-        },
+      await fetchData(`/api/letters/${id}/delete`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       navigate("/admin/entries");
     } catch (err) {
       console.log("Error deleting data: " + err);
+    }
+  };
+
+  const handleConfirmEdit = async () => {
+    if (isStudentListChanged) {
+      const currentStudentIds = dataEntryStudent.map((student) => student.id);
+      const newStudentIds = rows.map((student) => student.id);
+
+      const studentsToAdd = rows.filter(
+        (student) => !currentStudentIds.includes(student.id)
+      );
+      const studentsToDelete = dataEntryStudent.filter(
+        (student) => !newStudentIds.includes(student.id)
+      );
+
+      try {
+        // Add new students
+        for (const student of studentsToAdd) {
+          await fetchData(`/api/letters/${id}/student/add`, {
+            method: "POST",
+            body: JSON.stringify({ student_id: student.id }),
+          });
+        }
+
+        // Delete removed students
+        for (const student of studentsToDelete) {
+          await fetchData(`/api/letters/${id}/student/${student.id}/remove`, {
+            method: "DELETE",
+          });
+        }
+
+        fetchDataForEntryStudents();
+        fetchDataForEntry();
+        setIsStudentListChanged(false);
+      } catch (error) {
+        console.log("Error confirming edit: " + error.message);
+      }
     }
   };
 
@@ -143,65 +137,6 @@ function Entry() {
     setIsStudentListChanged(true);
   };
 
-  const searchStudent = (value, setVisibleStudents) => {
-    const searchTerm = value.toLowerCase();
-    const filteredStudents = matchSorter(dataAllStudent, searchTerm, {
-      threshold: matchSorter.rankings.STARTS_WITH,
-      keys: ["name"],
-    });
-    setVisibleStudents(filteredStudents);
-  };
-
-  const handleConfirmEdit = async () => {
-    if (isStudentListChanged) {
-      const currentStudentIds = dataEntryStudent.map((student) => student.id);
-      const newStudentIds = rows.map((student) => student.id);
-
-      const studentsToAdd = rows.filter(
-        (student) => !currentStudentIds.includes(student.id)
-      );
-      const studentsToDelete = dataEntryStudent.filter(
-        (student) => !newStudentIds.includes(student.id)
-      );
-
-      try {
-        // Add new students
-        for (const student of studentsToAdd) {
-          await fetch(`${host}/api/letters/${id}/student/add`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token,
-            },
-            body: JSON.stringify({ student_id: student.id }),
-          });
-        }
-
-        // Delete removed students
-        for (const student of studentsToDelete) {
-          await fetch(
-            `${host}/api/letters/${id}/student/${student.id}/remove`,
-            {
-              method: "DELETE",
-              headers: {
-                Authorization: token,
-              },
-            }
-          );
-        }
-
-        // Fetch updated student data
-        fetchDataForEntryStudents();
-
-        // refresh entry data
-        fetchDataForEntry();
-        setIsStudentListChanged(false);
-      } catch (error) {
-        console.log("Error confirming edit: " + error.message);
-      }
-    }
-  };
-
   const handleCancelEdit = async () => {
     if (isStudentListChanged) {
       fetchDataForEntryStudents();
@@ -215,6 +150,15 @@ function Entry() {
     } else {
       setSelectedRows([...selectedRows, rowIndex]);
     }
+  };
+
+  const searchStudent = (value, setVisibleStudents) => {
+    const searchTerm = value.toLowerCase();
+    const filteredStudents = matchSorter(dataAllStudent, searchTerm, {
+      threshold: matchSorter.rankings.STARTS_WITH,
+      keys: ["name"],
+    });
+    setVisibleStudents(filteredStudents);
   };
 
   return (

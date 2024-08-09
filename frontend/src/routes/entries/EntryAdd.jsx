@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import StudentEntryAddTable from "../../components/tables/entries/StudentEntryAddTable";
 import Cookies from "universal-cookie";
 import Dropdown from "../../components/Dropdown";
-import { fetchData } from "../../services";
+import { fetchData, fetchDataWrapper } from "../../services";
 import { assignStudentToLetter } from "../../services/functions/students";
 
 function EntryAdd({ role }) {
@@ -26,20 +26,6 @@ function EntryAdd({ role }) {
   const endDateValue = ["6 Months", "1 Year"];
 
   useEffect(() => {
-    const fetchDataWrapper = async (
-      url,
-      setter,
-      transform = (data) => data
-    ) => {
-      try {
-        const data = await fetchData(url);
-        setter(transform(data.data.items));
-      } catch (err) {
-        alert(err);
-        setter([]);
-      }
-    };
-
     const flattenStudentData = (students) => {
       return students.map((student) => ({
         id: student.id,

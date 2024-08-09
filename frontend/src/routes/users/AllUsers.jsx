@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
 import { useNavigate, useParams } from "react-router-dom";
-import host from "../../assets/strings/host";
 import StatisticUser from "../../components/count/StatisticUser";
 import Search from "../../components/Search";
+import { fetchData } from "../../services";
 
 function AllUsers() {
   const navigate = useNavigate();
@@ -24,21 +24,12 @@ function AllUsers() {
 
   const fetchDataForUsers = async () => {
     try {
-      const response = await fetch(
-        `${host}/api/user?page=${page}&size=${cookies.get("max-item-users")}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await fetchData(
+        `/api/user?page=${page}&size=${cookies.get("max-item-users")}`
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      const usersData = await response.json();
-      console.log(usersData);
-      setData(usersData.data.items);
-      setPageData(usersData.data);
+      console.log(response);
+      setData(response.data.items);
+      setPageData(response.data);
     } catch (err) {
       alert("Something went wrong: " + err);
       setData([]);
@@ -47,15 +38,9 @@ function AllUsers() {
 
   const onDelete = async (id) => {
     try {
-      const response = await fetch(`${host}/api/user/${id}/delete`, {
+      const response = await fetchData(`/api/user/${id}/delete`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
       fetchDataForUsers();
     } catch (err) {
       alert("Something went wrong: " + err);
@@ -68,20 +53,13 @@ function AllUsers() {
       return;
     }
     try {
-      const response = await fetch(
-        `${host}/api/user/${selectedUser}/change-password`,
+      const response = await fetchData(
+        `/api/user/${selectedUser}/change-password`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify({ newPassword }),
         }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
       setNewPassword("");
       setConfirmPassword("");
       setSelectedUser(null);

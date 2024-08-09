@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
 import Dropdown from "../../components/Dropdown";
+import { fetchData } from "../../services";
 
 function UserAdd() {
   const [rows, setRows] = useState([{ username: "", password: "", role: "" }]);
@@ -18,12 +18,8 @@ function UserAdd() {
 
   const handleSubmit = async (formData) => {
     console.log("Form data submitted:", formData);
-    await fetch(`${host}/api/auth/register`, {
+    await fetchData(`/api/auth/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         username: formData.username,
         password: formData.password,

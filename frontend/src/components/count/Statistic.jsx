@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
 import { fetchData } from "../../services";
 
 function Statistic({ entryCount }) {

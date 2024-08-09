@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
 import Search from "../../../components/Search";
 import { useNavigate } from "react-router-dom";
+import { fetchData } from "../../../services";
 
 function Department() {
   const cookies = new Cookies(null, { path: "/" });
@@ -19,20 +19,11 @@ function Department() {
   const fetchDataForDepartments = async (page = 0) => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${host}/api/department?page=${page}&size=10`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await fetchData(
+        `/api/department?page=${page}&size=10`
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      const departmentsData = await response.json();
-      setPageData(departmentsData.data);
-      setData(departmentsData.data.items);
+      setPageData(response.data);
+      setData(response.data.items);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -48,16 +39,9 @@ function Department() {
 
   const deleteDepartment = async (id) => {
     try {
-      const response = await fetch(`${host}/api/department/${id}`, {
+      await fetchData(`/api/department/${id}/delete`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setError(null);
       fetchDataForDepartments(pageData.page);
     } catch (err) {
@@ -75,23 +59,12 @@ function Department() {
       return;
     }
     try {
-      const response = await fetch(`${host}/api/department/create`, {
+      const response = await fetchData(`/api/department/create`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ name: newDepartmentName }),
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `HTTP error: Status ${response.status}, Message: ${errorText}`
-        );
-      }
-      const newDepartment = await response.json();
       setError(null);
-      setData((prevData) => [...prevData, newDepartment.data]);
+      setData((prevData) => [...prevData, response.data]);
       setNewDepartmentName("");
       setIsModalVisible(false);
     } catch (err) {
@@ -107,8 +80,8 @@ function Department() {
       />
 
       {isModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-5 rounded-lg relative w-80">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-10">
+          <div className="bg-base-100 p-5 rounded-lg relative w-80">
             <button
               type="button"
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"

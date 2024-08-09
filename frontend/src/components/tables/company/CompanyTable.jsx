@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Cookies from "universal-cookie";
-import host from "../../../assets/strings/host";
+import { fetchData } from "../../../services";
 
 function CompanyTable() {
   const cookies = new Cookies(null, { path: "/" });
@@ -12,17 +12,9 @@ function CompanyTable() {
 
   const fetchDataForCompanies = async () => {
     try {
-      const response = await fetch(`${host}/api/company?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let companiesData = await response.json();
-      setData(companiesData.data.items);
-      setIsDataEdited(companiesData.data.items.map(() => false));
+      const response = await fetchData(`/api/company?page=0`);
+      setData(response.data.items);
+      setIsDataEdited(response.data.items.map(() => false));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -38,16 +30,9 @@ function CompanyTable() {
 
   const deleteCompany = async (index) => {
     try {
-      const response = await fetch(`${host}/api/company/${index}/delete`, {
-        headers: {
-          Authorization: token,
-        },
+      await fetchData(`/api/company/${index}/delete`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      await response.json();
       setError(null);
       fetchDataForCompanies();
     } catch (err) {
@@ -68,28 +53,23 @@ function CompanyTable() {
   const saveChanges = async (index, id) => {
     // Implement the logic to save the changes to the server
     console.log("Form data submitted:", data[index]);
-    await fetch(`${host}/api/company/${id}/update`, {
+    await fetchData(`/api/company/${id}/update`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
       body: JSON.stringify({
         name: data[index].name,
         address: data[index].address,
       }),
     })
-      .then((response) => response.json())
       .then((result) => {
         if (result.status === "success") {
-          fetchDataForCompanies();
+          fetchDataForStudents();
         }
       })
       .catch(() => {
         alert("Something went wrong");
-        fetchDataForCompanies();
+        fetchDataForStudents();
       });
-
+    fetchDataForCompanies();
     const newIsDataEdited = [...isDataEdited];
     newIsDataEdited[index] = false;
     setIsDataEdited(newIsDataEdited);

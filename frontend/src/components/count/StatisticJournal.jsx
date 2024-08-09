@@ -1,62 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import host from "../../assets/strings/host";
+import { fetchData } from "../../services";
 
-function Statistic({ entryCount }) {
+function StatisticJournal({ entryCount }) {
   const navigate = useNavigate();
   const cookies = new Cookies(null, { path: "/" });
   const token = cookies.get("access-token");
-  const [companyData, setCompanyData] = useState([]);
-  const [studentData, setStudentData] = useState([]);
+  const [tenureData, setTenureData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchDataForStudents = async () => {
+  const fetchDataForTenure = async () => {
     try {
-      const response = await fetch(`${host}/api/student?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let studentsData = await response.json();
-      setStudentData(studentsData.data);
+      const response = await fetchData(`/api/tenure?page=0&size=0`);
+      setTenureData(response.data);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setStudentData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDataForCompanies = async () => {
-    try {
-      const response = await fetch(`${host}/api/company?page=0`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let companiesData = await response.json();
-      setCompanyData(companiesData.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      setCompanyData([]);
+      setTenureData([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDataForCompanies();
-    fetchDataForStudents();
+    fetchDataForTenure();
   }, []);
 
   return (
@@ -74,7 +43,7 @@ function Statistic({ entryCount }) {
       >
         <span className="z-10 text-left">Total siswa yang PKL</span>
         <span className="z-10 text-4xl font-bold">
-          {companyData.total_items}
+          {tenureData.total_items}
         </span>
         <span className="absolute -rotate-12 -right-10 -bottom-16 icon-size-164 material-symbols-rounded text-primary opacity-20">
           supervisor_account
@@ -88,4 +57,4 @@ function Statistic({ entryCount }) {
   );
 }
 
-export default Statistic;
+export default StatisticJournal;

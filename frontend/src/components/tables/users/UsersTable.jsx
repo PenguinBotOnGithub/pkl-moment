@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import host from "../../../assets/strings/host";
 import Cookies from "universal-cookie";
 import { useNavigate, useParams } from "react-router-dom";
+import { fetchData } from "../../../services";
 
 function UsersTable() {
   const navigate = useNavigate();
@@ -17,18 +17,9 @@ function UsersTable() {
 
   const fetchDataForUsers = async () => {
     try {
-      const response = await fetch(`${host}/api/user?page=${page}&size=${cookies.get("max-item-users")}`, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
-      let usersData = await response.json();
-      console.log(usersData);
-      setData(usersData.data.items);
-      setPageData(usersData.data);
+      const response = await fetchData(`/api/user?page=${page}&size=${cookies.get("max-item-users")}`);
+      setData(response.data.items);
+      setPageData(response.data);
     } catch (err) {
       alert("something went wrong:" + err);
       setData([]);
@@ -38,15 +29,9 @@ function UsersTable() {
 
   const onDelete = async (index) => {
     try {
-      const response = await fetch(`${host}/api/user/${index}/delete`, {
+      await fetchData(`/api/user/${index}/delete`, {
         method: "DELETE",
-        headers: {
-          Authorization: token,
-        },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error: Status ${response.status}`);
-      }
       fetchDataForUsers();
     } catch (err) {
       alert("something went wrong:" + err);
